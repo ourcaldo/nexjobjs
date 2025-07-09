@@ -138,7 +138,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
       {/* Static sidebar for desktop */}
       <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'} select-none ${sidebarCollapsed ? 'pointer-events-auto' : ''}`}>
         <div className={`flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white ${sidebarCollapsed ? 'overflow-hidden' : ''}`}>
-          <div className={`flex-1 flex flex-col pt-5 pb-4 ${sidebarCollapsed ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className={`flex items-center flex-shrink-0 ${sidebarCollapsed ? 'px-2 justify-center' : 'px-4'} ${sidebarCollapsed ? 'cursor-default' : ''}`}>
               <div className={`flex items-center ${sidebarCollapsed ? 'space-x-0' : 'space-x-2'}`}>
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
@@ -152,22 +152,22 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
               </div>
             </div>
             
-            <nav className={`mt-8 flex-1 space-y-1 ${sidebarCollapsed ? 'px-2 overflow-x-hidden' : 'px-2'}`}>
+            <nav className={`mt-8 flex-1 space-y-1 ${sidebarCollapsed ? 'px-2' : 'px-2'}`}>
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={`group flex items-center py-2 text-sm font-medium rounded-md relative ${
-                    sidebarCollapsed ? 'px-2 justify-center w-12 mx-auto' : 'px-2'
+                    sidebarCollapsed ? 'px-2 justify-center' : 'px-2'
                   } ${
                     item.current
                       ? 'bg-primary-100 text-primary-900'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  } ${sidebarCollapsed ? 'select-none overflow-hidden' : ''}`}
+                  } ${sidebarCollapsed ? 'select-none' : ''}`}
                   title={sidebarCollapsed ? item.name : ''}
                   draggable={false}
                 >
-                  <item.icon className={`h-5 w-5 ${sidebarCollapsed ? 'mr-0' : 'mr-3'} ${item.current ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'} ${sidebarCollapsed ? 'flex-shrink-0' : ''}`} />
+                  <item.icon className={`h-5 w-5 ${sidebarCollapsed ? 'mr-0' : 'mr-3'} ${item.current ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'}`} />
                   {!sidebarCollapsed && item.name}
                   
                   {/* Tooltip for collapsed state */}
