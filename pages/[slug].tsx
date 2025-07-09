@@ -7,6 +7,7 @@ import Footer from '@/components/Layout/Footer';
 import SchemaMarkup from '@/components/SEO/SchemaMarkup';
 import { generatePageSchema, generateBreadcrumbSchema } from '@/utils/schemaUtils';
 import { getCurrentDomain } from '@/lib/env';
+import CMSContent from '@/components/CMSContent';
 
 interface PageProps {
   page: NxdbPage;
@@ -45,7 +46,7 @@ export default function DynamicPage({ page }: PageProps) {
       <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
 
       <Header />
-      
+
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Featured Image */}
@@ -64,7 +65,7 @@ export default function DynamicPage({ page }: PageProps) {
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               {page.title}
             </h1>
-            
+
             {page.excerpt && (
               <div className="text-xl text-gray-600 mb-6">
                 {page.excerpt}
@@ -80,7 +81,7 @@ export default function DynamicPage({ page }: PageProps) {
                   day: 'numeric'
                 })}</span>
               </div>
-              
+
               {page.author && (
                 <div className="flex items-center">
                   <span>By: {page.author.full_name || page.author.email}</span>
@@ -97,9 +98,9 @@ export default function DynamicPage({ page }: PageProps) {
 
           {/* Page Content with Rich Text Styling */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-            <div 
+            <CMSContent
+              content={page.content}
               className="rich-text-content max-w-none"
-              dangerouslySetInnerHTML={{ __html: page.content }}
             />
           </div>
 
@@ -131,7 +132,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   try {
     // Get all published pages for static generation
     const { pages } = await cmsPageService.getPages({ status: 'published' });
-    
+
     const paths = pages.map((page) => ({
       params: { slug: page.slug }
     }));

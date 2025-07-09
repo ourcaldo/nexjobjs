@@ -439,248 +439,261 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       </div>
 
       {/* Custom Styles for Rich Text Editor */}
-      <style jsx>{`
+      <style jsx global>{`
+        /* Editor Styles */
+        .rich-text-editor h1, .rich-text-editor h2, .rich-text-editor h3, 
+        .rich-text-editor h4, .rich-text-editor h5, .rich-text-editor h6 {
+          display: block !important;
+          font-weight: bold !important;
+          margin: 0.5em 0 !important;
+        }
+        
         .rich-text-editor h1 {
-          font-size: 2.25rem;
-          font-weight: 700;
-          line-height: 1.2;
-          margin: 1rem 0;
-          color: #1f2937;
+          font-size: 2em !important;
+          margin: 0.67em 0 !important;
         }
         
         .rich-text-editor h2 {
-          font-size: 1.875rem;
-          font-weight: 600;
-          line-height: 1.3;
-          margin: 0.875rem 0;
-          color: #1f2937;
+          font-size: 1.5em !important;
+          margin: 0.75em 0 !important;
         }
         
         .rich-text-editor h3 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          line-height: 1.4;
-          margin: 0.75rem 0;
-          color: #1f2937;
+          font-size: 1.17em !important;
+          margin: 0.83em 0 !important;
         }
         
         .rich-text-editor h4 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          line-height: 1.4;
-          margin: 0.625rem 0;
-          color: #1f2937;
+          font-size: 1em !important;
+          margin: 1.12em 0 !important;
         }
         
         .rich-text-editor h5 {
-          font-size: 1.125rem;
-          font-weight: 600;
-          line-height: 1.4;
-          margin: 0.5rem 0;
-          color: #1f2937;
+          font-size: 0.83em !important;
+          margin: 1.5em 0 !important;
         }
         
         .rich-text-editor h6 {
-          font-size: 1rem;
-          font-weight: 600;
-          line-height: 1.4;
-          margin: 0.5rem 0;
-          color: #1f2937;
+          font-size: 0.75em !important;
+          margin: 1.67em 0 !important;
         }
         
         .rich-text-editor p {
-          font-size: 1rem;
-          line-height: 1.6;
-          margin: 0.5rem 0;
-          color: #374151;
+          display: block !important;
+          margin: 1em 0 !important;
         }
         
         .rich-text-editor ul, .rich-text-editor ol {
-          margin: 0.5rem 0;
-          padding-left: 1.5rem;
+          display: block !important;
+          list-style-position: inside !important;
+          margin: 1em 0 !important;
+          padding-left: 1em !important;
+        }
+        
+        .rich-text-editor ul {
+          list-style-type: disc !important;
+        }
+        
+        .rich-text-editor ol {
+          list-style-type: decimal !important;
         }
         
         .rich-text-editor li {
-          margin: 0.25rem 0;
-          line-height: 1.6;
+          display: list-item !important;
+          margin: 0.25em 0 !important;
         }
         
         .rich-text-editor blockquote {
-          border-left: 4px solid #e5e7eb;
-          padding-left: 1rem;
-          margin: 1rem 0;
-          font-style: italic;
-          color: #6b7280;
+          display: block !important;
+          margin: 1em 40px !important;
+          padding: 10px 20px !important;
+          border-left: 4px solid #ddd !important;
+          background-color: #f9f9f9 !important;
+          font-style: italic !important;
+          color: #666 !important;
         }
         
         .rich-text-editor pre {
-          background: #f3f4f6;
-          padding: 1rem;
-          border-radius: 0.375rem;
-          margin: 1rem 0;
-          overflow-x: auto;
-          font-family: 'Courier New', monospace;
+          display: block !important;
+          font-family: monospace !important;
+          white-space: pre !important;
+          margin: 1em 0 !important;
+          padding: 1em !important;
+          background: #f4f4f4 !important;
+          border: 1px solid #ddd !important;
+          border-radius: 4px !important;
+          overflow-x: auto !important;
         }
         
         .rich-text-editor code {
-          background: #f3f4f6;
-          padding: 0.125rem 0.25rem;
-          border-radius: 0.25rem;
-          font-family: 'Courier New', monospace;
-          font-size: 0.875rem;
+          font-family: monospace !important;
+          background: #f0f0f0 !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
+          font-size: 0.9em !important;
         }
         
-        .rich-text-editor a {
-          color: #2563eb;
-          text-decoration: underline;
-        }
-        
-        .rich-text-editor a:hover {
-          color: #1d4ed8;
-        }
-        
-        .rich-text-editor img {
-          max-width: 100%;
-          height: auto;
-          margin: 0.5rem 0;
-          border-radius: 0.375rem;
+        .rich-text-editor pre code {
+          background: none !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
         }
         
         .rich-text-editor strong, .rich-text-editor b {
-          font-weight: 600;
+          font-weight: bold !important;
         }
         
         .rich-text-editor em, .rich-text-editor i {
-          font-style: italic;
+          font-style: italic !important;
         }
         
         .rich-text-editor u {
-          text-decoration: underline;
+          text-decoration: underline !important;
+        }
+        
+        .rich-text-editor a {
+          color: #0066cc !important;
+          text-decoration: underline !important;
+        }
+        
+        .rich-text-editor a:hover {
+          color: #004499 !important;
+        }
+        
+        .rich-text-editor img {
+          max-width: 100% !important;
+          height: auto !important;
+          display: block !important;
+          margin: 0.5em 0 !important;
         }
         
         .rich-text-editor[data-placeholder]:empty:before {
           content: attr(data-placeholder);
-          color: #9ca3af;
+          color: #999;
           font-style: italic;
         }
         
-        /* Content styles for preview */
+        /* Preview Content Styles */
+        .rich-text-content h1, .rich-text-content h2, .rich-text-content h3, 
+        .rich-text-content h4, .rich-text-content h5, .rich-text-content h6 {
+          font-weight: bold !important;
+          margin: 0.5em 0 !important;
+          color: #333 !important;
+        }
+        
         .rich-text-content h1 {
-          font-size: 2.25rem;
-          font-weight: 700;
-          line-height: 1.2;
-          margin: 1rem 0;
-          color: #1f2937;
+          font-size: 2em !important;
+          margin: 0.67em 0 !important;
         }
         
         .rich-text-content h2 {
-          font-size: 1.875rem;
-          font-weight: 600;
-          line-height: 1.3;
-          margin: 0.875rem 0;
-          color: #1f2937;
+          font-size: 1.5em !important;
+          margin: 0.75em 0 !important;
         }
         
         .rich-text-content h3 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          line-height: 1.4;
-          margin: 0.75rem 0;
-          color: #1f2937;
+          font-size: 1.17em !important;
+          margin: 0.83em 0 !important;
         }
         
         .rich-text-content h4 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          line-height: 1.4;
-          margin: 0.625rem 0;
-          color: #1f2937;
+          font-size: 1em !important;
+          margin: 1.12em 0 !important;
         }
         
         .rich-text-content h5 {
-          font-size: 1.125rem;
-          font-weight: 600;
-          line-height: 1.4;
-          margin: 0.5rem 0;
-          color: #1f2937;
+          font-size: 0.83em !important;
+          margin: 1.5em 0 !important;
         }
         
         .rich-text-content h6 {
-          font-size: 1rem;
-          font-weight: 600;
-          line-height: 1.4;
-          margin: 0.5rem 0;
-          color: #1f2937;
+          font-size: 0.75em !important;
+          margin: 1.67em 0 !important;
         }
         
         .rich-text-content p {
-          font-size: 1rem;
-          line-height: 1.6;
-          margin: 0.5rem 0;
-          color: #374151;
+          margin: 1em 0 !important;
+          line-height: 1.6 !important;
         }
         
         .rich-text-content ul, .rich-text-content ol {
-          margin: 0.5rem 0;
-          padding-left: 1.5rem;
+          margin: 1em 0 !important;
+          padding-left: 2em !important;
+        }
+        
+        .rich-text-content ul {
+          list-style-type: disc !important;
+        }
+        
+        .rich-text-content ol {
+          list-style-type: decimal !important;
         }
         
         .rich-text-content li {
-          margin: 0.25rem 0;
-          line-height: 1.6;
+          margin: 0.25em 0 !important;
+          line-height: 1.6 !important;
         }
         
         .rich-text-content blockquote {
-          border-left: 4px solid #e5e7eb;
-          padding-left: 1rem;
-          margin: 1rem 0;
-          font-style: italic;
-          color: #6b7280;
+          margin: 1em 40px !important;
+          padding: 10px 20px !important;
+          border-left: 4px solid #ddd !important;
+          background-color: #f9f9f9 !important;
+          font-style: italic !important;
+          color: #666 !important;
         }
         
         .rich-text-content pre {
-          background: #f3f4f6;
-          padding: 1rem;
-          border-radius: 0.375rem;
-          margin: 1rem 0;
-          overflow-x: auto;
-          font-family: 'Courier New', monospace;
+          font-family: monospace !important;
+          white-space: pre !important;
+          margin: 1em 0 !important;
+          padding: 1em !important;
+          background: #f4f4f4 !important;
+          border: 1px solid #ddd !important;
+          border-radius: 4px !important;
+          overflow-x: auto !important;
         }
         
         .rich-text-content code {
-          background: #f3f4f6;
-          padding: 0.125rem 0.25rem;
-          border-radius: 0.25rem;
-          font-family: 'Courier New', monospace;
-          font-size: 0.875rem;
+          font-family: monospace !important;
+          background: #f0f0f0 !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
+          font-size: 0.9em !important;
         }
         
-        .rich-text-content a {
-          color: #2563eb;
-          text-decoration: underline;
-        }
-        
-        .rich-text-content a:hover {
-          color: #1d4ed8;
-        }
-        
-        .rich-text-content img {
-          max-width: 100%;
-          height: auto;
-          margin: 0.5rem 0;
-          border-radius: 0.375rem;
+        .rich-text-content pre code {
+          background: none !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
         }
         
         .rich-text-content strong, .rich-text-content b {
-          font-weight: 600;
+          font-weight: bold !important;
         }
         
         .rich-text-content em, .rich-text-content i {
-          font-style: italic;
+          font-style: italic !important;
         }
         
         .rich-text-content u {
-          text-decoration: underline;
+          text-decoration: underline !important;
+        }
+        
+        .rich-text-content a {
+          color: #0066cc !important;
+          text-decoration: underline !important;
+        }
+        
+        .rich-text-content a:hover {
+          color: #004499 !important;
+        }
+        
+        .rich-text-content img {
+          max-width: 100% !important;
+          height: auto !important;
+          display: block !important;
+          margin: 0.5em 0 !important;
         }
       `}</style>
     </div>

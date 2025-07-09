@@ -18,7 +18,7 @@ import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { supabaseStorageService } from '@/services/supabaseStorageService';
 import { NxdbPage, NxdbPageCategory, NxdbPageTag } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastProvider';
-import RichTextEditor from './RichTextEditor';
+import TiptapEditor from './TiptapEditor';
 
 interface PageEditorProps {
   pageId?: string;
@@ -361,7 +361,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Content
             </label>
-            <RichTextEditor
+            <TiptapEditor
               value={formData.content}
               onChange={(content) => setFormData(prev => ({ ...prev, content }))}
               placeholder="Enter your page content..."
