@@ -186,10 +186,38 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     return null;
   }
 
+  const [isToolbarFixed, setIsToolbarFixed] = React.useState(false);
+  const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const editorContainerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (toolbarRef.current && editorContainerRef.current) {
+        const editorRect = editorContainerRef.current.getBoundingClientRect();
+        const shouldFix = editorRect.top < 0 && editorRect.bottom > 60;
+        setIsToolbarFixed(shouldFix);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
+    <div ref={editorContainerRef} className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
       {/* Toolbar */}
-      <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-300 p-3 flex flex-wrap gap-2 shadow-sm">
+      <div 
+        ref={toolbarRef}
+        className={`${
+          isToolbarFixed 
+            ? 'fixed top-0 left-0 right-0 z-50' 
+            : 'sticky top-0 z-10'
+        } bg-gray-50 border-b border-gray-300 p-3 flex flex-wrap gap-2 shadow-sm transition-all duration-200`}
+        style={isToolbarFixed ? { 
+          width: toolbarRef.current?.parentElement?.offsetWidth || 'auto',
+          marginLeft: toolbarRef.current?.parentElement?.getBoundingClientRect().left || 0
+        } : {}}
+      >
         {/* Heading Dropdown */}
         <div className="relative">
           <select
