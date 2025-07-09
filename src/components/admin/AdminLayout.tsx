@@ -15,7 +15,9 @@ import {
   Bell,
   User,
   Link2,
-  Edit3
+  Edit3,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -134,7 +136,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
       </div>
 
       {/* Static sidebar for desktop */}
-      <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}`}>
+      <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'} select-none`}>
         <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white">
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className={`flex items-center flex-shrink-0 ${sidebarCollapsed ? 'px-2 justify-center' : 'px-4'}`}>
@@ -150,18 +152,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
               </div>
             </div>
             
-            {/* Collapse Toggle Button */}
-            <div className={`${sidebarCollapsed ? 'px-2' : 'px-4'} mt-4`}>
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              >
-                <Menu className={`h-5 w-5 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} />
-              </button>
-            </div>
-            
-            <nav className={`mt-5 flex-1 space-y-1 ${sidebarCollapsed ? 'px-2' : 'px-2'}`}>
+            <nav className={`mt-8 flex-1 space-y-1 ${sidebarCollapsed ? 'px-2' : 'px-2'}`}>
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -180,13 +171,28 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
                   
                   {/* Tooltip for collapsed state */}
                   {sidebarCollapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
                       {item.name}
                     </div>
                   )}
                 </Link>
               ))}
             </nav>
+            
+            {/* Collapse Toggle Button - Moved to bottom */}
+            <div className={`${sidebarCollapsed ? 'px-2' : 'px-4'} pb-2`}>
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight className="h-5 w-5" />
+                ) : (
+                  <ChevronLeft className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
