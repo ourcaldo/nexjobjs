@@ -235,7 +235,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   return (
     <div className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
       {/* Toolbar */}
-      <div className="bg-gray-50 border-b border-gray-300 p-3 flex flex-wrap gap-2">
+      <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-300 p-3 flex flex-wrap gap-2 shadow-sm">
         {/* Heading Dropdown */}
         <div className="relative">
           <select
