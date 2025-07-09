@@ -29,6 +29,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
   const router = useRouter();
   const { showToast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -133,32 +134,56 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
       </div>
 
       {/* Static sidebar for desktop */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
+      <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}`}>
         <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white">
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4">
-              <div className="flex items-center space-x-2">
+            <div className={`flex items-center flex-shrink-0 ${sidebarCollapsed ? 'px-2 justify-center' : 'px-4'}`}>
+              <div className={`flex items-center ${sidebarCollapsed ? 'space-x-0' : 'space-x-2'}`}>
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
                   <Search className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">
-                  Nex<span className="text-primary-600">job</span> Admin
-                </span>
+                {!sidebarCollapsed && (
+                  <span className="text-xl font-bold text-gray-900">
+                    Nex<span className="text-primary-600">job</span> Admin
+                  </span>
+                )}
               </div>
             </div>
-            <nav className="mt-5 flex-1 px-2 space-y-1">
+            
+            {/* Collapse Toggle Button */}
+            <div className={`${sidebarCollapsed ? 'px-2' : 'px-4'} mt-4`}>
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                <Menu className={`h-5 w-5 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+            
+            <nav className={`mt-5 flex-1 space-y-1 ${sidebarCollapsed ? 'px-2' : 'px-2'}`}>
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                  className={`group flex items-center py-2 text-sm font-medium rounded-md relative ${
+                    sidebarCollapsed ? 'px-2 justify-center' : 'px-2'
+                  } ${
                     item.current
                       ? 'bg-primary-100 text-primary-900'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
+                  title={sidebarCollapsed ? item.name : ''}
                 >
-                  <item.icon className={`mr-3 h-5 w-5 ${item.current ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'}`} />
-                  {item.name}
+                  <item.icon className={`h-5 w-5 ${sidebarCollapsed ? 'mr-0' : 'mr-3'} ${item.current ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'}`} />
+                  {!sidebarCollapsed && item.name}
+                  
+                  {/* Tooltip for collapsed state */}
+                  {sidebarCollapsed && (
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                      {item.name}
+                    </div>
+                  )}
                 </Link>
               ))}
             </nav>
@@ -167,7 +192,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
+      <div className={`flex flex-col flex-1 transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
         {/* Top navigation */}
         <div className="sticky top-0 z-10 lg:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 bg-gray-50">
           <button
