@@ -1,0 +1,155 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Server-side client with service role key
+export const createServerSupabaseClient = () => {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+};
+
+// Database types
+export interface Profile {
+  id: string;
+  email: string;
+  full_name?: string;
+  phone?: string;
+  birth_date?: string;
+  gender?: 'male' | 'female' | 'other';
+  location?: string;
+  photo_url?: string;
+  bio?: string;
+  role: 'user' | 'super_admin';
+  created_at: string;
+}
+
+export interface UserBookmark {
+  id: string;
+  user_id: string;
+  job_id: string;
+  created_at: string;
+}
+
+export interface PopupTemplate {
+  id: string;
+  template_key: string;
+  title: string;
+  content: string;
+  button_text: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// CMS Page Types
+export interface NxdbPage {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  status: 'draft' | 'published' | 'trash' | 'scheduled';
+  author_id?: string;
+  featured_image?: string;
+  seo_title?: string;
+  meta_description?: string;
+  schema_types: string[];
+  post_date: string;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  author?: Profile;
+  categories?: NxdbPageCategory[];
+  tags?: NxdbPageTag[];
+}
+
+export interface NxdbPageCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NxdbPageTag {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+}
+
+export interface NxdbPageCategoryRelation {
+  id: string;
+  page_id: string;
+  category_id: string;
+  created_at: string;
+}
+
+export interface NxdbPageTagRelation {
+  id: string;
+  page_id: string;
+  tag_id: string;
+  created_at: string;
+}
+
+export interface AdminSettings {
+  id?: string;
+  api_url: string;
+  filters_api_url: string;
+  auth_token?: string;
+  site_title: string;
+  site_tagline: string;
+  site_description: string;
+  // Environment settings that can be edited from admin
+  site_url?: string;
+  ga_id?: string;
+  gtm_id?: string;
+  // Supabase Storage Configuration (editable from admin)
+  supabase_storage_endpoint?: string;
+  supabase_storage_region?: string;
+  supabase_storage_access_key?: string;
+  supabase_storage_secret_key?: string;
+  // WordPress API Configuration (editable from admin)
+  wp_posts_api_url: string;
+  wp_jobs_api_url: string;
+  wp_auth_token?: string;
+  // Dynamic SEO Templates
+  location_page_title_template: string;
+  location_page_description_template: string;
+  category_page_title_template: string;
+  category_page_description_template: string;
+  // Archive Page SEO Settings
+  jobs_title: string;
+  jobs_description: string;
+  articles_title: string;
+  articles_description: string;
+  // Auth Pages SEO
+  login_page_title: string;
+  login_page_description: string;
+  signup_page_title: string;
+  signup_page_description: string;
+  profile_page_title: string;
+  profile_page_description: string;
+  // SEO Images
+  home_og_image?: string;
+  jobs_og_image?: string;
+  articles_og_image?: string;
+  default_job_og_image?: string;
+  default_article_og_image?: string;
+  // Sitemap settings
+  sitemap_update_interval: number;
+  auto_generate_sitemap: boolean;
+  last_sitemap_update: string;
+  robots_txt: string;
+  created_at?: string;
+  updated_at?: string;
+}
