@@ -182,10 +182,6 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     setIsPreviewMode(!isPreviewMode);
   }, [isPreviewMode]);
 
-  if (!editor) {
-    return null;
-  }
-
   const [isToolbarFixed, setIsToolbarFixed] = React.useState(false);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const editorContainerRef = React.useRef<HTMLDivElement>(null);
@@ -202,6 +198,10 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (!editor) {
+    return null;
+  }
 
   return (
     <div ref={editorContainerRef} className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
