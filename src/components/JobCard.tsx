@@ -29,6 +29,17 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
     }
   }, []);
 
+  const loadBookmarkStatus = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const isBookmarked = await userBookmarkService.isBookmarked(user.id, job.id);
+      setIsBookmarked(isBookmarked);
+    } catch (error) {
+      console.error('Error checking bookmark status:', error);
+    }
+  }, [user, job.id]);
+
   useEffect(() => {
     checkUser();
   }, [checkUser]);
@@ -138,20 +149,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
 
   const tags = getJobTags();
 
-  const loadBookmarkStatus = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      const isBookmarked = await userBookmarkService.isBookmarked(user.id, job.id);
-      setIsBookmarked(isBookmarked);
-    } catch (error) {
-      console.error('Error checking bookmark status:', error);
-    }
-  }, [user, job.id]);
-
-  useEffect(() => {
-    loadBookmarkStatus();
-  }, [loadBookmarkStatus]);
+  
 
   return (
     <>
