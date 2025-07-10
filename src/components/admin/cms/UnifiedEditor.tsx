@@ -376,7 +376,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <form onSubmit={(e) => e.preventDefault()} className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -425,6 +425,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   placeholder={`Enter ${getContentTypeName().toLowerCase()} title`}
                 />
@@ -444,6 +450,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                     type="text"
                     value={formData.slug}
                     onChange={(e) => handleSlugChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-primary-500 focus:border-primary-500"
                     placeholder={`${getContentTypeName().toLowerCase()}-slug`}
                   />
@@ -457,6 +469,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 <textarea
                   value={formData.excerpt}
                   onChange={(e) => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   placeholder={`Brief description of your ${getContentTypeName().toLowerCase()}`}
@@ -493,6 +511,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   type="text"
                   value={formData.seo_title}
                   onChange={(e) => setFormData(prev => ({ ...prev, seo_title: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Custom SEO title (optional)"
                 />
@@ -505,6 +529,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 <textarea
                   value={formData.meta_description}
                   onChange={(e) => setFormData(prev => ({ ...prev, meta_description: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Brief description for search engines"
@@ -521,7 +551,16 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       <input
                         type="checkbox"
                         checked={formData.schema_types.includes(schema)}
-                        onChange={(e) => handleSchemaChange(schema, e.target.checked)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleSchemaChange(schema, e.target.checked);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }
+                        }}
                         className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                       />
                       <span className="ml-2 text-sm text-gray-700">{schema}</span>
@@ -560,6 +599,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   type="datetime-local"
                   value={formData.post_date}
                   onChange={(e) => setFormData(prev => ({ ...prev, post_date: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
@@ -573,6 +618,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                     type="datetime-local"
                     value={formData.published_at}
                     onChange={(e) => setFormData(prev => ({ ...prev, published_at: e.target.value }))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
@@ -581,7 +632,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
 
             <div className="mt-6 space-y-2">
               <button
-                onClick={() => handleSave('draft')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave('draft');
+                }}
                 disabled={saving}
                 className="w-full px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
               >
@@ -589,7 +645,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
               </button>
 
               <button
-                onClick={() => handleSave('scheduled')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave('scheduled');
+                }}
                 disabled={saving}
                 className="w-full px-4 py-2 text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
               >
@@ -597,7 +658,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
               </button>
 
               <button
-                onClick={() => handleSave('published')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave('published');
+                }}
                 disabled={saving}
                 className="w-full px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
               >
@@ -620,10 +686,17 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                     type="checkbox"
                     checked={selectedCategories.includes(category.id)}
                     onChange={(e) => {
+                      e.stopPropagation();
                       if (e.target.checked) {
                         setSelectedCategories(prev => [...prev, category.id]);
                       } else {
                         setSelectedCategories(prev => prev.filter(id => id !== category.id));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
                       }
                     }}
                     className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
@@ -678,10 +751,17 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                     type="checkbox"
                     checked={selectedTags.includes(tag.id)}
                     onChange={(e) => {
+                      e.stopPropagation();
                       if (e.target.checked) {
                         setSelectedTags(prev => [...prev, tag.id]);
                       } else {
                         setSelectedTags(prev => prev.filter(id => id !== tag.id));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
                       }
                     }}
                     className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
@@ -739,7 +819,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   className="w-full h-32 object-cover rounded-lg"
                 />
                 <button
-                  onClick={() => setFormData(prev => ({ ...prev, featured_image: '' }))}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, featured_image: '' }));
+                  }}
                   className="w-full px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
                 >
                   Remove Image
@@ -773,7 +858,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
           </div>
         </div>
       </div>
-    </div>
+    </form>
   );
 };
 
