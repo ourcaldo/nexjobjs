@@ -221,6 +221,7 @@ class SitemapService {
     const baseUrl = getCurrentDomain();
     const lastmod = new Date().toISOString();
 
+    // Static pages
     const pages: SitemapItem[] = [
       {
         url: `${baseUrl}/`,
@@ -241,6 +242,25 @@ class SitemapService {
         priority: '0.8'
       }
     ];
+
+    // Add CMS pages
+    try {
+      const { pages: cmsPages } = await this.getCmsPages();
+      
+      // Add published CMS pages to sitemap
+      cmsPages.forEach(page => {
+        pages.push({
+          url: `${baseUrl}/${page.slug}/`,
+          lastmod: this.formatDateForSitemap(page.updated_at || page.post_date || new Date().toISOString()),
+          changefreq: 'weekly',
+          priority: '0.7'
+        });
+      });
+
+      console.log(`Added ${cmsPages.length} CMS pages to sitemap`);
+    } catch (error) {
+      console.error('Error fetching CMS pages for sitemap:', error);
+    }
 
     const xml = this.generateSitemapXml(pages);
 
@@ -637,6 +657,32 @@ class SitemapService {
     } catch (error) {
       console.error('Error fetching CMS articles for sitemap:', error);
       return { articles: [] };
+    }
+  }
+
+  // Get CMS pages for sitemap
+  async getCmsPages(): Promise<{ pages: any[] }> {
+    try {
+      const { cmsPageService } = await import('./cmsPageService');
+      const { pages } = await cmsPageService.getPages({
+        status: 'published',
+        limit: 10000,
+        offset: 0
+      });
+
+      return {
+        pages: pages.map(page => ({
+          slug: page.slug,
+          title: page.title,
+          excerpt: page.excerpt,
+          post_date: page.post_date,
+          updated_at: page.updated_at,
+          published_at: page.published_at
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching CMS pages for sitemap:', error);
+      return { pages: [] };
     }
   }
 }
