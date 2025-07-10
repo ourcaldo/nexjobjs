@@ -227,9 +227,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     const file = e.target.files?.[0];
     if (!file || !currentUser) return;
 
-    e.preventDefault();
-    e.stopPropagation();
-
     setUploadingImage(true);
     try {
       const result = await supabaseStorageService.uploadFile(
@@ -245,7 +242,10 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
           featured_image: imageUrl
         }));
         showToast('success', 'Image uploaded successfully');
-        e.target.value = '';
+        // Clear the input value to allow uploading the same file again
+        if (e.target) {
+          e.target.value = '';
+        }
       } else {
         showToast('error', result.error || 'Failed to upload image');
       }
@@ -257,12 +257,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const handleCreateCategory = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleCreateCategory = async () => {    
     if (!newCategoryName.trim()) return;
 
     try {
@@ -282,12 +277,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const handleCreateTag = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleCreateTag = async () => {    
     if (!newTagName.trim()) return;
 
     try {
@@ -654,13 +644,18 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
+                      e.stopPropagation();
                       handleCreateCategory();
                     }
                   }}
                 />
                 <button
                   type="button"
-                  onClick={() => handleCreateCategory()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCreateCategory();
+                  }}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
@@ -707,13 +702,18 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
+                      e.stopPropagation();
                       handleCreateTag();
                     }
                   }}
                 />
                 <button
                   type="button"
-                  onClick={() => handleCreateTag()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCreateTag();
+                  }}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
