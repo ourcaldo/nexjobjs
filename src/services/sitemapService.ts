@@ -303,12 +303,15 @@ class SitemapService {
     console.log(`Generating fresh articles sitemap for page ${page}`);
     const baseUrl = getCurrentDomain();
 
-    const sitemapItems: SitemapItem[] = articles.map(article => ({
-      url: `${baseUrl}/artikel/${article.slug}/`,
-      lastmod: this.formatDateForSitemap(article.modified || article.date || new Date().toISOString()),
-      changefreq: 'monthly',
-      priority: '0.6'
-    }));
+    const sitemapItems: SitemapItem[] = articles.map(article => {
+      const categorySlug = article.category || 'uncategorized';
+      return {
+        url: `${baseUrl}/artikel/${categorySlug}/${article.slug}/`,
+        lastmod: this.formatDateForSitemap(article.modified || article.date || new Date().toISOString()),
+        changefreq: 'monthly',
+        priority: '0.6'
+      };
+    });
 
     const xml = this.generateSitemapXml(sitemapItems);
 
@@ -531,7 +534,7 @@ class SitemapService {
   private async fetchArticlesWithRetry(maxRetries: number = 3): Promise<any[]> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const articles = await wpService.getAllArticlesForSitemap();
+        const { articles } = await this.getCmsArticles();
         return articles;
       } catch (error) {
         console.error(`Attempt ${attempt} to fetch articles failed:`, error);
@@ -615,54 +618,6 @@ class SitemapService {
 </sitemapindex>`;
   }
 
-  // Get all sitemap data and cache it
-  async getAllSitemapData(): Promise<{
-    jobs: any[];
-    articles: any[];
-    jobPages: number;
-    articlePages: number;
-  }> {
-    const cacheKey = 'all-sitemap-data';
-
-    // Check cache first
-    if (await this.isCacheValid(cacheKey)) {
-      const cached = this.sitemapCache.get(cacheKey);
-      if (cached) {
-        console.log('Using cached sitemap data (ISR-like)');
-        return cached;
-      }
-    }
-
-    console.log('Fetching fresh sitemap data (cache expired or not found)...');
-
-    const [jobsData, articlesData] = await Promise.all([
-      wpService.getAllJobs(),
-      this.getCmsArticles()
-    ]);
-
-    const jobs = jobsData.jobs || [];
-    const articles = articlesData.articles || [];
-
-    // Calculate pages (100 items per page)
-    const jobPages = Math.ceil(jobs.length / 100);
-    const articlePages = Math.ceil(articles.length / 100);
-
-    const data = {
-      jobs,
-      articles,
-      jobPages,
-      articlePages
-    };
-
-    // Cache the data
-    this.sitemapCache.set(cacheKey, data);
-
-    console.log(`Sitemap data: ${jobs.length} jobs (${jobPages} pages), ${articles.length} articles (${articlePages} pages)`);
-    console.log('Sitemap data cached with ISR-like behavior');
-
-    return data;
-  }
-
   // Get CMS articles for sitemap
   async getCmsArticles(): Promise<{ articles: any[] }> {
     try {
@@ -683,34 +638,6 @@ class SitemapService {
       console.error('Error fetching CMS articles for sitemap:', error);
       return { articles: [] };
     }
-  }
-
-  // Generate articles sitemap
-  async generateArticlesSitemap(articles: any[], pageNumber: number = 1): Promise<string> {
-    const baseUrl = getCurrentDomain();
-    const lastmod = new Date().toISOString();
-
-    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-
-    articles.forEach((article) => {
-      const categorySlug = article.category || 'uncategorized';
-      const url = `${baseUrl}/artikel/${categorySlug}/${article.slug}/`;
-      const priority = '0.8';
-
-      sitemap += `
-  <url>
-    <loc>${url}</loc>
-    <lastmod>${article.modified || article.date}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>${priority}</priority>
-  </url>`;
-    });
-
-    sitemap += `
-</urlset>`;
-
-    return sitemap;
   }
 }
 
