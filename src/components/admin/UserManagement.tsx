@@ -22,22 +22,6 @@ const UserManagement: React.FC = () => {
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const users = await adminService.getUsers();
-      setUsers(users);
-    } catch (error) {
-      console.error('Error loading users:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadUsers();
-  }, [loadUsers]);
-
-  const loadUsers = useCallback(async () => {
-    try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')

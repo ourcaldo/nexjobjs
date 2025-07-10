@@ -329,7 +329,7 @@ const SEOSettings: React.FC = () => {
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <Image className="h-6 w-6 mr-3 text-primary-600" />
+            <Image className="h-6 w-6 mr-3 text-primary-600" aria-hidden="true" />
             Open Graph Images
           </h2>
           <p className="mt-1 text-sm text-gray-600">
