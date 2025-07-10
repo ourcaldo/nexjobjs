@@ -253,8 +253,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const handleCreateTag = async (e?: React.FormEvent) => {
-
   const handleCreateTag = async (e?: React.FormEvent | React.KeyboardEvent) => {
     if (e) {
       e.preventDefault();
