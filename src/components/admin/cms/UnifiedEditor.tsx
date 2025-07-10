@@ -348,9 +348,15 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       if (result?.success) {
         showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
         if (!itemId && result.article) {
-          router.push(`/backend/admin/cms/${contentType}/edit/${result.article.id}`);
+          // Use setTimeout to ensure toast shows before navigation
+          setTimeout(() => {
+            router.push(`/backend/admin/cms/${contentType}/edit/${result.article.id}`);
+          }, 1000);
         } else if (!itemId && result.page) {
-          router.push(`/backend/admin/cms/${contentType}/edit/${result.page.id}`);
+          // Use setTimeout to ensure toast shows before navigation
+          setTimeout(() => {
+            router.push(`/backend/admin/cms/${contentType}/edit/${result.page.id}`);
+          }, 1000);
         }
       } else {
         showToast('error', result?.error || `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
@@ -375,13 +381,18 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
   }
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => router.push('/backend/admin/cms')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push('/backend/admin/cms');
+              }}
               className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -397,15 +408,18 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
           </div>
 
           {formData.status === 'published' && getPreviewUrl() && (
-            <a
-              href={getPreviewUrl()!}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(getPreviewUrl()!, '_blank', 'noopener,noreferrer');
+              }}
               className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <Eye className="h-4 w-4 mr-2" />
               Preview
-            </a>
+            </button>
           )}
         </div>
       </div>
@@ -423,7 +437,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTitleChange(e.target.value);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -449,7 +467,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   <input
                     type="text"
                     value={formData.slug}
-                    onChange={(e) => handleSlugChange(e.target.value)}
+                    onChange={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSlugChange(e.target.value);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -469,7 +491,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 </label>
                 <textarea
                   value={formData.excerpt}
-                  onChange={(e) => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, excerpt: e.target.value }));
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                       e.preventDefault();
@@ -512,7 +538,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 <input
                   type="text"
                   value={formData.seo_title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, seo_title: e.target.value }))}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, seo_title: e.target.value }));
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -531,7 +561,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 </label>
                 <textarea
                   value={formData.meta_description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, meta_description: e.target.value }))}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, meta_description: e.target.value }));
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                       e.preventDefault();
@@ -602,7 +636,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 <input
                   type="datetime-local"
                   value={formData.post_date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, post_date: e.target.value }))}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, post_date: e.target.value }));
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -622,7 +660,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   <input
                     type="datetime-local"
                     value={formData.published_at}
-                    onChange={(e) => setFormData(prev => ({ ...prev, published_at: e.target.value }))}
+                    onChange={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setFormData(prev => ({ ...prev, published_at: e.target.value }));
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -864,7 +906,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
           </div>
         </div>
       </div>
-    </form>
+    </div>
   );
 };
 
