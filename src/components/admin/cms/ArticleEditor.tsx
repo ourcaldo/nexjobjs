@@ -331,9 +331,9 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
         {/* Main Content */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-7 space-y-6">
           {/* Title and Slug */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="space-y-4">
@@ -356,7 +356,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
                 </label>
                 <div className="flex">
                   <span className="inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-lg">
-                    /artikel/category/
+                    /artikel/{selectedCategories.length > 0 ? categories.find(cat => cat.id === selectedCategories[0])?.slug || 'uncategorized' : 'uncategorized'}/
                   </span>
                   <input
                     type="text"
@@ -452,7 +452,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="lg:col-span-3 space-y-6">
           {/* Publish Box */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Publish</h3>
