@@ -15,10 +15,6 @@ const SitemapManagement: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
   const loadSettings = async () => {
     try {
       const adminSettings = await supabaseAdminService.getSettings();
@@ -37,6 +33,10 @@ const SitemapManagement: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;

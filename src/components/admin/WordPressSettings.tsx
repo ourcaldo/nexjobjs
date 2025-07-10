@@ -197,7 +197,7 @@ const WordPressSettings: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Leave empty if your WordPress API doesn't require authentication
+              Leave empty if your WordPress API doesn&apos;t require authentication
             </p>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Loader2, FileText, Image, Globe, Search } from 'lucide-react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -38,9 +38,9 @@ const SEOSettings: React.FC = () => {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const adminSettings = await supabaseAdminService.getSettings();
       if (adminSettings) {
@@ -75,7 +75,7 @@ const SEOSettings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
