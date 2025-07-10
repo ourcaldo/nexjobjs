@@ -39,7 +39,17 @@ const CmsPages: React.FC = () => {
     pages: true,
     jobs: false
   });
-  const [activeContentType, setActiveContentType] = useState<ContentType>('pages');
+  
+  // Initialize activeContentType from URL parameter
+  const getInitialContentType = (): ContentType => {
+    const type = router.query.type as string;
+    if (type === 'articles' || type === 'pages' || type === 'jobs') {
+      return type as ContentType;
+    }
+    return 'pages'; // default fallback
+  };
+  
+  const [activeContentType, setActiveContentType] = useState<ContentType>(getInitialContentType());
 
   // Pages state
   const [pages, setPages] = useState<NxdbPage[]>([]);
@@ -95,6 +105,17 @@ const CmsPages: React.FC = () => {
     loadData();
   }, [loadData]);
 
+  // Update activeContentType when URL query changes
+  useEffect(() => {
+    const type = router.query.type as string;
+    if (type === 'articles' || type === 'pages' || type === 'jobs') {
+      setActiveContentType(type as ContentType);
+    } else if (router.isReady && !type) {
+      // Default to pages if no type is specified
+      setActiveContentType('pages');
+    }
+  }, [router.query.type, router.isReady]);
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -105,6 +126,12 @@ const CmsPages: React.FC = () => {
   const handleContentTypeChange = (type: ContentType) => {
     setActiveContentType(type);
     setFilters(prev => ({ ...prev, offset: 0 }));
+    
+    // Update URL to reflect the content type
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, type }
+    }, undefined, { shallow: true });
   };
 
   const handleStatusFilter = (status: string) => {
