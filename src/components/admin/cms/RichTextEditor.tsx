@@ -42,7 +42,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       // Set initial content
       editorRef.current.innerHTML = value || '';
       setIsInitialized(true);
-      
+
       // Focus at the end of content if there's content
       if (value) {
         setTimeout(() => {
@@ -62,7 +62,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Save and restore cursor position
   const saveCursorPosition = useCallback(() => {
     if (!editorRef.current) return;
-    
+
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
@@ -75,29 +75,29 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   const restoreCursorPosition = useCallback((position: number) => {
     if (!editorRef.current) return;
-    
+
     setTimeout(() => {
       if (!editorRef.current) return;
-      
+
       const walker = document.createTreeWalker(
         editorRef.current,
         NodeFilter.SHOW_TEXT,
         null
       );
-      
+
       let currentPosition = 0;
       let node;
-      
+
       while (node = walker.nextNode()) {
         const textLength = node.textContent?.length || 0;
         if (currentPosition + textLength >= position) {
           const range = document.createRange();
           const selection = window.getSelection();
           const offset = position - currentPosition;
-          
+
           range.setStart(node, Math.min(offset, textLength));
           range.collapse(true);
-          
+
           selection?.removeAllRanges();
           selection?.addRange(range);
           break;
@@ -110,7 +110,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Handle content change with cursor position preservation
   const handleContentChange = useCallback(() => {
     if (!editorRef.current) return;
-    
+
     saveCursorPosition();
     const newContent = editorRef.current.innerHTML;
     onChange(newContent);
@@ -127,13 +127,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Execute formatting command with cursor position preservation
   const execCommand = useCallback((command: string, value?: string) => {
     if (!editorRef.current) return;
-    
+
     saveCursorPosition();
     document.execCommand(command, false, value);
-    
+
     const newContent = editorRef.current.innerHTML;
     onChange(newContent);
-    
+
     // Restore cursor position after a short delay
     setTimeout(() => {
       restoreCursorPosition(lastCursorPosition);
@@ -144,15 +144,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Insert HTML at cursor with position preservation
   const insertHTML = useCallback((html: string) => {
     if (!editorRef.current) return;
-    
+
     editorRef.current.focus();
     saveCursorPosition();
-    
+
     document.execCommand('insertHTML', false, html);
-    
+
     const newContent = editorRef.current.innerHTML;
     onChange(newContent);
-    
+
     setTimeout(() => {
       editorRef.current?.focus();
     }, 10);
@@ -175,7 +175,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const insertImage = useCallback(() => {
     const url = prompt('Enter image URL:');
     if (url) {
-      insertHTML(`<img src="${url}" alt="Image" style="max-width: 100%; height: auto; margin: 10px 0;" />`);
+      insertHTML(`<img src="${url}" alt="Uploaded content" style="max-width: 100%; height: auto; margin: 10px 0;" />`);
     }
   }, [insertHTML]);
 
@@ -193,7 +193,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Save cursor position on any key press
     saveCursorPosition();
-    
+
     // Handle specific key combinations
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
@@ -217,10 +217,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
     saveCursorPosition();
-    
+
     const text = e.clipboardData.getData('text/plain');
     document.execCommand('insertText', false, text);
-    
+
     if (editorRef.current) {
       const newContent = editorRef.current.innerHTML;
       onChange(newContent);
@@ -475,62 +475,62 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           font-weight: bold !important;
           margin: 0.5em 0 !important;
         }
-        
+
         .rich-text-editor h1 {
           font-size: 2em !important;
           margin: 0.67em 0 !important;
         }
-        
+
         .rich-text-editor h2 {
           font-size: 1.5em !important;
           margin: 0.75em 0 !important;
         }
-        
+
         .rich-text-editor h3 {
           font-size: 1.17em !important;
           margin: 0.83em 0 !important;
         }
-        
+
         .rich-text-editor h4 {
           font-size: 1em !important;
           margin: 1.12em 0 !important;
         }
-        
+
         .rich-text-editor h5 {
           font-size: 0.83em !important;
           margin: 1.5em 0 !important;
         }
-        
+
         .rich-text-editor h6 {
           font-size: 0.75em !important;
           margin: 1.67em 0 !important;
         }
-        
+
         .rich-text-editor p {
           display: block !important;
           margin: 1em 0 !important;
         }
-        
+
         .rich-text-editor ul, .rich-text-editor ol {
           display: block !important;
           list-style-position: inside !important;
           margin: 1em 0 !important;
           padding-left: 1em !important;
         }
-        
+
         .rich-text-editor ul {
           list-style-type: disc !important;
         }
-        
+
         .rich-text-editor ol {
           list-style-type: decimal !important;
         }
-        
+
         .rich-text-editor li {
           display: list-item !important;
           margin: 0.25em 0 !important;
         }
-        
+
         .rich-text-editor blockquote {
           display: block !important;
           margin: 1em 40px !important;
@@ -540,7 +540,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           font-style: italic !important;
           color: #666 !important;
         }
-        
+
         .rich-text-editor pre {
           display: block !important;
           font-family: monospace !important;
@@ -552,7 +552,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           border-radius: 4px !important;
           overflow-x: auto !important;
         }
-        
+
         .rich-text-editor code {
           font-family: monospace !important;
           background: #f0f0f0 !important;
@@ -560,47 +560,47 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           border-radius: 3px !important;
           font-size: 0.9em !important;
         }
-        
+
         .rich-text-editor pre code {
           background: none !important;
           padding: 0 !important;
           border-radius: 0 !important;
         }
-        
+
         .rich-text-editor strong, .rich-text-editor b {
           font-weight: bold !important;
         }
-        
+
         .rich-text-editor em, .rich-text-editor i {
           font-style: italic !important;
         }
-        
+
         .rich-text-editor u {
           text-decoration: underline !important;
         }
-        
+
         .rich-text-editor a {
           color: #0066cc !important;
           text-decoration: underline !important;
         }
-        
+
         .rich-text-editor a:hover {
           color: #004499 !important;
         }
-        
+
         .rich-text-editor img {
           max-width: 100% !important;
           height: auto !important;
           display: block !important;
           margin: 0.5em 0 !important;
         }
-        
+
         .rich-text-editor[data-placeholder]:empty:before {
           content: attr(data-placeholder);
           color: #999;
           font-style: italic;
         }
-        
+
         /* Preview Content Styles */
         .rich-text-content h1, .rich-text-content h2, .rich-text-content h3, 
         .rich-text-content h4, .rich-text-content h5, .rich-text-content h6 {
@@ -608,60 +608,60 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           margin: 0.5em 0 !important;
           color: #333 !important;
         }
-        
+
         .rich-text-content h1 {
           font-size: 2em !important;
           margin: 0.67em 0 !important;
         }
-        
+
         .rich-text-content h2 {
           font-size: 1.5em !important;
           margin: 0.75em 0 !important;
         }
-        
+
         .rich-text-content h3 {
           font-size: 1.17em !important;
           margin: 0.83em 0 !important;
         }
-        
+
         .rich-text-content h4 {
           font-size: 1em !important;
           margin: 1.12em 0 !important;
         }
-        
+
         .rich-text-content h5 {
           font-size: 0.83em !important;
           margin: 1.5em 0 !important;
         }
-        
+
         .rich-text-content h6 {
           font-size: 0.75em !important;
           margin: 1.67em 0 !important;
         }
-        
+
         .rich-text-content p {
           margin: 1em 0 !important;
           line-height: 1.6 !important;
         }
-        
+
         .rich-text-content ul, .rich-text-content ol {
           margin: 1em 0 !important;
           padding-left: 2em !important;
         }
-        
+
         .rich-text-content ul {
           list-style-type: disc !important;
         }
-        
+
         .rich-text-content ol {
           list-style-type: decimal !important;
         }
-        
+
         .rich-text-content li {
           margin: 0.25em 0 !important;
           line-height: 1.6 !important;
         }
-        
+
         .rich-text-content blockquote {
           margin: 1em 40px !important;
           padding: 10px 20px !important;
@@ -670,7 +670,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           font-style: italic !important;
           color: #666 !important;
         }
-        
+
         .rich-text-content pre {
           font-family: monospace !important;
           white-space: pre !important;
@@ -681,7 +681,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           border-radius: 4px !important;
           overflow-x: auto !important;
         }
-        
+
         .rich-text-content code {
           font-family: monospace !important;
           background: #f0f0f0 !important;
@@ -689,34 +689,34 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           border-radius: 3px !important;
           font-size: 0.9em !important;
         }
-        
+
         .rich-text-content pre code {
           background: none !important;
           padding: 0 !important;
           border-radius: 0 !important;
         }
-        
+
         .rich-text-content strong, .rich-text-content b {
           font-weight: bold !important;
         }
-        
+
         .rich-text-content em, .rich-text-content i {
           font-style: italic !important;
         }
-        
+
         .rich-text-content u {
           text-decoration: underline !important;
         }
-        
+
         .rich-text-content a {
           color: #0066cc !important;
           text-decoration: underline !important;
         }
-        
+
         .rich-text-content a:hover {
           color: #004499 !important;
         }
-        
+
         .rich-text-content img {
           max-width: 100% !important;
           height: auto !important;

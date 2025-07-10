@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { 
   Plus, 
@@ -25,13 +24,15 @@ import { cmsArticleService } from '@/services/cmsArticleService';
 import { NxdbPage, NxdbArticle } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastProvider';
 import { formatDistance } from 'date-fns';
+import Link from 'next/link';
+import Image from 'next/image';
 
 type ContentType = 'articles' | 'pages' | 'jobs';
 
 const CmsPages: React.FC = () => {
   const router = useRouter();
   const { showToast } = useToast();
-  
+
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({
     articles: false,
@@ -39,19 +40,19 @@ const CmsPages: React.FC = () => {
     jobs: false
   });
   const [activeContentType, setActiveContentType] = useState<ContentType>('pages');
-  
+
   // Pages state
   const [pages, setPages] = useState<NxdbPage[]>([]);
   const [pageStats, setPageStats] = useState({
     total: 0, published: 0, draft: 0, trash: 0, scheduled: 0
   });
-  
+
   // Articles state
   const [articles, setArticles] = useState<NxdbArticle[]>([]);
   const [articleStats, setArticleStats] = useState({
     total: 0, published: 0, draft: 0, trash: 0, scheduled: 0
   });
-  
+
   // Filters
   const [filters, setFilters] = useState({
     status: '',
@@ -59,14 +60,10 @@ const CmsPages: React.FC = () => {
     limit: 10,
     offset: 0
   });
-  
+
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    loadData();
-  }, [activeContentType, filters]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       if (activeContentType === 'pages') {
@@ -92,7 +89,11 @@ const CmsPages: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeContentType, filters, showToast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -124,7 +125,7 @@ const CmsPages: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
-    
+
     try {
       let result;
       if (activeContentType === 'pages') {
@@ -132,7 +133,7 @@ const CmsPages: React.FC = () => {
       } else if (activeContentType === 'articles') {
         result = await cmsArticleService.deleteArticle(id);
       }
-      
+
       if (result?.success) {
         showToast('success', 'Item deleted successfully');
         loadData();
@@ -218,7 +219,7 @@ const CmsPages: React.FC = () => {
 
   const renderContent = () => {
     const items = activeContentType === 'pages' ? pages : articles;
-    
+
     if (loading) {
       return (
         <div className="text-center py-12">
@@ -324,14 +325,14 @@ const CmsPages: React.FC = () => {
                       <Edit className="h-4 w-4" />
                     </button>
                     {item.status === 'published' && (
-                      <a
+                      <Link
                         href={`/${activeContentType === 'articles' ? 'artikel' : ''}${item.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-900"
                       >
                         <Eye className="h-4 w-4" />
-                      </a>
+                      </Link>
                     )}
                     <button
                       onClick={() => handleDelete(item.id)}
@@ -361,7 +362,7 @@ const CmsPages: React.FC = () => {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Content Types</h2>
-            
+
             {/* Articles */}
             <div className="mb-2">
               <button
@@ -378,7 +379,7 @@ const CmsPages: React.FC = () => {
                   <ChevronRight className="h-4 w-4 text-gray-400" />
                 )}
               </button>
-              
+
               {expandedSections.articles && (
                 <div className="ml-6 mt-2 space-y-1">
                   <button
@@ -417,7 +418,7 @@ const CmsPages: React.FC = () => {
                   <ChevronRight className="h-4 w-4 text-gray-400" />
                 )}
               </button>
-              
+
               {expandedSections.pages && (
                 <div className="ml-6 mt-2 space-y-1">
                   <button
@@ -456,7 +457,7 @@ const CmsPages: React.FC = () => {
                   <ChevronRight className="h-4 w-4 text-gray-400" />
                 )}
               </button>
-              
+
               {expandedSections.jobs && (
                 <div className="ml-6 mt-2 space-y-1">
                   <button
@@ -500,7 +501,7 @@ const CmsPages: React.FC = () => {
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleStatusFilter('published')}

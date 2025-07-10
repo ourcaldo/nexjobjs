@@ -1,5 +1,6 @@
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
+import Image from 'next/image';
 import { cmsPageService } from '@/services/cmsPageService';
 import { NxdbPage } from '@/lib/supabase';
 import Header from '@/components/Layout/Header';
@@ -52,9 +53,11 @@ export default function DynamicPage({ page }: PageProps) {
           {/* Featured Image */}
           {page.featured_image && (
             <div className="mb-8">
-              <img
+              <Image
                 src={page.featured_image}
                 alt={page.title}
+                width={800}
+                height={256}
                 className="w-full h-64 md:h-96 object-cover rounded-xl shadow-sm"
               />
             </div>

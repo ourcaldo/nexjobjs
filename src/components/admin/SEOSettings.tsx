@@ -89,7 +89,7 @@ const SEOSettings: React.FC = () => {
     setSaving(true);
     try {
       const result = await supabaseAdminService.saveSettings(settings);
-      
+
       if (result.success) {
         showToast('success', 'SEO settings saved successfully!');
       } else {

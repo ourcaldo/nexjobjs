@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Loader2, Settings, Database, Globe, BarChart3 } from 'lucide-react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -28,9 +28,21 @@ const SystemSettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const loadSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const settings = await adminService.getSystemSettings();
+      setFormData(settings);
+    } catch (error) {
+      console.error('Error loading system settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
   const loadSettings = async () => {
     try {

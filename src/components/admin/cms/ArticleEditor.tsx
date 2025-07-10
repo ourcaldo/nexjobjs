@@ -1,6 +1,6 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import { 
   Save, 
   Eye, 
@@ -8,7 +8,7 @@ import {
   User, 
   Tag, 
   Folder, 
-  Image as ImageIcon,
+  ImageIcon,
   ArrowLeft,
   Loader2,
   Plus,
@@ -28,11 +28,11 @@ interface ArticleEditorProps {
 const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
   const router = useRouter();
   const { showToast } = useToast();
-  
+
   const [loading, setLoading] = useState(!!articleId);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  
+
   // Form data
   const [formData, setFormData] = useState({
     title: '',
@@ -47,7 +47,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     post_date: new Date().toISOString().slice(0, 16),
     published_at: ''
   });
-  
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [categories, setCategories] = useState<NxdbArticleCategory[]>([]);
@@ -65,12 +65,9 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     'Review'
   ];
 
-  useEffect(() => {
-    loadInitialData();
-  }, [articleId]);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     try {
+      setLoading(true);
       // Load current user
       const user = await supabaseAdminService.getCurrentProfile();
       setCurrentUser(user);
@@ -80,7 +77,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
         cmsArticleService.getCategories(),
         cmsArticleService.getTags()
       ]);
-      
+
       setCategories(categoriesData);
       setTags(tagsData);
 
@@ -101,7 +98,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
             post_date: article.post_date.slice(0, 16),
             published_at: article.published_at?.slice(0, 16) || ''
           });
-          
+
           setSelectedCategories(article.categories?.map(cat => cat.id) || []);
           setSelectedTags(article.tags?.map(tag => tag.id) || []);
         }
@@ -112,7 +109,11 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [articleId, showToast]);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const generateSlug = async (title: string) => {
     if (!title) return '';
@@ -122,7 +123,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
 
   const handleTitleChange = async (title: string) => {
     setFormData(prev => ({ ...prev, title }));
-    
+
     // Auto-generate slug if it's empty or matches the previous title's slug
     if (!formData.slug || formData.slug === await generateSlug(formData.title)) {
       const newSlug = await generateSlug(title);
@@ -138,7 +139,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
-    
+
     setFormData(prev => ({ ...prev, slug: cleanSlug }));
   };
 
@@ -167,7 +168,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
         `articles/${Date.now()}-${file.name}`,
         file.type
       );
-      
+
       if (result.success && result.url) {
         setFormData(prev => ({ ...prev, featured_image: result.url }));
         showToast('success', 'Image uploaded successfully');
@@ -273,10 +274,10 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
 
   const getPreviewUrl = () => {
     if (!formData.slug || formData.status !== 'published') return null;
-    
+
     const primaryCategory = categories.find(cat => selectedCategories.includes(cat.id));
     const categorySlug = primaryCategory?.slug || 'uncategorized';
-    
+
     return `/artikel/${categorySlug}/${formData.slug}`;
   };
 
@@ -312,7 +313,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
               </p>
             </div>
           </div>
-          
+
           {formData.status === 'published' && getPreviewUrl() && (
             <a
               href={getPreviewUrl()!}
@@ -345,7 +346,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
                   placeholder="Enter article title"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Slug *
@@ -411,7 +412,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
                   placeholder="Custom SEO title (optional)"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Meta Description
@@ -452,7 +453,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
           {/* Publish Box */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Publish</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -501,7 +502,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Save as Draft'}
               </button>
-              
+
               <button
                 onClick={() => handleSave('scheduled')}
                 disabled={saving}
@@ -509,7 +510,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Schedule'}
               </button>
-              
+
               <button
                 onClick={() => handleSave('published')}
                 disabled={saving}
@@ -526,7 +527,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
               <Folder className="h-5 w-5 mr-2" />
               Categories
             </h3>
-            
+
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {categories.map((category) => (
                 <label key={category.id} className="flex items-center">
@@ -573,7 +574,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
               <Tag className="h-5 w-5 mr-2" />
               Tags
             </h3>
-            
+
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {tags.map((tag) => (
                 <label key={tag.id} className="flex items-center">
@@ -620,12 +621,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
               <ImageIcon className="h-5 w-5 mr-2" />
               Featured Image
             </h3>
-            
+
             {formData.featured_image ? (
               <div className="space-y-4">
-                <img
+                <Image
                   src={formData.featured_image}
-                  alt="Featured"
+                  alt="Featured image preview"
+                  width={400}
+                  height={192}
                   className="w-full h-32 object-cover rounded-lg"
                 />
                 <button

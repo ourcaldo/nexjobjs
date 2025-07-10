@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import { 
   Save, 
   Eye, 
@@ -27,11 +28,11 @@ interface PageEditorProps {
 const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
   const router = useRouter();
   const { showToast } = useToast();
-  
+
   const [loading, setLoading] = useState(!!pageId);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  
+
   // Form data
   const [formData, setFormData] = useState({
     title: '',
@@ -46,7 +47,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     post_date: new Date().toISOString().slice(0, 16),
     published_at: ''
   });
-  
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [categories, setCategories] = useState<NxdbPageCategory[]>([]);
@@ -64,11 +65,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     'Event'
   ];
 
-  useEffect(() => {
-    loadInitialData();
-  }, [pageId]);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     try {
       // Load current user
       const user = await supabaseAdminService.getCurrentProfile();
@@ -79,7 +76,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
         cmsPageService.getCategories(),
         cmsPageService.getTags()
       ]);
-      
+
       setCategories(categoriesData);
       setTags(tagsData);
 
@@ -100,7 +97,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
             post_date: page.post_date.slice(0, 16),
             published_at: page.published_at?.slice(0, 16) || ''
           });
-          
+
           setSelectedCategories(page.categories?.map(cat => cat.id) || []);
           setSelectedTags(page.tags?.map(tag => tag.id) || []);
         }
@@ -111,7 +108,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pageId, showToast]);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const generateSlug = async (title: string) => {
     if (!title) return '';
@@ -121,7 +122,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
 
   const handleTitleChange = async (title: string) => {
     setFormData(prev => ({ ...prev, title }));
-    
+
     // Auto-generate slug if it's empty or matches the previous title's slug
     if (!formData.slug || formData.slug === await generateSlug(formData.title)) {
       const newSlug = await generateSlug(title);
@@ -137,7 +138,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
-    
+
     setFormData(prev => ({ ...prev, slug: cleanSlug }));
   };
 
@@ -166,7 +167,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
         `pages/${Date.now()}-${file.name}`,
         file.type
       );
-      
+
       if (result.success && result.url) {
         setFormData(prev => ({ ...prev, featured_image: result.url }));
         showToast('success', 'Image uploaded successfully');
@@ -302,7 +303,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
               </p>
             </div>
           </div>
-          
+
           {formData.status === 'published' && formData.slug && (
             <a
               href={`/${formData.slug}`}
@@ -335,7 +336,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
                   placeholder="Enter page title"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Slug *
@@ -388,7 +389,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
                   placeholder="Custom SEO title (optional)"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Meta Description
@@ -429,7 +430,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
           {/* Publish Box */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Publish</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -478,7 +479,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Save as Draft'}
               </button>
-              
+
               <button
                 onClick={() => handleSave('scheduled')}
                 disabled={saving}
@@ -486,7 +487,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Schedule'}
               </button>
-              
+
               <button
                 onClick={() => handleSave('published')}
                 disabled={saving}
@@ -503,7 +504,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
               <Folder className="h-5 w-5 mr-2" />
               Categories
             </h3>
-            
+
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {categories.map((category) => (
                 <label key={category.id} className="flex items-center">
@@ -550,7 +551,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
               <Tag className="h-5 w-5 mr-2" />
               Tags
             </h3>
-            
+
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {tags.map((tag) => (
                 <label key={tag.id} className="flex items-center">
@@ -597,13 +598,15 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
               <ImageIcon className="h-5 w-5 mr-2" />
               Featured Image
             </h3>
-            
+
             {formData.featured_image ? (
               <div className="space-y-4">
-                <img
+                <Image
                   src={formData.featured_image}
-                  alt="Featured"
-                  className="w-full h-32 object-cover rounded-lg"
+                  alt="Featured image preview"
+                  width={400}
+                  height={192}
+                  className="w-full h-48 object-cover rounded-lg"
                 />
                 <button
                   onClick={() => setFormData(prev => ({ ...prev, featured_image: '' }))}

@@ -1,6 +1,8 @@
-
+import React, { useState, useEffect } from 'react';
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
+import Image from 'next/image';
+import Link from 'next/link';
 import { cmsArticleService } from '@/services/cmsArticleService';
 import { NxdbArticle } from '@/lib/supabase';
 import Header from '@/components/Layout/Header';
@@ -19,7 +21,7 @@ interface ArticleDetailProps {
 
 export default function ArticleDetail({ article, categorySlug }: ArticleDetailProps) {
   const currentUrl = getCurrentDomain();
-  
+
   const breadcrumbItems = [
     { name: 'Home', href: '/' },
     { name: 'Artikel', href: '/artikel' },
@@ -40,7 +42,7 @@ export default function ArticleDetail({ article, categorySlug }: ArticleDetailPr
         <title>{article.seo_title || article.title} - Nexjob</title>
         <meta name="description" content={article.meta_description || article.excerpt} />
         <meta name="keywords" content={article.tags?.map(tag => tag.name).join(', ')} />
-        
+
         {/* Open Graph */}
         <meta property="og:title" content={article.seo_title || article.title} />
         <meta property="og:description" content={article.meta_description || article.excerpt} />
@@ -56,7 +58,7 @@ export default function ArticleDetail({ article, categorySlug }: ArticleDetailPr
         {article.tags?.map(tag => (
           <meta key={tag.id} property="article:tag" content={tag.name} />
         ))}
-        
+
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={article.seo_title || article.title} />
@@ -64,15 +66,15 @@ export default function ArticleDetail({ article, categorySlug }: ArticleDetailPr
         {article.featured_image && (
           <meta name="twitter:image" content={article.featured_image} />
         )}
-        
+
         {/* Canonical URL */}
         <link rel="canonical" href={`${currentUrl}/artikel/${categorySlug}/${article.slug}`} />
       </Head>
-      
+
       <SchemaMarkup schema={[articleSchema, breadcrumbSchema]} />
-      
+
       <Header />
-      
+
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 py-8">
           {/* Breadcrumb */}
@@ -106,17 +108,17 @@ export default function ArticleDetail({ article, categorySlug }: ArticleDetailPr
                 </span>
               ))}
             </div>
-            
+
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               {article.title}
             </h1>
-            
+
             {article.excerpt && (
               <p className="text-lg text-gray-600 mb-6">
                 {article.excerpt}
               </p>
             )}
-            
+
             <div className="flex items-center space-x-6 text-sm text-gray-500">
               <div className="flex items-center">
                 <User className="h-4 w-4 mr-1" />
@@ -136,9 +138,11 @@ export default function ArticleDetail({ article, categorySlug }: ArticleDetailPr
           {/* Featured Image */}
           {article.featured_image && (
             <div className="mb-8">
-              <img
+              <Image
                 src={article.featured_image}
                 alt={article.title}
+                width={800}
+                height={384}
                 className="w-full h-64 md:h-96 object-cover rounded-lg shadow-lg"
               />
             </div>
@@ -172,7 +176,7 @@ export default function ArticleDetail({ article, categorySlug }: ArticleDetailPr
           )}
         </div>
       </main>
-      
+
       <Footer />
     </>
   );
@@ -181,16 +185,16 @@ export default function ArticleDetail({ article, categorySlug }: ArticleDetailPr
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const categorySlug = params?.category as string;
   const slug = params?.slug as string;
-  
+
   try {
     const article = await cmsArticleService.getArticleBySlug(slug);
-    
+
     if (!article) {
       return {
         notFound: true
       };
     }
-    
+
     // Check if article belongs to the requested category
     const hasCategory = article.categories?.some(cat => cat.slug === categorySlug);
     if (!hasCategory) {
@@ -198,7 +202,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         notFound: true
       };
     }
-    
+
     return {
       props: {
         article,
@@ -223,7 +227,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
         slug: article.slug 
       }
     }));
-    
+
     return {
       paths,
       fallback: 'blocking'

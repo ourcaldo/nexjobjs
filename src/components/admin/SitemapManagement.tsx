@@ -50,7 +50,7 @@ const SitemapManagement: React.FC = () => {
     setSaving(true);
     try {
       const result = await supabaseAdminService.saveSettings(settings);
-      
+
       if (result.success) {
         showToast('success', 'Sitemap settings saved successfully!');
       } else {
@@ -75,7 +75,7 @@ const SitemapManagement: React.FC = () => {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         showToast('success', 'Sitemap regenerated successfully!');
         // Reload settings to get updated timestamp

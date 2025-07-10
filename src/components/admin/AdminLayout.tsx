@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { 
@@ -37,9 +37,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const profile = await supabaseAdminService.getCurrentProfile();
       if (!profile || profile.role !== 'super_admin') {
@@ -53,7 +53,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   const handleLogout = async () => {
     try {
@@ -92,7 +92,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 flex z-40 lg:hidden ${sidebarOpen ? '' : 'pointer-events-none'}`}>
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity ease-linear duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setSidebarOpen(false)} />
-        
+
         <div className={`relative flex-1 flex flex-col max-w-xs w-full bg-white transform transition ease-in-out duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="absolute top-0 right-0 -mr-12 pt-2">
             <button
@@ -103,7 +103,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
               <X className="h-6 w-6 text-white" />
             </button>
           </div>
-          
+
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 flex items-center px-4">
               <div className="flex items-center space-x-2">
@@ -151,7 +151,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
                 )}
               </div>
             </div>
-            
+
             <nav className={`mt-8 flex-1 space-y-1 ${sidebarCollapsed ? 'px-2 overflow-x-hidden' : 'px-2'}`}>
               {navigation.map((item) => (
                 <Link
@@ -169,7 +169,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
                 >
                   <item.icon className={`h-5 w-5 ${sidebarCollapsed ? 'mr-0' : 'mr-3'} ${item.current ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'} ${sidebarCollapsed ? 'flex-shrink-0' : ''}`} />
                   {!sidebarCollapsed && item.name}
-                  
+
                   {/* Tooltip for collapsed state */}
                   {sidebarCollapsed && (
                     <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
@@ -179,7 +179,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
                 </Link>
               ))}
             </nav>
-            
+
             {/* Collapse Toggle Button - Moved to bottom */}
             <div className={`${sidebarCollapsed ? 'px-2' : 'px-4'} pb-2`}>
               <button
@@ -220,12 +220,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
                   {currentPage === 'dashboard' ? 'Dashboard' : currentPage.replace('-', ' ')}
                 </h1>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <button className="p-2 text-gray-400 hover:text-gray-500">
                   <Bell className="h-5 w-5" />
                 </button>
-                
+
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
                     <User className="h-5 w-5 text-white" />

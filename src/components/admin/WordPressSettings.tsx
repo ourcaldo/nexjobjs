@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Save, TestTube, Loader2, CheckCircle, XCircle, Globe, Key, Link } from 'lucide-react';
+import { Save, TestTube, Loader2, CheckCircle, XCircle, Globe, Key } from 'lucide-react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { wpService } from '@/services/wpService';
 import { useToast } from '@/components/ui/ToastProvider';
+import NextLink from 'next/link'; // Import Next.js Link
+import Image from 'next/image'; // Import Next.js Image
 
 const WordPressSettings: React.FC = () => {
   const { showToast } = useToast();
@@ -69,7 +71,7 @@ const WordPressSettings: React.FC = () => {
 
       const result = await response.json();
       setTestResults(result);
-      
+
       if (result.success) {
         showToast('success', 'All connections successful!');
       } else {
@@ -92,10 +94,10 @@ const WordPressSettings: React.FC = () => {
     setSaving(true);
     try {
       const result = await supabaseAdminService.saveSettings(settings);
-      
+
       if (result.success) {
         showToast('success', 'WordPress settings saved successfully!');
-        
+
         // Update wpService with new settings
         wpService.setBaseUrl(settings.api_url);
         wpService.setFiltersApiUrl(settings.filters_api_url);
@@ -141,7 +143,9 @@ const WordPressSettings: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Link className="h-4 w-4 inline mr-2" />
+                <NextLink href="#" className="h-4 w-4 inline mr-2">
+                  <Key className="h-4 w-4 inline mr-2" />
+                </NextLink>
                 WordPress API Base URL
               </label>
               <input
@@ -159,7 +163,9 @@ const WordPressSettings: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Link className="h-4 w-4 inline mr-2" />
+                <NextLink href="#" className="h-4 w-4 inline mr-2">
+                  <Key className="h-4 w-4 inline mr-2" />
+                </NextLink>
                 Filters API URL
               </label>
               <input

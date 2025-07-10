@@ -1,4 +1,3 @@
-
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
 import { cmsArticleService } from '@/services/cmsArticleService';
@@ -10,6 +9,8 @@ import { generateArticleListingSchema, generateBreadcrumbSchema } from '@/utils/
 import { getCurrentDomain } from '@/lib/env';
 import { formatDistance } from 'date-fns';
 import { Calendar, User, Tag, Folder, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 
 interface ArticleCategoryPageProps {
   articles: NxdbArticle[];
@@ -20,7 +21,7 @@ interface ArticleCategoryPageProps {
 
 export default function ArticleCategoryPage({ articles, category, allCategories, total }: ArticleCategoryPageProps) {
   const currentUrl = getCurrentDomain();
-  
+
   const breadcrumbItems = [
     { name: 'Home', href: '/' },
     { name: 'Artikel', href: '/artikel' },
@@ -49,28 +50,28 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
         <title>{category.name} - Artikel - Nexjob</title>
         <meta name="description" content={category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`} />
         <meta name="keywords" content={`${category.name}, artikel kerja, tips karir, berita kerja, panduan kerja`} />
-        
+
         {/* Open Graph */}
         <meta property="og:title" content={`${category.name} - Artikel - Nexjob`} />
         <meta property="og:description" content={category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${currentUrl}/artikel/${category.slug}`} />
         <meta property="og:image" content={`${currentUrl}/logo.png`} />
-        
+
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={`${category.name} - Artikel - Nexjob`} />
         <meta name="twitter:description" content={category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`} />
         <meta name="twitter:image" content={`${currentUrl}/logo.png`} />
-        
+
         {/* Canonical URL */}
         <link rel="canonical" href={`${currentUrl}/artikel/${category.slug}`} />
       </Head>
-      
+
       <SchemaMarkup schema={[articleListingSchema, breadcrumbSchema]} />
-      
+
       <Header />
-      
+
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Header */}
@@ -83,15 +84,15 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
                     {index === breadcrumbItems.length - 1 ? (
                       <span className="text-gray-900">{item.name}</span>
                     ) : (
-                      <a href={item.href} className="hover:text-gray-900">
+                      <Link href={item.href} className="hover:text-gray-900">
                         {item.name}
-                      </a>
+                      </Link>
                     )}
                   </li>
                 ))}
               </ol>
             </nav>
-            
+
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               {category.name}
             </h1>
@@ -100,7 +101,7 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
                 {category.description}
               </p>
             )}
-            
+
             <div className="flex items-center text-sm text-gray-500">
               <span>{total} artikel dalam kategori ini</span>
             </div>
@@ -113,23 +114,23 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Kategori Lainnya</h2>
                 <ul className="space-y-2">
                   <li>
-                    <a
+                    <Link
                       href="/artikel"
                       className="flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                     >
                       <span>Semua Artikel</span>
                       <ArrowRight className="h-4 w-4" />
-                    </a>
+                    </Link>
                   </li>
                   {allCategories.filter(cat => cat.id !== category.id).map(cat => (
                     <li key={cat.id}>
-                      <a
+                      <Link
                         href={`/artikel/${cat.slug}`}
                         className="flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                       >
                         <span>{cat.name}</span>
                         <ArrowRight className="h-4 w-4" />
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -160,14 +161,16 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
                       <div className="flex items-start space-x-4">
                         {article.featured_image && (
                           <div className="flex-shrink-0">
-                            <img
+                            <Image
                               src={article.featured_image}
                               alt={article.title}
+                              width={128}
+                              height={96}
                               className="w-32 h-24 object-cover rounded-lg"
                             />
                           </div>
                         )}
-                        
+
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
                             {article.categories?.map(category => (
@@ -180,22 +183,22 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
                               </span>
                             ))}
                           </div>
-                          
+
                           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                            <a
+                            <Link
                               href={`/artikel/${category.slug}/${article.slug}`}
                               className="hover:text-primary-600 transition-colors"
                             >
                               {article.title}
-                            </a>
+                            </Link>
                           </h2>
-                          
+
                           {article.excerpt && (
                             <p className="text-gray-600 mb-4 line-clamp-3">
                               {article.excerpt}
                             </p>
                           )}
-                          
+
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4 text-sm text-gray-500">
                               <div className="flex items-center">
@@ -207,14 +210,14 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
                                 <span>{formatDistance(new Date(article.published_at || article.post_date), new Date(), { addSuffix: true })}</span>
                               </div>
                             </div>
-                            
-                            <a
+
+                            <Link
                               href={`/artikel/${category.slug}/${article.slug}`}
                               className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
                             >
                               Baca Selengkapnya
                               <ArrowRight className="h-4 w-4 ml-1" />
-                            </a>
+                            </Link>
                           </div>
                         </div>
                       </div>
@@ -226,7 +229,7 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </>
   );
@@ -234,22 +237,22 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const categorySlug = params?.category as string;
-  
+
   try {
     const [allCategories] = await Promise.all([
       cmsArticleService.getCategories()
     ]);
-    
+
     const category = allCategories.find(cat => cat.slug === categorySlug);
-    
+
     if (!category) {
       return {
         notFound: true
       };
     }
-    
+
     const articlesData = await cmsArticleService.getArticlesByCategory(categorySlug, 20, 0);
-    
+
     return {
       props: {
         articles: articlesData.articles,
@@ -273,7 +276,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     const paths = categories.map(category => ({
       params: { category: category.slug }
     }));
-    
+
     return {
       paths,
       fallback: 'blocking'

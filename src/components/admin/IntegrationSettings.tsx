@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Loader2, Database, HardDrive, TestTube, CheckCircle, XCircle, Link2 } from 'lucide-react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -22,9 +22,21 @@ const IntegrationSettings: React.FC = () => {
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState<any>(null);
 
+  const loadSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const settings = await adminService.getIntegrationSettings();
+      setFormData(settings);
+    } catch (error) {
+      console.error('Error loading integration settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
   const loadSettings = async () => {
     try {
