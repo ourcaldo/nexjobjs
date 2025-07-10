@@ -1,7 +1,8 @@
+
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import AdminLayout from '@/components/admin/AdminLayout';
-import PageEditor from '@/components/admin/cms/PageEditor';
+import UnifiedEditor from '@/components/admin/cms/UnifiedEditor';
 
 interface EditPageProps {
   pageId: string;
@@ -17,7 +18,7 @@ export default function EditPage({ pageId }: EditPageProps) {
       </Head>
       
       <AdminLayout currentPage="cms">
-        <PageEditor pageId={pageId} />
+        <UnifiedEditor contentType="pages" itemId={pageId} />
       </AdminLayout>
     </>
   );
@@ -25,7 +26,13 @@ export default function EditPage({ pageId }: EditPageProps) {
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const pageId = params?.id as string;
-  
+
+  if (!pageId) {
+    return {
+      notFound: true
+    };
+  }
+
   return {
     props: {
       pageId

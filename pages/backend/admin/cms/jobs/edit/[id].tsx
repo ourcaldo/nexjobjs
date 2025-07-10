@@ -4,30 +4,30 @@ import Head from 'next/head';
 import AdminLayout from '@/components/admin/AdminLayout';
 import UnifiedEditor from '@/components/admin/cms/UnifiedEditor';
 
-interface EditArticleProps {
-  articleId: string;
+interface EditJobProps {
+  jobId: string;
 }
 
-export default function EditArticle({ articleId }: EditArticleProps) {
+export default function EditJob({ jobId }: EditJobProps) {
   return (
     <>
       <Head>
-        <title>Edit Article - Nexjob Admin</title>
-        <meta name="description" content="Edit article in Nexjob CMS" />
+        <title>Edit Job - Nexjob Admin</title>
+        <meta name="description" content="Edit job posting in Nexjob CMS" />
         <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
       </Head>
       
       <AdminLayout currentPage="cms">
-        <UnifiedEditor contentType="articles" itemId={articleId} />
+        <UnifiedEditor contentType="jobs" itemId={jobId} />
       </AdminLayout>
     </>
   );
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const articleId = params?.id as string;
+  const jobId = params?.id as string;
 
-  if (!articleId) {
+  if (!jobId) {
     return {
       notFound: true
     };
@@ -35,7 +35,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
   return {
     props: {
-      articleId
+      jobId
     }
   };
 };

@@ -1,7 +1,8 @@
+
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import AdminLayout from '@/components/admin/AdminLayout';
-import PageEditor from '@/components/admin/cms/PageEditor';
+import UnifiedEditor from '@/components/admin/cms/UnifiedEditor';
 
 export default function NewPage() {
   return (
@@ -13,7 +14,7 @@ export default function NewPage() {
       </Head>
       
       <AdminLayout currentPage="cms">
-        <PageEditor />
+        <UnifiedEditor contentType="pages" />
       </AdminLayout>
     </>
   );

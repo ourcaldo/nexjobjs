@@ -195,8 +195,7 @@ const CmsPages: React.FC = () => {
     } else if (activeContentType === 'articles') {
       router.push('/backend/admin/cms/articles/new');
     } else if (activeContentType === 'jobs') {
-      // For now, show a message that jobs functionality is under development
-      showToast('info', 'Jobs CMS functionality is under development');
+      router.push('/backend/admin/cms/jobs/new');
     }
   };
 
