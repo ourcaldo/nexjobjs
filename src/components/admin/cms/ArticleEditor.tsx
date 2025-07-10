@@ -39,7 +39,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     slug: '',
     content: '',
     excerpt: '',
-    status: 'draft' as 'draft' | 'published' | 'scheduled',
+    status: 'draft' as 'draft' | 'published' | 'scheduled' | 'trash',
     featured_image: '',
     seo_title: '',
     meta_description: '',
@@ -221,7 +221,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     }
   };
 
-  const handleSave = async (status: 'draft' | 'published' | 'scheduled') => {
+  const handleSave = async (status: 'draft' | 'published' | 'scheduled' | 'trash') => {
     if (!formData.title.trim()) {
       showToast('error', 'Title is required');
       return;
