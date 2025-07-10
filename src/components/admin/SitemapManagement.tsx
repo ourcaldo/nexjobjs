@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Loader2, CheckCircle, Clock, FileText, BarChart3, Settings } from 'lucide-react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -15,7 +15,7 @@ const SitemapManagement: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const adminSettings = await supabaseAdminService.getSettings();
       if (adminSettings) {
@@ -32,7 +32,7 @@ const SitemapManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     loadSettings();

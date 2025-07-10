@@ -28,11 +28,11 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
     { name: category.name, href: `/artikel/${category.slug}` }
   ];
 
-  const articleListingSchema = generateArticleListingSchema({
-    title: `${category.name} - Artikel ${category.name}`,
-    description: category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`,
-    url: `${currentUrl}/artikel/${category.slug}`,
-    articles: articles.map(article => ({
+  const articleListingSchema = generateArticleListingSchema(
+    `${category.name} - Artikel ${category.name}`,
+    category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`,
+    `${currentUrl}/artikel/${category.slug}`,
+    articles.map(article => ({
       title: article.title,
       description: article.excerpt,
       url: `${currentUrl}/artikel/${category.slug}/${article.slug}`,
@@ -40,7 +40,7 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
       author: article.author?.full_name || article.author?.email || 'Nexjob',
       imageUrl: article.featured_image || `${currentUrl}/logo.png`
     }))
-  });
+  );
 
   const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems, currentUrl);
 
