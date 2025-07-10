@@ -228,7 +228,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       e.stopPropagation();
     }
 
-    if (!newCategoryName.trim()) return;
+    if (!newCategoryName.trim()) return false;
 
     try {
       const service = getService();
@@ -238,8 +238,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
         setSelectedCategories(prev => [...prev, result.category!.id]);
         setNewCategoryName('');
         showToast('success', 'Category created successfully');
-        // Force update without reload
-        return false;
       } else {
         showToast('error', result.error || 'Failed to create category');
       }
@@ -256,7 +254,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       e.stopPropagation();
     }
 
-    if (!newTagName.trim()) return;
+    if (!newTagName.trim()) return false;
 
     try {
       const service = getService();
@@ -266,8 +264,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
         setSelectedTags(prev => [...prev, result.tag!.id]);
         setNewTagName('');
         showToast('success', 'Tag created successfully');
-        // Force update without reload
-        return false;
       } else {
         showToast('error', result.error || 'Failed to create tag');
       }
@@ -283,7 +279,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     e.stopPropagation();
 
     const file = e.target.files?.[0];
-    if (!file || !currentUser) return;
+    if (!file || !currentUser) return false;
 
     setUploadingImage(true);
     try {
@@ -311,28 +307,29 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     } finally {
       setUploadingImage(false);
     }
+    return false;
   };
 
   const handleSave = async (status: 'draft' | 'published' | 'scheduled' | 'trash') => {
     if (!formData.title.trim()) {
       showToast('error', 'Title is required');
-      return;
+      return false;
     }
 
     if (!formData.slug.trim()) {
       showToast('error', 'Slug is required');
-      return;
+      return false;
     }
 
     if (!currentUser) {
       showToast('error', 'User not authenticated');
-      return;
+      return false;
     }
 
     // Check if jobs functionality is implemented
     if (contentType === 'jobs') {
       showToast('info', 'Jobs CMS functionality is under development');
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -388,6 +385,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     } finally {
       setSaving(false);
     }
+    return false;
   };
 
   if (loading) {
@@ -776,14 +774,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <form 
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleCreateCategory(e);
-                }}
-                className="flex space-x-2"
-              >
+              <div className="flex space-x-2">
                 <input
                   type="text"
                   value={newCategoryName}
@@ -799,21 +790,23 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.preventDefault();
                       e.stopPropagation();
                       handleCreateCategory();
+                      return false;
                     }
                   }}
                 />
                 <button
-                  type="submit"
+                  type="button"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     handleCreateCategory();
+                    return false;
                   }}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-              </form>
+              </div>
             </div>
           </div>
 
@@ -852,14 +845,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <form 
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleCreateTag(e);
-                }}
-                className="flex space-x-2"
-              >
+              <div className="flex space-x-2">
                 <input
                   type="text"
                   value={newTagName}
@@ -875,21 +861,23 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.preventDefault();
                       e.stopPropagation();
                       handleCreateTag();
+                      return false;
                     }
                   }}
                 />
                 <button
-                  type="submit"
+                  type="button"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     handleCreateTag();
+                    return false;
                   }}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-              </form>
+              </div>
             </div>
           </div>
 
@@ -922,29 +910,27 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
               </div>
             ) : (
               <div>
-                <form onSubmit={(e) => e.preventDefault()}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    id="featured-image"
-                    disabled={uploadingImage}
-                  />
-                  <label
-                    htmlFor="featured-image"
-                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary-500 transition-colors block"
-                  >
-                    {uploadingImage ? (
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                    ) : (
-                      <ImageIcon className="h-6 w-6 mx-auto mb-2 text-gray-400" />
-                    )}
-                    <span className="text-sm text-gray-600">
-                      {uploadingImage ? 'Uploading...' : 'Click to upload image'}
-                    </span>
-                  </label>
-                </form>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="featured-image"
+                  disabled={uploadingImage}
+                />
+                <label
+                  htmlFor="featured-image"
+                  className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary-500 transition-colors block"
+                >
+                  {uploadingImage ? (
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                  )}
+                  <span className="text-sm text-gray-600">
+                    {uploadingImage ? 'Uploading...' : 'Click to upload image'}
+                  </span>
+                </label>
               </div>
             )}
           </div>
