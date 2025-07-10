@@ -36,10 +36,6 @@ const SEOSettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
-
   const loadSettings = useCallback(async () => {
     try {
       const adminSettings = await supabaseAdminService.getSettings();
@@ -76,6 +72,10 @@ const SEOSettings: React.FC = () => {
       setLoading(false);
     }
   }, [showToast]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
