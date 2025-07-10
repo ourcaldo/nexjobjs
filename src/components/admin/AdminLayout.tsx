@@ -19,7 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Briefcase
 } from 'lucide-react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -37,6 +38,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
   const [cmsExpanded, setCmsExpanded] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isCmsOpen, setIsCmsOpen] = useState(currentPage === 'cms' || currentPage.startsWith('cms-'));
 
   const checkAuth = useCallback(async () => {
     try {
