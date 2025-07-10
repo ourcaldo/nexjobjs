@@ -163,6 +163,12 @@ export interface AdminSettings {
   supabase_storage_region?: string;
   supabase_storage_access_key?: string;
   supabase_storage_secret_key?: string;
+  // Storage Configuration (additional properties)
+  storage_bucket_name?: string;
+  storage_endpoint?: string;
+  storage_region?: string;
+  storage_access_key?: string;
+  storage_secret_key?: string;
   // WordPress API Configuration (editable from admin)
   wp_posts_api_url: string;
   wp_jobs_api_url: string;
