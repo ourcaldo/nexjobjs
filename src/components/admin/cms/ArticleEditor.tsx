@@ -207,14 +207,8 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
       const result = await cmsArticleService.createCategory(newCategoryName.trim());
       if (result.success && result.category) {
         // Update state immediately without reload
-        setCategories(prev => {
-          const updated = [...prev, result.category!];
-          return updated;
-        });
-        setSelectedCategories(prev => {
-          const updated = [...prev, result.category!.id];
-          return updated;
-        });
+        setCategories(prev => [...prev, result.category!]);
+        setSelectedCategories(prev => [...prev, result.category!.id]);
         setNewCategoryName('');
         showToast('success', 'Category created successfully');
       } else {
@@ -238,14 +232,8 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
       const result = await cmsArticleService.createTag(newTagName.trim());
       if (result.success && result.tag) {
         // Update state immediately without reload
-        setTags(prev => {
-          const updated = [...prev, result.tag!];
-          return updated;
-        });
-        setSelectedTags(prev => {
-          const updated = [...prev, result.tag!.id];
-          return updated;
-        });
+        setTags(prev => [...prev, result.tag!]);
+        setSelectedTags(prev => [...prev, result.tag!.id]);
         setNewTagName('');
         showToast('success', 'Tag created successfully');
       } else {
@@ -585,21 +573,28 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <form onSubmit={handleCreateCategory} className="flex space-x-2">
+              <div className="flex space-x-2">
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="New category name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleCreateCategory();
+                    }
+                  }}
                 />
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleCreateCategory}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-              </form>
+              </div>
             </div>
           </div>
 
@@ -631,21 +626,28 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <form onSubmit={handleCreateTag} className="flex space-x-2">
+              <div className="flex space-x-2">
                 <input
                   type="text"
                   value={newTagName}
                   onChange={(e) => setNewTagName(e.target.value)}
                   placeholder="New tag name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleCreateTag();
+                    }
+                  }}
                 />
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleCreateTag}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-              </form>
+              </div>
             </div>
           </div>
 

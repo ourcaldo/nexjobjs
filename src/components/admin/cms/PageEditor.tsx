@@ -194,21 +194,20 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     }
   };
 
-  const handleCreateCategory = async () => {
+  const handleCreateCategory = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!newCategoryName.trim()) return;
 
     try {
       const result = await cmsPageService.createCategory(newCategoryName.trim());
       if (result.success && result.category) {
         // Update state immediately without reload
-        setCategories(prev => {
-          const updated = [...prev, result.category!];
-          return updated;
-        });
-        setSelectedCategories(prev => {
-          const updated = [...prev, result.category!.id];
-          return updated;
-        });
+        setCategories(prev => [...prev, result.category!]);
+        setSelectedCategories(prev => [...prev, result.category!.id]);
         setNewCategoryName('');
         showToast('success', 'Category created successfully');
       } else {
@@ -220,7 +219,12 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     }
   };
 
-  const handleCreateTag = async () => {
+  const handleCreateTag = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!newTagName.trim()) return;
 
     try {
@@ -552,9 +556,15 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="New category name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateCategory()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleCreateCategory();
+                    }
+                  }}
                 />
                 <button
+                  type="button"
                   onClick={handleCreateCategory}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
@@ -599,9 +609,15 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
                   onChange={(e) => setNewTagName(e.target.value)}
                   placeholder="New tag name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateTag()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleCreateTag();
+                    }
+                  }}
                 />
                 <button
+                  type="button"
                   onClick={handleCreateTag}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
