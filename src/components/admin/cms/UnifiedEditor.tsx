@@ -360,19 +360,14 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       if (result?.success) {
         showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
 
-        // For new content creation, update the URL without reload
-        if (!itemId && result.article) {
-          // Update URL without navigation to avoid reload
-          const newUrl = `/backend/admin/cms/${contentType}/edit/${result.article.id}`;
-          window.history.replaceState({}, '', newUrl);
-          // Update the itemId so subsequent saves will be updates
-          router.query.id = result.article.id;
-        } else if (!itemId && result.page) {
-          // Update URL without navigation to avoid reload
-          const newUrl = `/backend/admin/cms/${contentType}/edit/${result.page.id}`;
-          window.history.replaceState({}, '', newUrl);
-          // Update the itemId so subsequent saves will be updates
-          router.query.id = result.page.id;
+        // For new content creation, update the URL and component state without reload
+        if (!itemId && (result.article || result.page)) {
+          const newItemId = result.article?.id || result.page?.id;
+          if (newItemId) {
+            // Update URL using router.replace to avoid reload
+            const newUrl = `/backend/admin/cms/${contentType}/edit/${newItemId}`;
+            router.replace(newUrl, undefined, { shallow: true });
+          }
         }
       } else {
         showToast('error', result?.error || `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
