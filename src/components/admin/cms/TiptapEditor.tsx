@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -162,7 +161,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
 
   const insertLink = useCallback(() => {
     if (!editor) return;
-    
+
     const url = prompt('Enter URL:');
     if (url) {
       editor.chain().focus().setLink({ href: url }).run();
@@ -171,7 +170,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
 
   const insertImage = useCallback(() => {
     if (!editor) return;
-    
+
     const url = prompt('Enter image URL:');
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();

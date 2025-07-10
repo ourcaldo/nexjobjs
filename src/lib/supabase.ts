@@ -25,7 +25,7 @@ export interface Profile {
   birth_date?: string;
   gender?: 'male' | 'female' | 'other';
   location?: string;
-  photo_url?: string;
+  photo_url?: string | null;
   bio?: string;
   role: 'user' | 'super_admin';
   created_at: string;
