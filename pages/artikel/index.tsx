@@ -26,21 +26,21 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
     { name: 'Artikel', href: '/artikel' }
   ];
 
-  const articleListingSchema = generateArticleListingSchema({
-    title: 'Artikel - Tips Karir dan Berita Kerja Terbaru',
-    description: 'Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia.',
-    url: `${currentUrl}/artikel`,
-    articles: articles.map(article => ({
-      title: article.title,
-      description: article.excerpt,
-      url: `${currentUrl}/artikel/${article.categories?.[0]?.slug || 'uncategorized'}/${article.slug}`,
-      publishDate: article.published_at || article.post_date,
-      author: article.author?.full_name || article.author?.email || 'Nexjob',
-      imageUrl: article.featured_image || `${currentUrl}/logo.png`
+  const articleListingSchema = generateArticleListingSchema(
+    articles.map(article => ({
+      title: { rendered: article.title },
+      seo_description: article.excerpt,
+      excerpt: { rendered: article.excerpt || '' },
+      author_info: { display_name: article.author?.full_name || article.author?.email || 'Nexjob' },
+      date: article.published_at || article.post_date,
+      slug: article.slug
     }))
-  });
+  );
 
-  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems, currentUrl);
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems.map(item => ({ 
+    label: item.name, 
+    href: item.href 
+  })));
 
   return (
     <>

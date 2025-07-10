@@ -29,20 +29,20 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
   ];
 
   const articleListingSchema = generateArticleListingSchema(
-    `${category.name} - Artikel ${category.name}`,
-    category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`,
-    `${currentUrl}/artikel/${category.slug}`,
     articles.map(article => ({
-      title: article.title,
-      description: article.excerpt,
-      url: `${currentUrl}/artikel/${category.slug}/${article.slug}`,
-      publishDate: article.published_at || article.post_date,
-      author: article.author?.full_name || article.author?.email || 'Nexjob',
-      imageUrl: article.featured_image || `${currentUrl}/logo.png`
+      title: { rendered: article.title },
+      seo_description: article.excerpt,
+      excerpt: { rendered: article.excerpt || '' },
+      author_info: { display_name: article.author?.full_name || article.author?.email || 'Nexjob' },
+      date: article.published_at || article.post_date,
+      slug: article.slug
     }))
   );
 
-  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems, currentUrl);
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems.map(item => ({ 
+    label: item.name, 
+    href: item.href 
+  })));
 
   return (
     <>
