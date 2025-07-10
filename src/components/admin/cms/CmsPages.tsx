@@ -63,6 +63,12 @@ const CmsPages: React.FC = () => {
     total: 0, published: 0, draft: 0, trash: 0, scheduled: 0
   });
 
+  // Jobs state (placeholder for future implementation)
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobStats, setJobStats] = useState({
+    total: 0, published: 0, draft: 0, trash: 0, scheduled: 0
+  });
+
   // Filters
   const [filters, setFilters] = useState({
     status: '',
@@ -92,6 +98,11 @@ const CmsPages: React.FC = () => {
         setArticles(articlesData.articles);
         setArticleStats(stats);
         setTotal(articlesData.total);
+      } else if (activeContentType === 'jobs') {
+        // For now, just set empty data until jobs functionality is implemented
+        setJobs([]);
+        setJobStats({ total: 0, published: 0, draft: 0, trash: 0, scheduled: 0 });
+        setTotal(0);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -147,6 +158,8 @@ const CmsPages: React.FC = () => {
       router.push(`/backend/admin/cms/pages/edit/${id}`);
     } else if (activeContentType === 'articles') {
       router.push(`/backend/admin/cms/articles/edit/${id}`);
+    } else if (activeContentType === 'jobs') {
+      showToast('info', 'Jobs CMS functionality is under development');
     }
   };
 
@@ -159,6 +172,9 @@ const CmsPages: React.FC = () => {
         result = await cmsPageService.deletePage(id);
       } else if (activeContentType === 'articles') {
         result = await cmsArticleService.deleteArticle(id);
+      } else if (activeContentType === 'jobs') {
+        showToast('info', 'Jobs CMS functionality is under development');
+        return;
       }
 
       if (result?.success) {
@@ -178,6 +194,9 @@ const CmsPages: React.FC = () => {
       router.push('/backend/admin/cms/pages/new');
     } else if (activeContentType === 'articles') {
       router.push('/backend/admin/cms/articles/new');
+    } else if (activeContentType === 'jobs') {
+      // For now, show a message that jobs functionality is under development
+      showToast('info', 'Jobs CMS functionality is under development');
     }
   };
 
@@ -192,7 +211,8 @@ const CmsPages: React.FC = () => {
   };
 
   const renderStats = () => {
-    const stats = activeContentType === 'pages' ? pageStats : articleStats;
+    const stats = activeContentType === 'pages' ? pageStats : 
+                  activeContentType === 'articles' ? articleStats : jobStats;
     return (
       <div className="grid grid-cols-5 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
@@ -245,7 +265,8 @@ const CmsPages: React.FC = () => {
   };
 
   const renderContent = () => {
-    const items = activeContentType === 'pages' ? pages : articles;
+    const items = activeContentType === 'pages' ? pages : 
+                  activeContentType === 'articles' ? articles : jobs;
 
     if (loading) {
       return (
@@ -267,17 +288,22 @@ const CmsPages: React.FC = () => {
             )}
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No {activeContentType} found
+            {activeContentType === 'jobs' ? 'Jobs CMS Under Development' : `No ${activeContentType} found`}
           </h3>
           <p className="text-gray-500 mb-4">
-            Get started by creating your first {activeContentType.slice(0, -1)}.
+            {activeContentType === 'jobs' 
+              ? 'Jobs CMS functionality is currently under development. Please check back later.' 
+              : `Get started by creating your first ${activeContentType.slice(0, -1)}.`
+            }
           </p>
-          <button
-            onClick={handleCreateNew}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Create {activeContentType === 'pages' ? 'Page' : 'Article'}
-          </button>
+          {activeContentType !== 'jobs' && (
+            <button
+              onClick={handleCreateNew}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              Create {activeContentType === 'pages' ? 'Page' : 'Article'}
+            </button>
+          )}
         </div>
       );
     }
