@@ -223,6 +223,9 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const file = e.target.files?.[0];
     if (!file || !currentUser) return;
 
@@ -241,10 +244,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
           featured_image: imageUrl
         }));
         showToast('success', 'Image uploaded successfully');
-        // Clear the input value to allow uploading the same file again
-        if (e.target) {
-          e.target.value = '';
-        }
+        // Reset the input but don't clear it completely to avoid form issues
+        e.target.form?.reset();
       } else {
         showToast('error', result.error || 'Failed to upload image');
       }
@@ -256,7 +257,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const handleCreateCategory = async () => {    
+  const handleCreateCategory = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!newCategoryName.trim()) return;
 
     try {
@@ -276,7 +282,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const handleCreateTag = async () => {    
+  const handleCreateTag = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!newTagName.trim()) return;
 
     try {
@@ -347,16 +358,20 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
 
       if (result?.success) {
         showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
+        
+        // For new content creation, update the URL without reload
         if (!itemId && result.article) {
-          // Use setTimeout to ensure toast shows before navigation
-          setTimeout(() => {
-            router.push(`/backend/admin/cms/${contentType}/edit/${result.article.id}`);
-          }, 1000);
+          // Update URL without navigation to avoid reload
+          const newUrl = `/backend/admin/cms/${contentType}/edit/${result.article.id}`;
+          window.history.replaceState({}, '', newUrl);
+          // Update the itemId so subsequent saves will be updates
+          router.query.id = result.article.id;
         } else if (!itemId && result.page) {
-          // Use setTimeout to ensure toast shows before navigation
-          setTimeout(() => {
-            router.push(`/backend/admin/cms/${contentType}/edit/${result.page.id}`);
-          }, 1000);
+          // Update URL without navigation to avoid reload
+          const newUrl = `/backend/admin/cms/${contentType}/edit/${result.page.id}`;
+          window.history.replaceState({}, '', newUrl);
+          // Update the itemId so subsequent saves will be updates
+          router.query.id = result.page.id;
         }
       } else {
         showToast('error', result?.error || `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
@@ -755,11 +770,22 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex space-x-2">
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCreateCategory(e);
+                }}
+                className="flex space-x-2"
+              >
                 <input
                   type="text"
                   value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setNewCategoryName(e.target.value);
+                  }}
                   placeholder="New category name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   onKeyDown={(e) => {
@@ -771,7 +797,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   }}
                 />
                 <button
-                  type="button"
+                  type="submit"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -781,7 +807,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-              </div>
+              </form>
             </div>
           </div>
 
@@ -820,11 +846,22 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex space-x-2">
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCreateTag(e);
+                }}
+                className="flex space-x-2"
+              >
                 <input
                   type="text"
                   value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setNewTagName(e.target.value);
+                  }}
                   placeholder="New tag name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   onKeyDown={(e) => {
@@ -836,7 +873,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                   }}
                 />
                 <button
-                  type="button"
+                  type="submit"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -846,7 +883,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-              </div>
+              </form>
             </div>
           </div>
 
@@ -880,27 +917,29 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
               </div>
             ) : (
               <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="featured-image"
-                  disabled={uploadingImage}
-                />
-                <label
-                  htmlFor="featured-image"
-                  className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary-500 transition-colors block"
-                >
-                  {uploadingImage ? (
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  ) : (
-                    <ImageIcon className="h-6 w-6 mx-auto mb-2 text-gray-400" />
-                  )}
-                  <span className="text-sm text-gray-600">
-                    {uploadingImage ? 'Uploading...' : 'Click to upload image'}
-                  </span>
-                </label>
+                <form onSubmit={(e) => e.preventDefault()}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="featured-image"
+                    disabled={uploadingImage}
+                  />
+                  <label
+                    htmlFor="featured-image"
+                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary-500 transition-colors block"
+                  >
+                    {uploadingImage ? (
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    ) : (
+                      <ImageIcon className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                    )}
+                    <span className="text-sm text-gray-600">
+                      {uploadingImage ? 'Uploading...' : 'Click to upload image'}
+                    </span>
+                  </label>
+                </form>
               </div>
             )}
           </div>
