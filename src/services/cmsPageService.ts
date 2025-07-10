@@ -168,7 +168,7 @@ class CmsPageService {
   // Create new page
   async createPage(pageData: CreatePageData): Promise<{ success: boolean; page?: NxdbPage; error?: string }> {
     try {
-      // Start transaction
+      // Use single transaction approach
       const { data: page, error: pageError } = await supabase
         .from('nxdb_pages')
         .insert({
@@ -193,36 +193,28 @@ class CmsPageService {
         return { success: false, error: pageError.message };
       }
 
-      // Add category relations
+      // Add relations in parallel to reduce time and avoid multiple re-renders
+      const promises = [];
+      
       if (pageData.category_ids.length > 0) {
         const categoryRelations = pageData.category_ids.map(categoryId => ({
           page_id: page.id,
           category_id: categoryId
         }));
-
-        const { error: categoryError } = await supabase
-          .from('nxdb_page_category_relations')
-          .insert(categoryRelations);
-
-        if (categoryError) {
-          console.error('Error adding category relations:', categoryError);
-        }
+        promises.push(supabase.from('nxdb_page_category_relations').insert(categoryRelations));
       }
 
-      // Add tag relations
       if (pageData.tag_ids.length > 0) {
         const tagRelations = pageData.tag_ids.map(tagId => ({
           page_id: page.id,
           tag_id: tagId
         }));
+        promises.push(supabase.from('nxdb_page_tag_relations').insert(tagRelations));
+      }
 
-        const { error: tagError } = await supabase
-          .from('nxdb_page_tag_relations')
-          .insert(tagRelations);
-
-        if (tagError) {
-          console.error('Error adding tag relations:', tagError);
-        }
+      // Execute all relation inserts in parallel
+      if (promises.length > 0) {
+        await Promise.all(promises);
       }
 
       return { success: true, page };

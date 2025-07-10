@@ -169,10 +169,9 @@ class CmsArticleService {
   // Create new article
   async createArticle(articleData: CreateArticleData): Promise<{ success: boolean; article?: NxdbArticle; error?: string }> {
     try {
-      // Start transaction
-      const { data: article, error: articleError } = await supabase
-        .from('nxdb_articles')
-        .insert({
+      // Use RPC for atomic transaction
+      const { data, error } = await supabase.rpc('create_article_with_relations', {
+        article_data: {
           title: articleData.title,
           slug: articleData.slug,
           content: articleData.content,
@@ -185,51 +184,70 @@ class CmsArticleService {
           schema_types: articleData.schema_types,
           post_date: articleData.post_date,
           published_at: articleData.published_at
-        })
-        .select()
-        .single();
+        },
+        category_ids: articleData.category_ids,
+        tag_ids: articleData.tag_ids
+      });
 
-      if (articleError) {
-        console.error('Error creating article:', articleError);
-        return { success: false, error: articleError.message };
+      if (error) {
+        console.error('Error creating article:', error);
+        return { success: false, error: error.message };
       }
 
-      // Add category relations
-      if (articleData.category_ids.length > 0) {
-        const categoryRelations = articleData.category_ids.map(categoryId => ({
-          article_id: article.id,
-          category_id: categoryId
-        }));
-
-        const { error: categoryError } = await supabase
-          .from('nxdb_article_category_relations')
-          .insert(categoryRelations);
-
-        if (categoryError) {
-          console.error('Error adding category relations:', categoryError);
-        }
-      }
-
-      // Add tag relations
-      if (articleData.tag_ids.length > 0) {
-        const tagRelations = articleData.tag_ids.map(tagId => ({
-          article_id: article.id,
-          tag_id: tagId
-        }));
-
-        const { error: tagError } = await supabase
-          .from('nxdb_article_tag_relations')
-          .insert(tagRelations);
-
-        if (tagError) {
-          console.error('Error adding tag relations:', tagError);
-        }
-      }
-
-      return { success: true, article };
+      return { success: true, article: data };
     } catch (error) {
       console.error('Error creating article:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      
+      // Fallback to original method if RPC doesn't exist
+      try {
+        const { data: article, error: articleError } = await supabase
+          .from('nxdb_articles')
+          .insert({
+            title: articleData.title,
+            slug: articleData.slug,
+            content: articleData.content,
+            excerpt: articleData.excerpt,
+            status: articleData.status,
+            author_id: articleData.author_id,
+            featured_image: articleData.featured_image,
+            seo_title: articleData.seo_title,
+            meta_description: articleData.meta_description,
+            schema_types: articleData.schema_types,
+            post_date: articleData.post_date,
+            published_at: articleData.published_at
+          })
+          .select()
+          .single();
+
+        if (articleError) {
+          return { success: false, error: articleError.message };
+        }
+
+        // Add relations in parallel to reduce time
+        const promises = [];
+        
+        if (articleData.category_ids.length > 0) {
+          const categoryRelations = articleData.category_ids.map(categoryId => ({
+            article_id: article.id,
+            category_id: categoryId
+          }));
+          promises.push(supabase.from('nxdb_article_category_relations').insert(categoryRelations));
+        }
+
+        if (articleData.tag_ids.length > 0) {
+          const tagRelations = articleData.tag_ids.map(tagId => ({
+            article_id: article.id,
+            tag_id: tagId
+          }));
+          promises.push(supabase.from('nxdb_article_tag_relations').insert(tagRelations));
+        }
+
+        await Promise.all(promises);
+        return { success: true, article };
+      } catch (fallbackError) {
+        console.error('Fallback error creating article:', fallbackError);
+        return { success: false, error: fallbackError instanceof Error ? fallbackError.message : 'Unknown error' };
+      }
     }
   }
 
