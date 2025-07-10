@@ -27,21 +27,12 @@ export default function ArticleDetail({ article, categorySlug }: ArticleDetailPr
     { name: article.title, href: `/artikel/${categorySlug}/${article.slug}` }
   ];
 
-  const articleSchema = generateArticleSchema({
-    title: article.seo_title || article.title,
-    description: article.meta_description || article.excerpt,
-    content: article.content,
-    publishDate: article.published_at || article.post_date,
-    modifiedDate: article.updated_at,
-    author: article.author?.full_name || article.author?.email || 'Nexjob',
-    authorUrl: currentUrl,
-    url: `${currentUrl}/artikel/${categorySlug}/${article.slug}`,
-    imageUrl: article.featured_image || `${currentUrl}/logo.png`,
-    category: article.categories?.[0]?.name || 'Article',
-    tags: article.tags?.map(tag => tag.name) || []
-  });
+  const articleSchema = generateArticleSchema(article);
 
-  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems, currentUrl);
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems.map(item => ({ 
+    label: item.name, 
+    href: item.href 
+  })));
 
   return (
     <>

@@ -164,34 +164,70 @@ export const generateBreadcrumbSchema = (items: Array<{ label: string; href?: st
 export const generateArticleSchema = (article: any) => {
   const baseUrl = getCurrentDomain();
   
-  return {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "headline": article.title.rendered,
-    "description": article.seo_description || article.excerpt.rendered.replace(/<[^>]*>/g, '').substring(0, 160),
-    "image": article.featured_media_url || `${baseUrl}/default-article-image.jpg`,
-    "author": {
-      "@type": "Person",
-      "name": article.author_info?.display_name || article.author_info?.name || "Nexjob Team"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Nexjob",
-      "logo": {
-        "@type": "ImageObject",
-        "url": `${baseUrl}/logo.png`
-      }
-    },
-    "datePublished": article.date,
-    "dateModified": article.modified || article.date,
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": `${baseUrl}/artikel/${article.slug}/`
-    },
-    "articleSection": article.categories_info?.[0]?.name || "Career Tips",
-    "keywords": article.tags_info?.map((tag: any) => tag.name).join(", ") || "",
-    "url": `${baseUrl}/artikel/${article.slug}/`
-  };
+  // Handle both WordPress articles and CMS articles
+  const isWordPressArticle = article.title?.rendered !== undefined;
+  
+  if (isWordPressArticle) {
+    // WordPress article structure
+    return {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": article.title.rendered,
+      "description": article.seo_description || article.excerpt.rendered.replace(/<[^>]*>/g, '').substring(0, 160),
+      "image": article.featured_media_url || `${baseUrl}/default-article-image.jpg`,
+      "author": {
+        "@type": "Person",
+        "name": article.author_info?.display_name || article.author_info?.name || "Nexjob Team"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Nexjob",
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${baseUrl}/logo.png`
+        }
+      },
+      "datePublished": article.date,
+      "dateModified": article.modified || article.date,
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": `${baseUrl}/artikel/${article.slug}/`
+      },
+      "articleSection": article.categories_info?.[0]?.name || "Career Tips",
+      "keywords": article.tags_info?.map((tag: any) => tag.name).join(", ") || "",
+      "url": `${baseUrl}/artikel/${article.slug}/`
+    };
+  } else {
+    // CMS article structure (NxdbArticle)
+    return {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": article.title,
+      "description": article.meta_description || article.excerpt || article.content?.replace(/<[^>]*>/g, '').substring(0, 160) || "",
+      "image": article.featured_image || `${baseUrl}/default-article-image.jpg`,
+      "author": {
+        "@type": "Person",
+        "name": article.author?.full_name || article.author?.email || "Nexjob Team"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Nexjob",
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${baseUrl}/logo.png`
+        }
+      },
+      "datePublished": article.published_at || article.post_date,
+      "dateModified": article.updated_at,
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": `${baseUrl}/artikel/${article.categories?.[0]?.slug || 'uncategorized'}/${article.slug}/`
+      },
+      "articleSection": article.categories?.[0]?.name || "Career Tips",
+      "keywords": article.tags?.map((tag: any) => tag.name).join(", ") || "",
+      "url": `${baseUrl}/artikel/${article.categories?.[0]?.slug || 'uncategorized'}/${article.slug}/`
+    };
+  }
 };
 
 export const generatePageSchema = (page: NxdbPage) => {
