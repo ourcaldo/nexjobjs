@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
 
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
 interface ToastProps {
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: ToastType;
   message: string;
   onClose: () => void;
   duration?: number;
@@ -34,6 +36,8 @@ const Toast: React.FC<ToastProps> = ({ type, message, onClose, duration = 5000 }
         return <AlertCircle className="h-5 w-5 text-yellow-500" />;
       case 'info':
         return <AlertCircle className="h-5 w-5 text-blue-500" />;
+      default:
+        return null;
     }
   };
 

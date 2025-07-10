@@ -8,7 +8,7 @@ import {
   User, 
   Tag, 
   Folder, 
-  Image as ImageIcon,
+  ImageIcon,
   ArrowLeft,
   Loader2,
   Plus,
@@ -43,7 +43,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     featured_image: '',
     seo_title: '',
     meta_description: '',
-    schema_types: ['WebPage'] as string[],
+    schema_types: [] as string[],
     post_date: new Date().toISOString().slice(0, 16),
     published_at: ''
   });

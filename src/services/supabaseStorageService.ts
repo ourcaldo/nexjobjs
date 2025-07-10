@@ -1,5 +1,11 @@
 import { supabase } from '@/lib/supabase';
 
+export interface UploadResponse {
+  success: boolean;
+  url?: string | null;
+  error?: string;
+}
+
 class SupabaseStorageService {
   private bucketName = 'nexjob';
 
@@ -8,7 +14,7 @@ class SupabaseStorageService {
     file: File | Buffer, 
     path: string, 
     contentType?: string
-  ): Promise<{ success: boolean; url?: string; error?: string }> {
+  ): Promise<{ success: boolean; url?: string | null; error?: string }> {
     try {
       const buffer = file instanceof File ? await file.arrayBuffer() : file;
       const finalContentType = contentType || (file instanceof File ? file.type : 'application/octet-stream');
@@ -76,7 +82,7 @@ class SupabaseStorageService {
   async uploadProfileImage(
     userId: string, 
     file: File
-  ): Promise<{ success: boolean; url?: string; error?: string }> {
+  ): Promise<{ success: boolean; url?: string | null; error?: string }> {
     try {
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -118,7 +124,7 @@ class SupabaseStorageService {
       const url = new URL(imageUrl);
       const pathParts = url.pathname.split('/');
       const bucketIndex = pathParts.findIndex(part => part === this.bucketName);
-      
+
       if (bucketIndex === -1) {
         return {
           success: false,
@@ -142,7 +148,7 @@ class SupabaseStorageService {
     const { data } = supabase.storage
       .from(this.bucketName)
       .getPublicUrl(path);
-    
+
     return data.publicUrl;
   }
 }

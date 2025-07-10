@@ -409,7 +409,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           title="Insert Image"
           disabled={isPreviewMode}
         >
-          <Image className="h-4 w-4" alt="Insert Image" />
+          <Image className="h-4 w-4" aria-label="Insert Image" />
         </button>
 
         <div className="w-px bg-gray-300 mx-1"></div>
