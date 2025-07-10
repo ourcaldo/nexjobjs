@@ -25,21 +25,6 @@ const IntegrationSettings: React.FC = () => {
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const settings = await adminService.getIntegrationSettings();
-      setFormData(settings);
-    } catch (error) {
-      console.error('Error loading integration settings:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
-
-  const loadSettings = async () => {
-    try {
       const adminSettings = await supabaseAdminService.getSettings();
       if (adminSettings) {
         setSettings({
@@ -59,7 +44,11 @@ const IntegrationSettings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -28,21 +28,7 @@ const SystemSettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const loadSettings = useCallback(async () => {
-    try {
-      setLoading(true);
-      const settings = await adminService.getSystemSettings();
-      setFormData(settings);
-    } catch (error) {
-      console.error('Error loading system settings:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+  
 
   const loadSettings = async () => {
     try {
