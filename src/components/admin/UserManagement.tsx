@@ -35,7 +35,7 @@ const UserManagement: React.FC = () => {
     loadUsers();
   }, [loadUsers]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -56,7 +56,7 @@ const UserManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   const updateUserRole = async (userId: string, newRole: 'user' | 'super_admin') => {
     try {
@@ -83,9 +83,9 @@ const UserManagement: React.FC = () => {
     const matchesSearch = !searchTerm || 
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    
+
     return matchesSearch && matchesRole;
   });
 

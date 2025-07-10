@@ -17,6 +17,7 @@ const SitemapManagement: React.FC = () => {
 
   const loadSettings = useCallback(async () => {
     try {
+      setLoading(true);
       const adminSettings = await supabaseAdminService.getSettings();
       if (adminSettings) {
         setSettings({

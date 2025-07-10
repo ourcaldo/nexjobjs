@@ -35,10 +35,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
   const checkAuth = useCallback(async () => {
     try {
       const profile = await supabaseAdminService.getCurrentProfile();
@@ -54,6 +50,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
       setLoading(false);
     }
   }, [router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleLogout = async () => {
     try {

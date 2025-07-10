@@ -19,7 +19,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
   const [user, setUser] = useState<any>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const cardRef = React.useRef<HTMLDivElement>(null);
-  
+
   const checkUser = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -31,7 +31,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
 
   const checkBookmarkStatus = useCallback(async () => {
     if (!user) return;
-    
+
     try {
       const isBookmarked = await userBookmarkService.isBookmarked(user.id, job.id);
       setIsBookmarked(isBookmarked);
@@ -49,7 +49,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
       checkBookmarkStatus();
     }
   }, [user, checkBookmarkStatus]);
-  
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Baru saja';
     const date = new Date(dateStr);
@@ -57,12 +57,12 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffHours < 24) {
       if (diffHours === 1) return '1 jam lalu';
       return `${diffHours} jam lalu`;
     }
-    
+
     if (diffDays === 1) return '1 hari lalu';
     if (diffDays < 7) return `${diffDays} hari lalu`;
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} minggu lalu`;
@@ -94,7 +94,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
   const handleBookmarkClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!user) {
       setShowLoginModal(true);
       return;
@@ -102,7 +102,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
 
     try {
       const result = await userBookmarkService.toggleBookmark(user.id, job.id);
-      
+
       if (result.success) {
         setIsBookmarked(result.isBookmarked);
         showToast('success', result.isBookmarked ? 'Lowongan berhasil disimpan' : 'Lowongan dihapus dari simpanan');
@@ -135,19 +135,34 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
 
   const getJobTags = () => {
     if (!job.tag) return [];
-    
+
     const tags = job.tag.split(', ').map(tag => tag.trim()).filter(tag => tag.length > 0);
-    
+
     if (tags.length > 4) {
       const visibleTags = tags.slice(0, 3);
       const remainingCount = tags.length - 3;
       return [...visibleTags, `+${remainingCount} Lainnya`];
     }
-    
+
     return tags.slice(0, 4);
   };
 
   const tags = getJobTags();
+
+  const loadBookmarkStatus = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const isBookmarked = await userBookmarkService.isJobBookmarked(user.id, job.id);
+      setIsBookmarked(isBookmarked);
+    } catch (error) {
+      console.error('Error checking bookmark status:', error);
+    }
+  }, [user, job.id]);
+
+  useEffect(() => {
+    loadBookmarkStatus();
+  }, [loadBookmarkStatus]);
 
   return (
     <>
