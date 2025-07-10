@@ -222,10 +222,66 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
+  const handleCreateCategory = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (!newCategoryName.trim()) return;
+
+    try {
+      const service = getService();
+      const result = await service.createCategory(newCategoryName.trim());
+      if (result.success && result.category) {
+        setCategories(prev => [...prev, result.category!]);
+        setSelectedCategories(prev => [...prev, result.category!.id]);
+        setNewCategoryName('');
+        showToast('success', 'Category created successfully');
+        // Force update without reload
+        return false;
+      } else {
+        showToast('error', result.error || 'Failed to create category');
+      }
+    } catch (error) {
+      console.error('Error creating category:', error);
+      showToast('error', 'Failed to create category');
+    }
+    return false;
+  };
+
+  const handleCreateTag = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (!newTagName.trim()) return;
+
+    try {
+      const service = getService();
+      const result = await service.createTag(newTagName.trim());
+      if (result.success && result.tag) {
+        setTags(prev => [...prev, result.tag!]);
+        setSelectedTags(prev => [...prev, result.tag!.id]);
+        setNewTagName('');
+        showToast('success', 'Tag created successfully');
+        // Force update without reload
+        return false;
+      } else {
+        showToast('error', result.error || 'Failed to create tag');
+      }
+    } catch (error) {
+      console.error('Error creating tag:', error);
+      showToast('error', 'Failed to create tag');
+    }
+    return false;
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const file = e.target.files?.[0];
     if (!file || !currentUser) return;
 
@@ -244,8 +300,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
           featured_image: imageUrl
         }));
         showToast('success', 'Image uploaded successfully');
-        // Reset the input but don't clear it completely to avoid form issues
-        e.target.form?.reset();
+        // Clear the input value properly
+        e.target.value = '';
       } else {
         showToast('error', result.error || 'Failed to upload image');
       }
@@ -254,56 +310,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       showToast('error', 'Failed to upload image');
     } finally {
       setUploadingImage(false);
-    }
-  };
-
-  const handleCreateCategory = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    if (!newCategoryName.trim()) return;
-
-    try {
-      const service = getService();
-      const result = await service.createCategory(newCategoryName.trim());
-      if (result.success && result.category) {
-        setCategories(prev => [...prev, result.category!]);
-        setSelectedCategories(prev => [...prev, result.category!.id]);
-        setNewCategoryName('');
-        showToast('success', 'Category created successfully');
-      } else {
-        showToast('error', result.error || 'Failed to create category');
-      }
-    } catch (error) {
-      console.error('Error creating category:', error);
-      showToast('error', 'Failed to create category');
-    }
-  };
-
-  const handleCreateTag = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    if (!newTagName.trim()) return;
-
-    try {
-      const service = getService();
-      const result = await service.createTag(newTagName.trim());
-      if (result.success && result.tag) {
-        setTags(prev => [...prev, result.tag!]);
-        setSelectedTags(prev => [...prev, result.tag!.id]);
-        setNewTagName('');
-        showToast('success', 'Tag created successfully');
-      } else {
-        showToast('error', result.error || 'Failed to create tag');
-      }
-    } catch (error) {
-      console.error('Error creating tag:', error);
-      showToast('error', 'Failed to create tag');
     }
   };
 
@@ -358,7 +364,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
 
       if (result?.success) {
         showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
-        
+
         // For new content creation, update the URL without reload
         if (!itemId && result.article) {
           // Update URL without navigation to avoid reload
@@ -891,8 +897,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
               <ImageIcon className="h-5 w-5 mr-2" />
-              Featured Image
-            </h3>
+              Featured Image            </h3>
 
             {formData.featured_image ? (
               <div className="space-y-4">
