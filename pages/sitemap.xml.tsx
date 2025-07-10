@@ -7,7 +7,7 @@ const SitemapXml = () => null;
 export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   try {
     // Generate main sitemap index with ISR-like caching
-    const sitemap = await sitemapService.generateMainSitemap();
+    const sitemap = await sitemapService.generateMainSitemapIndex();
 
     res.setHeader('Content-Type', 'application/xml');
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400'); // ISR-like caching
