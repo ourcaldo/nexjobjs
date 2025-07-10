@@ -31,7 +31,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
   const [loadingBookmarks, setLoadingBookmarks] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'bookmarks'>('profile');
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    full_name: string;
+    phone: string;
+    birth_date: string;
+    gender: 'male' | 'female' | 'other' | '';
+    location: string;
+    bio: string;
+  }>({
     full_name: '',
     phone: '',
     birth_date: '',
@@ -180,9 +187,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
 
     setSaving(true);
     try {
+      // Prepare data with proper types
+      const updateData = {
+        full_name: formData.full_name,
+        phone: formData.phone,
+        birth_date: formData.birth_date,
+        gender: formData.gender === '' ? undefined : formData.gender as 'male' | 'female' | 'other',
+        location: formData.location,
+        bio: formData.bio
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update(formData)
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) {
@@ -190,7 +207,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
         return;
       }
 
-      setProfile(prev => prev ? { ...prev, ...formData } : null);
+      setProfile(prev => prev ? { ...prev, ...updateData } : null);
       showToast('success', 'Profil berhasil disimpan');
     } catch (error) {
       console.error('Error saving profile:', error);
