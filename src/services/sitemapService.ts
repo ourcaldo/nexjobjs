@@ -1,5 +1,6 @@
 import { supabaseAdminService } from './supabaseAdminService';
 import { wpService } from './wpService';
+import { cmsArticleService } from './cmsArticleService';
 import { Job } from '@/types/job';
 import { getCurrentDomain } from '@/lib/env';
 
@@ -21,27 +22,27 @@ interface CachedSitemapData {
 class SitemapService {
   private readonly ITEMS_PER_SITEMAP = 100;
   private readonly CACHE_KEY_DATA = 'sitemap_all_data';
-  
+
   // ISR-like cache for sitemap data
   private sitemapDataCache: CachedSitemapData | null = null;
   private sitemapXmlCache: Map<string, { xml: string; timestamp: number }> = new Map();
-  
+
   // Check if sitemap data cache is valid based on admin settings
   private async isSitemapDataCacheValid(): Promise<boolean> {
     if (!this.sitemapDataCache) return false;
-    
+
     try {
       const settings = await supabaseAdminService.getSettings();
-      
+
       // Check if settings is defined before accessing its properties
       if (!settings) {
         console.warn('Settings not available for cache validation, assuming cache is invalid');
         return false;
       }
-      
+
       const cacheAge = Date.now() - this.sitemapDataCache.timestamp;
       const maxAge = settings.sitemap_update_interval * 60 * 1000; // Convert minutes to milliseconds
-      
+
       return cacheAge < maxAge;
     } catch (error) {
       console.error('Error checking sitemap cache validity:', error);
@@ -53,19 +54,19 @@ class SitemapService {
   private async isXmlCacheValid(key: string): Promise<boolean> {
     const cached = this.sitemapXmlCache.get(key);
     if (!cached) return false;
-    
+
     try {
       const settings = await supabaseAdminService.getSettings();
-      
+
       // Check if settings is defined before accessing its properties
       if (!settings) {
         console.warn('Settings not available for XML cache validation, assuming cache is invalid');
         return false;
       }
-      
+
       const cacheAge = Date.now() - cached.timestamp;
       const maxAge = settings.sitemap_update_interval * 60 * 1000;
-      
+
       return cacheAge < maxAge;
     } catch (error) {
       console.error('Error checking XML cache validity:', error);
@@ -76,7 +77,7 @@ class SitemapService {
   // Generate main sitemap index with ISR-like caching
   async generateMainSitemapIndex(): Promise<string> {
     const cacheKey = 'main_index';
-    
+
     // Check XML cache first
     if (await this.isXmlCacheValid(cacheKey)) {
       const cached = this.sitemapXmlCache.get(cacheKey);
@@ -89,7 +90,7 @@ class SitemapService {
     console.log('Generating fresh main sitemap index');
     const baseUrl = getCurrentDomain();
     const lastmod = new Date().toISOString();
-    
+
     const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
@@ -118,7 +119,7 @@ class SitemapService {
   // Generate loker directory sitemap with ISR-like caching
   async generateLokerDirectorySitemap(): Promise<string> {
     const cacheKey = 'loker_directory';
-    
+
     // Check XML cache first
     if (await this.isXmlCacheValid(cacheKey)) {
       const cached = this.sitemapXmlCache.get(cacheKey);
@@ -131,10 +132,10 @@ class SitemapService {
     console.log('Generating fresh loker directory sitemap');
     const baseUrl = getCurrentDomain();
     const lastmod = new Date().toISOString();
-    
+
     // Get all data and cache it
     const { jobPages } = await this.getAllSitemapData();
-    
+
     let sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
 
@@ -162,7 +163,7 @@ class SitemapService {
   // Generate artikel directory sitemap with ISR-like caching
   async generateArtikelDirectorySitemap(): Promise<string> {
     const cacheKey = 'artikel_directory';
-    
+
     // Check XML cache first
     if (await this.isXmlCacheValid(cacheKey)) {
       const cached = this.sitemapXmlCache.get(cacheKey);
@@ -175,10 +176,10 @@ class SitemapService {
     console.log('Generating fresh artikel directory sitemap');
     const baseUrl = getCurrentDomain();
     const lastmod = new Date().toISOString();
-    
+
     // Get all data and cache it
     const { articlePages } = await this.getAllSitemapData();
-    
+
     let sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
 
@@ -206,7 +207,7 @@ class SitemapService {
   // Generate pages sitemap with ISR-like caching
   async generatePagesSitemap(): Promise<string> {
     const cacheKey = 'pages';
-    
+
     // Check XML cache first
     if (await this.isXmlCacheValid(cacheKey)) {
       const cached = this.sitemapXmlCache.get(cacheKey);
@@ -219,7 +220,7 @@ class SitemapService {
     console.log('Generating fresh pages sitemap');
     const baseUrl = getCurrentDomain();
     const lastmod = new Date().toISOString();
-    
+
     const pages: SitemapItem[] = [
       {
         url: `${baseUrl}/`,
@@ -242,7 +243,7 @@ class SitemapService {
     ];
 
     const xml = this.generateSitemapXml(pages);
-    
+
     // Cache the XML
     this.sitemapXmlCache.set(cacheKey, {
       xml,
@@ -255,7 +256,7 @@ class SitemapService {
   // Generate jobs sitemap for specific page with ISR-like caching
   async generateJobsSitemap(jobs: Job[], page: number): Promise<string> {
     const cacheKey = `loker_${page}`;
-    
+
     // Check XML cache first
     if (await this.isXmlCacheValid(cacheKey)) {
       const cached = this.sitemapXmlCache.get(cacheKey);
@@ -267,7 +268,7 @@ class SitemapService {
 
     console.log(`Generating fresh jobs sitemap for page ${page}`);
     const baseUrl = getCurrentDomain();
-    
+
     const sitemapItems: SitemapItem[] = jobs.map(job => ({
       url: `${baseUrl}/lowongan-kerja/${job.slug}/`,
       lastmod: this.formatDateForSitemap(job.created_at || new Date().toISOString()),
@@ -276,7 +277,7 @@ class SitemapService {
     }));
 
     const xml = this.generateSitemapXml(sitemapItems);
-    
+
     // Cache the XML
     this.sitemapXmlCache.set(cacheKey, {
       xml,
@@ -289,7 +290,7 @@ class SitemapService {
   // Generate articles sitemap for specific page with ISR-like caching
   async generateArticlesSitemap(articles: any[], page: number): Promise<string> {
     const cacheKey = `artikel_${page}`;
-    
+
     // Check XML cache first
     if (await this.isXmlCacheValid(cacheKey)) {
       const cached = this.sitemapXmlCache.get(cacheKey);
@@ -301,7 +302,7 @@ class SitemapService {
 
     console.log(`Generating fresh articles sitemap for page ${page}`);
     const baseUrl = getCurrentDomain();
-    
+
     const sitemapItems: SitemapItem[] = articles.map(article => ({
       url: `${baseUrl}/artikel/${article.slug}/`,
       lastmod: this.formatDateForSitemap(article.modified || article.date || new Date().toISOString()),
@@ -310,7 +311,7 @@ class SitemapService {
     }));
 
     const xml = this.generateSitemapXml(sitemapItems);
-    
+
     // Cache the XML
     this.sitemapXmlCache.set(cacheKey, {
       xml,
@@ -332,7 +333,7 @@ class SitemapService {
           return chunk;
         }
       }
-      
+
       console.log(`No cached job chunk found for page ${pageNumber}`);
       return null;
     } catch (error) {
@@ -353,7 +354,7 @@ class SitemapService {
           return chunk;
         }
       }
-      
+
       console.log(`No cached article chunk found for page ${pageNumber}`);
       return null;
     } catch (error) {
@@ -430,10 +431,10 @@ class SitemapService {
 
       // If no cache or cache expired, fetch fresh data
       console.log('Fetching fresh sitemap data (cache expired or not found)...');
-      
+
       // Initialize wpService with current admin settings
       const settings = await supabaseAdminService.getSettings();
-      
+
       // Check if settings is defined before accessing its properties
       if (!settings) {
         console.warn('Settings not available for sitemap data, using fallback configuration');
@@ -445,7 +446,7 @@ class SitemapService {
           articlePages: 1
         };
       }
-      
+
       wpService.setBaseUrl(settings.api_url);
       wpService.setFiltersApiUrl(settings.filters_api_url);
       wpService.setAuthToken(settings.auth_token || '');
@@ -560,7 +561,7 @@ class SitemapService {
     if (!array || array.length === 0) {
       return [];
     }
-    
+
     const chunks: T[][] = [];
     for (let i = 0; i < array.length; i += chunkSize) {
       chunks.push(array.slice(i, i + chunkSize));
@@ -572,13 +573,13 @@ class SitemapService {
   async shouldRegenerateSitemap(): Promise<boolean> {
     try {
       const settings = await supabaseAdminService.getSettings();
-      
+
       // Check if settings is defined before accessing its properties
       if (!settings) {
         console.warn('Settings not available for sitemap regeneration check, defaulting to regenerate');
         return true;
       }
-      
+
       if (!settings.auto_generate_sitemap) {
         return false;
       }
@@ -612,6 +613,104 @@ class SitemapService {
     <lastmod>${new Date().toISOString()}</lastmod>
   </sitemap>
 </sitemapindex>`;
+  }
+
+  // Get all sitemap data and cache it
+  async getAllSitemapData(): Promise<{
+    jobs: any[];
+    articles: any[];
+    jobPages: number;
+    articlePages: number;
+  }> {
+    const cacheKey = 'all-sitemap-data';
+
+    // Check cache first
+    if (await this.isCacheValid(cacheKey)) {
+      const cached = this.sitemapCache.get(cacheKey);
+      if (cached) {
+        console.log('Using cached sitemap data (ISR-like)');
+        return cached;
+      }
+    }
+
+    console.log('Fetching fresh sitemap data (cache expired or not found)...');
+
+    const [jobsData, articlesData] = await Promise.all([
+      wpService.getAllJobs(),
+      this.getCmsArticles()
+    ]);
+
+    const jobs = jobsData.jobs || [];
+    const articles = articlesData.articles || [];
+
+    // Calculate pages (100 items per page)
+    const jobPages = Math.ceil(jobs.length / 100);
+    const articlePages = Math.ceil(articles.length / 100);
+
+    const data = {
+      jobs,
+      articles,
+      jobPages,
+      articlePages
+    };
+
+    // Cache the data
+    this.sitemapCache.set(cacheKey, data);
+
+    console.log(`Sitemap data: ${jobs.length} jobs (${jobPages} pages), ${articles.length} articles (${articlePages} pages)`);
+    console.log('Sitemap data cached with ISR-like behavior');
+
+    return data;
+  }
+
+  // Get CMS articles for sitemap
+  async getCmsArticles(): Promise<{ articles: any[] }> {
+    try {
+      const { articles } = await cmsArticleService.getPublishedArticles(10000, 0);
+
+      return {
+        articles: articles.map(article => ({
+          slug: article.slug,
+          title: article.title,
+          excerpt: article.excerpt,
+          date: article.published_at || article.post_date,
+          modified: article.updated_at,
+          categories: article.categories || [],
+          category: article.categories?.[0]?.slug || 'uncategorized'
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching CMS articles for sitemap:', error);
+      return { articles: [] };
+    }
+  }
+
+  // Generate articles sitemap
+  async generateArticlesSitemap(articles: any[], pageNumber: number = 1): Promise<string> {
+    const baseUrl = getCurrentDomain();
+    const lastmod = new Date().toISOString();
+
+    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+
+    articles.forEach((article) => {
+      const categorySlug = article.category || 'uncategorized';
+      const url = `${baseUrl}/artikel/${categorySlug}/${article.slug}/`;
+      const priority = '0.8';
+
+      sitemap += `
+  <url>
+    <loc>${url}</loc>
+    <lastmod>${article.modified || article.date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${priority}</priority>
+  </url>`;
+    });
+
+    sitemap += `
+</urlset>`;
+
+    return sitemap;
   }
 }
 

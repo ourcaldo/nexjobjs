@@ -513,7 +513,7 @@ class CmsArticleService {
         `)
         .eq('category_id', category.id)
         .eq('article.status', 'published')
-        .order('article.published_at', { ascending: false })
+        .order('article(published_at)', { ascending: false })
         .range(offset, offset + limit - 1);
 
       if (relationsError) {

@@ -4,7 +4,7 @@ import { getCurrentDomain } from '@/lib/env';
 
 export const generateWebsiteSchema = (settings: AdminSettings) => {
   const baseUrl = getCurrentDomain();
-  
+
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -33,7 +33,7 @@ export const generateWebsiteSchema = (settings: AdminSettings) => {
 
 export const generateOrganizationSchema = () => {
   const baseUrl = getCurrentDomain();
-  
+
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -68,7 +68,7 @@ const mapEmploymentType = (tipeKerja: string): string => {
     'Magang': 'INTERN',
     'Intern': 'INTERN'
   };
-  
+
   return mapping[tipeKerja] || 'FULL_TIME';
 };
 
@@ -77,7 +77,7 @@ const extractSalaryInfo = (gaji: string) => {
   if (!gaji || gaji === 'Negosiasi' || gaji.toLowerCase().includes('negosiasi')) {
     return null;
   }
-  
+
   return {
     "@type": "MonetaryAmount",
     "currency": "IDR",
@@ -91,11 +91,11 @@ const extractSalaryInfo = (gaji: string) => {
 
 export const generateJobPostingSchema = (job: Job) => {
   const baseUrl = getCurrentDomain();
-  
+
   // Calculate valid through date (30 days from posting date)
   const postedDate = new Date(job.created_at || Date.now());
   const validThrough = new Date(postedDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-  
+
   return {
     "@context": "https://schema.org",
     "@type": "JobPosting",
@@ -138,7 +138,7 @@ export const generateJobPostingSchema = (job: Job) => {
 
 export const generateBreadcrumbSchema = (items: Array<{ label: string; href?: string }>) => {
   const baseUrl = getCurrentDomain();
-  
+
   const itemListElement = items.map((item, index) => ({
     "@type": "ListItem",
     "position": index + 1,
@@ -163,10 +163,10 @@ export const generateBreadcrumbSchema = (items: Array<{ label: string; href?: st
 
 export const generateArticleSchema = (article: any) => {
   const baseUrl = getCurrentDomain();
-  
+
   // Handle both WordPress articles and CMS articles
   const isWordPressArticle = article.title?.rendered !== undefined;
-  
+
   if (isWordPressArticle) {
     // WordPress article structure
     return {
@@ -232,7 +232,7 @@ export const generateArticleSchema = (article: any) => {
 
 export const generatePageSchema = (page: NxdbPage) => {
   const baseUrl = getCurrentDomain();
-  
+
   // Generate schema based on the page's schema types
   const schemas = page.schema_types.map(schemaType => {
     const baseSchema = {
@@ -267,7 +267,7 @@ export const generatePageSchema = (page: NxdbPage) => {
           "articleSection": page.categories?.[0]?.name || "General",
           "keywords": page.tags?.map(tag => tag.name).join(", ") || ""
         };
-      
+
       case 'WebPage':
         return {
           ...baseSchema,
@@ -276,7 +276,7 @@ export const generatePageSchema = (page: NxdbPage) => {
             "text": page.content.replace(/<[^>]*>/g, '').substring(0, 300)
           }
         };
-      
+
       case 'Product':
         return {
           ...baseSchema,
@@ -286,7 +286,7 @@ export const generatePageSchema = (page: NxdbPage) => {
             "name": "Nexjob"
           }
         };
-      
+
       case 'FAQPage':
         return {
           ...baseSchema,
@@ -299,7 +299,7 @@ export const generatePageSchema = (page: NxdbPage) => {
             }
           }
         };
-      
+
       case 'LocalBusiness':
         return {
           ...baseSchema,
@@ -310,7 +310,7 @@ export const generatePageSchema = (page: NxdbPage) => {
           "telephone": "+62-xxx-xxxx-xxxx",
           "openingHours": "Mo-Fr 09:00-17:00"
         };
-      
+
       case 'Event':
         return {
           ...baseSchema,
@@ -328,7 +328,7 @@ export const generatePageSchema = (page: NxdbPage) => {
             "name": "Nexjob"
           }
         };
-      
+
       default:
         return baseSchema;
     }
@@ -346,7 +346,7 @@ export const generatePageSchema = (page: NxdbPage) => {
 
 export const generateJobListingSchema = (jobs: Job[]) => {
   const baseUrl = getCurrentDomain();
-  
+
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -385,15 +385,15 @@ export const generateJobListingSchema = (jobs: Job[]) => {
 
 export const generateArticleListingSchema = (articles: any[]) => {
   const baseUrl = getCurrentDomain();
-  
+
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
     "name": "Career Articles",
     "description": "Latest career tips and guidance articles",
     "url": `${baseUrl}/artikel/`,
-    "numberOfItems": articles.length,
-    "itemListElement": articles.slice(0, 10).map((article, index) => ({
+    "numberOfItems": Array.isArray(articles) ? articles.length : 0,
+    "itemListElement": Array.isArray(articles) ? articles.slice(0, 10).map((article, index) => ({
       "@type": "ListItem",
       "position": index + 1,
       "item": {
@@ -407,13 +407,13 @@ export const generateArticleListingSchema = (articles: any[]) => {
         "datePublished": article.date,
         "url": `${baseUrl}/artikel/${article.slug}/`
       }
-    }))
+    })) : [],
   };
 };
 
 export const generateAuthorSchema = (author: any) => {
   const baseUrl = getCurrentDomain();
-  
+
   return {
     "@context": "https://schema.org",
     "@type": "Person",

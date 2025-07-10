@@ -3,7 +3,7 @@ import { sitemapService } from '@/services/sitemapService';
 
 const SitemapArtikelXml = () => null;
 
-export const getServerSideProps: GetServerSideProps = async ({ res, query }) => {
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   try {
     // Generate artikel directory sitemap with ISR-like caching
     const sitemap = await sitemapService.generateArtikelDirectorySitemap();

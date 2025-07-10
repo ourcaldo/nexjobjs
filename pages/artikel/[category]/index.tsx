@@ -1,5 +1,5 @@
 
-import { GetServerSideProps } from 'next';
+import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
 import { cmsArticleService } from '@/services/cmsArticleService';
 import { NxdbArticle, NxdbArticleCategory } from '@/lib/supabase';
@@ -232,7 +232,7 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   const categorySlug = params?.category as string;
   
   try {
@@ -256,12 +256,33 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         category,
         allCategories,
         total: articlesData.total
-      }
+      },
+      revalidate: 3600, // 1 hour ISR revalidation
     };
   } catch (error) {
     console.error('Error fetching articles:', error);
     return {
       notFound: true
+    };
+  }
+};
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  try {
+    const categories = await cmsArticleService.getCategories();
+    const paths = categories.map(category => ({
+      params: { category: category.slug }
+    }));
+    
+    return {
+      paths,
+      fallback: 'blocking'
+    };
+  } catch (error) {
+    console.error('Error generating static paths:', error);
+    return {
+      paths: [],
+      fallback: 'blocking'
     };
   }
 };

@@ -4,15 +4,10 @@ import { supabaseAdminService } from '@/services/supabaseAdminService';
 
 const SitemapXml = () => null;
 
-export const getServerSideProps: GetServerSideProps = async ({ res, query }) => {
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   try {
     // Generate main sitemap index with ISR-like caching
-    const sitemap = await sitemapService.generateMainSitemapIndex();
-
-    // Update last generation timestamp only if not using cache
-    if (!query.force) {
-      await supabaseAdminService.updateLastSitemapGeneration();
-    }
+    const sitemap = await sitemapService.generateMainSitemap();
 
     res.setHeader('Content-Type', 'application/xml');
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400'); // ISR-like caching
@@ -21,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = async ({ res, query }) => 
   } catch (error) {
     console.error('Error generating main sitemap:', error);
     res.statusCode = 500;
-    res.end('Error generating sitemap');
+    res.end('Error generating main sitemap');
   }
 
   return { props: {} };

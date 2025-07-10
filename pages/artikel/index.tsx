@@ -1,5 +1,5 @@
 
-import { GetServerSideProps } from 'next';
+import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { cmsArticleService } from '@/services/cmsArticleService';
 import { NxdbArticle, NxdbArticleCategory } from '@/lib/supabase';
@@ -230,7 +230,7 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
     const [articlesData, categories] = await Promise.all([
       cmsArticleService.getPublishedArticles(20, 0),
@@ -242,7 +242,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
         articles: articlesData.articles,
         categories,
         total: articlesData.total
-      }
+      },
+      revalidate: 3600, // 1 hour ISR revalidation
     };
   } catch (error) {
     console.error('Error fetching articles:', error);
@@ -251,7 +252,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
         articles: [],
         categories: [],
         total: 0
-      }
+      },
+      revalidate: 3600,
     };
   }
 };
