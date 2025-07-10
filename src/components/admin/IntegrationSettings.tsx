@@ -6,16 +6,13 @@ import { useToast } from '@/components/ui/ToastProvider';
 const IntegrationSettings: React.FC = () => {
   const { showToast } = useToast();
   const [settings, setSettings] = useState({
-    // Supabase Database Configuration
-    database_supabase_url: '',
-    database_supabase_anon_key: '',
-    database_supabase_service_role_key: '',
-    // Supabase Storage Configuration
-    supabase_bucket_name: '',
-    supabase_storage_endpoint: '',
-    supabase_storage_region: '',
-    supabase_storage_access_key: '',
-    supabase_storage_secret_key: ''
+    // WordPress API Configuration
+    api_url: '',
+    filters_api_url: '',
+    auth_token: '',
+    wp_posts_api_url: '',
+    wp_jobs_api_url: '',
+    wp_auth_token: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,14 +25,12 @@ const IntegrationSettings: React.FC = () => {
       const adminSettings = await supabaseAdminService.getSettings();
       if (adminSettings) {
         setSettings({
-          database_supabase_url: adminSettings.database_supabase_url || '',
-          database_supabase_anon_key: adminSettings.database_supabase_anon_key || '',
-          database_supabase_service_role_key: adminSettings.database_supabase_service_role_key || '',
-          supabase_bucket_name: adminSettings.supabase_bucket_name || '',
-          supabase_storage_endpoint: adminSettings.supabase_storage_endpoint || '',
-          supabase_storage_region: adminSettings.supabase_storage_region || '',
-          supabase_storage_access_key: adminSettings.supabase_storage_access_key || '',
-          supabase_storage_secret_key: adminSettings.supabase_storage_secret_key || ''
+          api_url: adminSettings.api_url || '',
+          filters_api_url: adminSettings.filters_api_url || '',
+          auth_token: adminSettings.auth_token || '',
+          wp_posts_api_url: adminSettings.wp_posts_api_url || '',
+          wp_jobs_api_url: adminSettings.wp_jobs_api_url || '',
+          wp_auth_token: adminSettings.wp_auth_token || ''
         });
       }
     } catch (error) {
@@ -63,48 +58,48 @@ const IntegrationSettings: React.FC = () => {
     setTestResults(null);
 
     try {
-      // Test database connection
-      const dbTest = {
-        name: 'Supabase Database',
+      // Test WordPress API connection
+      const wpApiTest = {
+        name: 'WordPress API',
         success: false,
         error: ''
       };
 
-      // Test storage connection
-      const storageTest = {
-        name: 'Supabase Storage',
+      // Test filters API connection
+      const filtersApiTest = {
+        name: 'Filters API',
         success: false,
         error: ''
       };
 
       // Simple validation tests
-      if (settings.database_supabase_url && settings.database_supabase_anon_key) {
+      if (settings.api_url) {
         try {
           // Basic URL validation
-          new URL(settings.database_supabase_url);
-          dbTest.success = true;
+          new URL(settings.api_url);
+          wpApiTest.success = true;
         } catch (error) {
-          dbTest.error = 'Invalid Supabase URL format';
+          wpApiTest.error = 'Invalid WordPress API URL format';
         }
       } else {
-        dbTest.error = 'Missing required database configuration';
+        wpApiTest.error = 'Missing WordPress API URL';
       }
 
-      if (settings.supabase_storage_endpoint && settings.supabase_bucket_name) {
+      if (settings.filters_api_url) {
         try {
           // Basic URL validation
-          new URL(settings.supabase_storage_endpoint);
-          storageTest.success = true;
+          new URL(settings.filters_api_url);
+          filtersApiTest.success = true;
         } catch (error) {
-          storageTest.error = 'Invalid storage endpoint format';
+          filtersApiTest.error = 'Invalid Filters API URL format';
         }
       } else {
-        storageTest.error = 'Missing required storage configuration';
+        filtersApiTest.error = 'Missing Filters API URL';
       }
 
       const results = {
-        success: dbTest.success && storageTest.success,
-        tests: [dbTest, storageTest]
+        success: wpApiTest.success && filtersApiTest.success,
+        tests: [wpApiTest, filtersApiTest]
       };
 
       setTestResults(results);
@@ -172,172 +167,121 @@ const IntegrationSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Database Configuration */}
+      {/* WordPress API Configuration */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <Database className="h-6 w-6 mr-3 text-primary-600" />
-            Supabase Database Configuration
+            <Globe className="h-6 w-6 mr-3 text-primary-600" />
+            WordPress API Configuration
           </h2>
           <p className="mt-1 text-sm text-gray-600">
-            Configure your Supabase database connection settings.
+            Configure your WordPress headless CMS connection settings.
           </p>
         </div>
 
         <div className="p-6 space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Supabase URL
+              WordPress API Base URL
             </label>
             <input
               type="url"
-              name="database_supabase_url"
-              value={settings.database_supabase_url}
+              name="api_url"
+              value={settings.api_url}
               onChange={handleInputChange}
-              placeholder="https://uzlzyosmbxgghhmafidk.supabase.co"
+              placeholder="https://cms.nexjob.tech/wp-json/wp/v2"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Your Supabase project URL
+              Base URL for WordPress REST API
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Supabase Anon Key
-              </label>
-              <input
-                type="password"
-                name="database_supabase_anon_key"
-                value={settings.database_supabase_anon_key}
-                onChange={handleInputChange}
-                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Public anonymous key for client-side operations
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Supabase Service Role Key
-              </label>
-              <input
-                type="password"
-                name="database_supabase_service_role_key"
-                value={settings.database_supabase_service_role_key}
-                onChange={handleInputChange}
-                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Service role key for server-side operations (keep secret!)
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Storage Configuration */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <HardDrive className="h-6 w-6 mr-3 text-primary-600" />
-            Supabase Storage Configuration
-          </h2>
-          <p className="mt-1 text-sm text-gray-600">
-            Configure your Supabase storage settings for file uploads.
-          </p>
-        </div>
-
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Storage Bucket Name
-              </label>
-              <input
-                type="text"
-                name="supabase_bucket_name"
-                value={settings.supabase_bucket_name}
-                onChange={handleInputChange}
-                placeholder="nexjob"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Name of your Supabase storage bucket
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Storage Region
-              </label>
-              <input
-                type="text"
-                name="supabase_storage_region"
-                value={settings.supabase_storage_region}
-                onChange={handleInputChange}
-                placeholder="ap-southeast-1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                AWS region for your storage bucket
-              </p>
-            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Storage Endpoint
+              Filters API URL
             </label>
             <input
               type="url"
-              name="supabase_storage_endpoint"
-              value={settings.supabase_storage_endpoint}
+              name="filters_api_url"
+              value={settings.filters_api_url}
               onChange={handleInputChange}
-              placeholder="https://uzlzyosmbxgghhmafidk.supabase.co/storage/v1/s3"
+              placeholder="https://cms.nexjob.tech/wp-json/nex/v1/filters-data"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
             />
             <p className="mt-1 text-xs text-gray-500">
-              S3-compatible storage endpoint URL
+              Custom API endpoint for filter data
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Storage Access Key
+                Posts API URL
               </label>
               <input
-                type="password"
-                name="supabase_storage_access_key"
-                value={settings.supabase_storage_access_key}
+                type="url"
+                name="wp_posts_api_url"
+                value={settings.wp_posts_api_url}
                 onChange={handleInputChange}
-                placeholder="642928fa32b65d648ce65ea04c64100e"
+                placeholder="https://cms.nexjob.tech/wp-json/wp/v2/posts"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
               />
               <p className="mt-1 text-xs text-gray-500">
-                S3 access key for storage operations
+                WordPress posts endpoint
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Storage Secret Key
+                Jobs API URL
               </label>
               <input
-                type="password"
-                name="supabase_storage_secret_key"
-                value={settings.supabase_storage_secret_key}
+                type="url"
+                name="wp_jobs_api_url"
+                value={settings.wp_jobs_api_url}
                 onChange={handleInputChange}
-                placeholder="082c3ce06c08ba1b347af99f16ff634fd12b4949a6cdda16df30dcc5741609dc"
+                placeholder="https://cms.nexjob.tech/wp-json/wp/v2/lowongan-kerja"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
               />
               <p className="mt-1 text-xs text-gray-500">
-                S3 secret key for storage operations (keep secret!)
+                Custom post type endpoint for jobs
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Legacy Auth Token
+              </label>
+              <input
+                type="password"
+                name="auth_token"
+                value={settings.auth_token}
+                onChange={handleInputChange}
+                placeholder="your-auth-token"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Legacy authentication token (if required)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                WordPress Auth Token
+              </label>
+              <input
+                type="password"
+                name="wp_auth_token"
+                value={settings.wp_auth_token}
+                onChange={handleInputChange}
+                placeholder="your-wp-auth-token"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                WordPress authentication token for API access
               </p>
             </div>
           </div>

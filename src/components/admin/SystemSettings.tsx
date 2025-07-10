@@ -30,8 +30,9 @@ const SystemSettings: React.FC = () => {
 
   
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
+      setLoading(true);
       const adminSettings = await supabaseAdminService.getSettings();
       if (adminSettings) {
         setSettings({
@@ -58,7 +59,7 @@ const SystemSettings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -67,6 +68,10 @@ const SystemSettings: React.FC = () => {
       [name]: value
     }));
   };
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const saveSettings = async () => {
     setSaving(true);

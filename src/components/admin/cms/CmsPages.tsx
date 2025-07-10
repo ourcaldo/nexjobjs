@@ -317,30 +317,37 @@ const CmsPages: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDistance(new Date(item.updated_at), new Date(), { addSuffix: true })}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => handleEdit(item.id)}
-                      className="text-primary-600 hover:text-primary-900"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    {item.status === 'published' && (
-                      <Link
-                        href={`/${activeContentType === 'articles' ? 'artikel' : ''}${item.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => handleEdit(item.id)}
+                          className="text-primary-600 hover:text-primary-900 p-1"
+                          title="Edit"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+
+                        {item.status === 'published' && (
+                          <a
+                            href={getPreviewUrl(item)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-600 hover:text-green-900 p-1"
+                            title="Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </a>
+                        )}
+
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
                 </tr>
               ))}
             </tbody>
@@ -348,6 +355,18 @@ const CmsPages: React.FC = () => {
         </div>
       </div>
     );
+  };
+
+  const getPreviewUrl = (item: any) => {
+    if (activeContentType === 'pages') {
+      return `/${item.slug}`;
+    } else if (activeContentType === 'articles') {
+      // Get primary category for article URL structure
+      const primaryCategory = item.categories?.[0];
+      const categorySlug = primaryCategory?.slug || 'uncategorized';
+      return `/artikel/${categorySlug}/${item.slug}`;
+    }
+    return '#';
   };
 
   return (
