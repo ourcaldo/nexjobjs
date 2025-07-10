@@ -170,11 +170,16 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
       );
 
       if (result.success && result.url) {
+        // Update state immediately without reload
+        const imageUrl = typeof result.url === 'string' ? result.url : '';
         setFormData(prev => ({ 
           ...prev, 
-          featured_image: typeof result.url === 'string' ? result.url : '' 
+          featured_image: imageUrl
         }));
         showToast('success', 'Image uploaded successfully');
+        
+        // Clear the input to allow re-upload of same file if needed
+        e.target.value = '';
       } else {
         showToast('error', result.error || 'Failed to upload image');
       }
@@ -192,8 +197,15 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     try {
       const result = await cmsArticleService.createCategory(newCategoryName.trim());
       if (result.success && result.category) {
-        setCategories(prev => [...prev, result.category!]);
-        setSelectedCategories(prev => [...prev, result.category!.id]);
+        // Update state immediately without reload
+        setCategories(prev => {
+          const updated = [...prev, result.category!];
+          return updated;
+        });
+        setSelectedCategories(prev => {
+          const updated = [...prev, result.category!.id];
+          return updated;
+        });
         setNewCategoryName('');
         showToast('success', 'Category created successfully');
       } else {
@@ -211,8 +223,15 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     try {
       const result = await cmsArticleService.createTag(newTagName.trim());
       if (result.success && result.tag) {
-        setTags(prev => [...prev, result.tag!]);
-        setSelectedTags(prev => [...prev, result.tag!.id]);
+        // Update state immediately without reload
+        setTags(prev => {
+          const updated = [...prev, result.tag!];
+          return updated;
+        });
+        setSelectedTags(prev => {
+          const updated = [...prev, result.tag!.id];
+          return updated;
+        });
         setNewTagName('');
         showToast('success', 'Tag created successfully');
       } else {
