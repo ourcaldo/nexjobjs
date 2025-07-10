@@ -223,7 +223,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const handleCreateCategory = async (e?: React.FormEvent) => {
+  const handleCreateCategory = async (e?: React.FormEvent | React.KeyboardEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -248,7 +248,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const handleCreateTag = async (e?: React.FormEvent) => {
+  const handleCreateTag = async (e?: React.FormEvent | React.KeyboardEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -397,270 +397,289 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
   }
 
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }}>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push('/backend/admin/cms');
-                }}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push('/backend/admin/cms');
+              }}
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {itemId ? `Edit ${getContentTypeName()}` : `Add New ${getContentTypeName()}`}
+              </h1>
+              <p className="text-gray-600">
+                {itemId ? `Update your ${getContentTypeName().toLowerCase()} content and settings` : `Create a new ${getContentTypeName().toLowerCase()}`}
+              </p>
+            </div>
+          </div>
+
+          {formData.status === 'published' && getPreviewUrl() && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(getPreviewUrl()!, '_blank', 'noopener,noreferrer');
+              }}
+              className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Title and Slug */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="space-y-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {itemId ? `Edit ${getContentTypeName()}` : `Add New ${getContentTypeName()}`}
-                </h1>
-                <p className="text-gray-600">
-                  {itemId ? `Update your ${getContentTypeName().toLowerCase()} content and settings` : `Create a new ${getContentTypeName().toLowerCase()}`}
-                </p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTitleChange(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  autoComplete="off"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  placeholder={`Enter ${getContentTypeName().toLowerCase()} title`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Slug *
+                </label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-lg">
+                    {contentType === 'articles' ? `/artikel/${selectedCategories.length > 0 ? categories.find(cat => cat.id === selectedCategories[0])?.slug || 'uncategorized' : 'uncategorized'}/` : 
+                     contentType === 'pages' ? '/' : 
+                     contentType === 'jobs' ? '/lowongan-kerja/' : '/'}
+                  </span>
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSlugChange(e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    autoComplete="off"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-primary-500 focus:border-primary-500"
+                    placeholder={`${getContentTypeName().toLowerCase()}-slug`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Excerpt
+                </label>
+                <textarea
+                  value={formData.excerpt}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, excerpt: e.target.value }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  autoComplete="off"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  placeholder={`Brief description of your ${getContentTypeName().toLowerCase()}`}
+                />
               </div>
             </div>
+          </div>
 
-            {formData.status === 'published' && getPreviewUrl() && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  window.open(getPreviewUrl()!, '_blank', 'noopener,noreferrer');
-                }}
-                className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Preview
-              </button>
-            )}
+          {/* Rich Text Editor */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Content
+            </label>
+            <TiptapEditor
+              value={formData.content}
+              onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+              placeholder={`Write your ${getContentTypeName().toLowerCase()} content here...`}
+              className="w-full"
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              Use the visual editor to format your content. You can switch to preview mode to see how it will look.
+            </p>
+          </div>
+
+          {/* SEO Settings */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">SEO Settings</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  SEO Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.seo_title}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, seo_title: e.target.value }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  autoComplete="off"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Custom SEO title (optional)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Meta Description
+                </label>
+                <textarea
+                  value={formData.meta_description}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, meta_description: e.target.value }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  autoComplete="off"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Brief description for search engines"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Schema Types
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {getSchemaOptions().map((schema) => (
+                    <label key={schema} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.schema_types.includes(schema)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleSchemaChange(schema, e.target.checked);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }
+                        }}
+                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{schema}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Title and Slug */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Title *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleTitleChange(e.target.value);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                    autoComplete="off"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                    placeholder={`Enter ${getContentTypeName().toLowerCase()} title`}
-                  />
-                </div>
+        {/* Sidebar */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Publish Box */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Publish</h3>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Slug *
-                  </label>
-                  <div className="flex">
-                    <span className="inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-lg">
-                      {contentType === 'articles' ? `/artikel/${selectedCategories.length > 0 ? categories.find(cat => cat.id === selectedCategories[0])?.slug || 'uncategorized' : 'uncategorized'}/` : 
-                       contentType === 'pages' ? '/' : 
-                       contentType === 'jobs' ? '/lowongan-kerja/' : '/'}
-                    </span>
-                    <input
-                      type="text"
-                      value={formData.slug}
-                      onChange={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSlugChange(e.target.value);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }
-                      }}
-                      autoComplete="off"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-primary-500 focus:border-primary-500"
-                      placeholder={`${getContentTypeName().toLowerCase()}-slug`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Excerpt
-                  </label>
-                  <textarea
-                    value={formData.excerpt}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setFormData(prev => ({ ...prev, excerpt: e.target.value }));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                    autoComplete="off"
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                    placeholder={`Brief description of your ${getContentTypeName().toLowerCase()}`}
-                  />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Author
+                </label>
+                <div className="flex items-center">
+                  <User className="h-4 w-4 text-gray-400 mr-2" />
+                  <span className="text-sm text-gray-900">
+                    {currentUser?.full_name || currentUser?.email || 'Current User'}
+                  </span>
                 </div>
               </div>
-            </div>
 
-            {/* Rich Text Editor */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Content
-              </label>
-              <TiptapEditor
-                value={formData.content}
-                onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-                placeholder={`Write your ${getContentTypeName().toLowerCase()} content here...`}
-                className="w-full"
-              />
-              <p className="mt-2 text-xs text-gray-500">
-                Use the visual editor to format your content. You can switch to preview mode to see how it will look.
-              </p>
-            </div>
-
-            {/* SEO Settings */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">SEO Settings</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    SEO Title
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.seo_title}
-                    onChange={(e) => {
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Post Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.post_date}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, post_date: e.target.value }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
                       e.preventDefault();
                       e.stopPropagation();
-                      setFormData(prev => ({ ...prev, seo_title: e.target.value }));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                    autoComplete="off"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Custom SEO title (optional)"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Meta Description
-                  </label>
-                  <textarea
-                    value={formData.meta_description}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setFormData(prev => ({ ...prev, meta_description: e.target.value }));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                    autoComplete="off"
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Brief description for search engines"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Schema Types
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {getSchemaOptions().map((schema) => (
-                      <label key={schema} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.schema_types.includes(schema)}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            handleSchemaChange(schema, e.target.checked);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }
-                          }}
-                          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{schema}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                    }
+                  }}
+                  autoComplete="off"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                />
               </div>
-            </div>
-          </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Publish Box */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Publish</h3>
-
-              <div className="space-y-4">
+              {formData.status === 'scheduled' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Author
-                  </label>
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-900">
-                      {currentUser?.full_name || currentUser?.email || 'Current User'}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Post Date
+                    Publish Date
                   </label>
                   <input
                     type="datetime-local"
-                    value={formData.post_date}
+                    value={formData.published_at}
                     onChange={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setFormData(prev => ({ ...prev, post_date: e.target.value }));
+                      setFormData(prev => ({ ...prev, published_at: e.target.value }));
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -672,271 +691,246 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
-
-                {formData.status === 'scheduled' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Publish Date
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={formData.published_at}
-                      onChange={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFormData(prev => ({ ...prev, published_at: e.target.value }));
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }
-                      }}
-                      autoComplete="off"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-6 space-y-2">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleSave('draft');
-                  }}
-                  disabled={saving}
-                  className="w-full px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Save as Draft'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleSave('scheduled');
-                  }}
-                  disabled={saving}
-                  className="w-full px-4 py-2 text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Schedule'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleSave('published');
-                  }}
-                  disabled={saving}
-                  className="w-full px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Publish'}
-                </button>
-              </div>
-            </div>
-
-            {/* Categories */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <Folder className="h-5 w-5 mr-2" />
-                Categories
-              </h3>
-
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {categories.map((category) => (
-                  <label key={category.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(category.id)}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        if (e.target.checked) {
-                          setSelectedCategories(prev => [...prev, category.id]);
-                        } else {
-                          setSelectedCategories(prev => prev.filter(id => id !== category.id));
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }
-                      }}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">{category.name}</span>
-                  </label>
-                ))}
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={newCategoryName}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setNewCategoryName(e.target.value);
-                    }}
-                    placeholder="New category name"
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleCreateCategory();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleCreateCategory();
-                    }}
-                    className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <Tag className="h-5 w-5 mr-2" />
-                Tags
-              </h3>
-
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {tags.map((tag) => (
-                  <label key={tag.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedTags.includes(tag.id)}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        if (e.target.checked) {
-                          setSelectedTags(prev => [...prev, tag.id]);
-                        } else {
-                          setSelectedTags(prev => prev.filter(id => id !== tag.id));
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }
-                      }}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">{tag.name}</span>
-                  </label>
-                ))}
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={newTagName}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setNewTagName(e.target.value);
-                    }}
-                    placeholder="New tag name"
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleCreateTag();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleCreateTag();
-                    }}
-                    className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Featured Image */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <ImageIcon className="h-5 w-5 mr-2" />
-                Featured Image
-              </h3>
-
-              {formData.featured_image ? (
-                <div className="space-y-4">
-                  <Image
-                    src={formData.featured_image}
-                    alt="Featured image preview"
-                    width={400}
-                    height={192}
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setFormData(prev => ({ ...prev, featured_image: '' }));
-                    }}
-                    className="w-full px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
-                  >
-                    Remove Image
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    id="featured-image"
-                    disabled={uploadingImage}
-                  />
-                  <label
-                    htmlFor="featured-image"
-                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary-500 transition-colors block"
-                  >
-                    {uploadingImage ? (
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                    ) : (
-                      <ImageIcon className="h-6 w-6 mx-auto mb-2 text-gray-400" />
-                    )}
-                    <span className="text-sm text-gray-600">
-                      {uploadingImage ? 'Uploading...' : 'Click to upload image'}
-                    </span>
-                  </label>
-                </div>
               )}
             </div>
+
+            <div className="mt-6 space-y-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave('draft');
+                }}
+                disabled={saving}
+                className="w-full px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Save as Draft'}
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave('scheduled');
+                }}
+                disabled={saving}
+                className="w-full px-4 py-2 text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Schedule'}
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave('published');
+                }}
+                disabled={saving}
+                className="w-full px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Publish'}
+              </button>
+            </div>
+          </div>
+
+          {/* Categories */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+              <Folder className="h-5 w-5 mr-2" />
+              Categories
+            </h3>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {categories.map((category) => (
+                <label key={category.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      if (e.target.checked) {
+                        setSelectedCategories(prev => [...prev, category.id]);
+                      } else {
+                        setSelectedCategories(prev => prev.filter(id => id !== category.id));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">{category.name}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setNewCategoryName(e.target.value);
+                  }}
+                  placeholder="New category name"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleCreateCategory(e);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCreateCategory(e);
+                  }}
+                  className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+              <Tag className="h-5 w-5 mr-2" />
+              Tags
+            </h3>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {tags.map((tag) => (
+                <label key={tag.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      if (e.target.checked) {
+                        setSelectedTags(prev => [...prev, tag.id]);
+                      } else {
+                        setSelectedTags(prev => prev.filter(id => id !== tag.id));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">{tag.name}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={newTagName}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setNewTagName(e.target.value);
+                  }}
+                  placeholder="New tag name"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleCreateTag(e);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCreateTag(e);
+                  }}
+                  className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Featured Image */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+              <ImageIcon className="h-5 w-5 mr-2" />
+              Featured Image
+            </h3>
+
+            {formData.featured_image ? (
+              <div className="space-y-4">
+                <Image
+                  src={formData.featured_image}
+                  alt="Featured image preview"
+                  width={400}
+                  height={192}
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFormData(prev => ({ ...prev, featured_image: '' }));
+                  }}
+                  className="w-full px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  Remove Image
+                </button>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="featured-image"
+                  disabled={uploadingImage}
+                />
+                <label
+                  htmlFor="featured-image"
+                  className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary-500 transition-colors block"
+                >
+                  {uploadingImage ? (
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                  )}
+                  <span className="text-sm text-gray-600">
+                    {uploadingImage ? 'Uploading...' : 'Click to upload image'}
+                  </span>
+                </label>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </form>
+    </div>
   );
 };
 
