@@ -161,6 +161,10 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     const file = e.target.files?.[0];
     if (!file || !currentUser) return;
 
+    // Prevent any default behavior
+    e.preventDefault();
+    e.stopPropagation();
+
     setUploadingImage(true);
     try {
       const result = await supabaseStorageService.uploadFile(
@@ -191,7 +195,12 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     }
   };
 
-  const handleCreateCategory = async () => {
+  const handleCreateCategory = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!newCategoryName.trim()) return;
 
     try {
@@ -217,7 +226,12 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
     }
   };
 
-  const handleCreateTag = async () => {
+  const handleCreateTag = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!newTagName.trim()) return;
 
     try {
@@ -571,22 +585,21 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex space-x-2">
+              <form onSubmit={handleCreateCategory} className="flex space-x-2">
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="New category name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateCategory()}
                 />
                 <button
-                  onClick={handleCreateCategory}
+                  type="submit"
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-              </div>
+              </form>
             </div>
           </div>
 
@@ -618,22 +631,21 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex space-x-2">
+              <form onSubmit={handleCreateTag} className="flex space-x-2">
                 <input
                   type="text"
                   value={newTagName}
                   onChange={(e) => setNewTagName(e.target.value)}
                   placeholder="New tag name"
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateTag()}
                 />
                 <button
-                  onClick={handleCreateTag}
+                  type="submit"
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-              </div>
+              </form>
             </div>
           </div>
 
@@ -669,6 +681,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
                   className="hidden"
                   id="featured-image"
                   disabled={uploadingImage}
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <label
                   htmlFor="featured-image"

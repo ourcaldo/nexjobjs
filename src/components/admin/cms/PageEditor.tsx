@@ -160,6 +160,10 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     const file = e.target.files?.[0];
     if (!file || !currentUser) return;
 
+    // Prevent any default behavior
+    e.preventDefault();
+    e.stopPropagation();
+
     setUploadingImage(true);
     try {
       const result = await supabaseStorageService.uploadFile(

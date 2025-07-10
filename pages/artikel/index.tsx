@@ -61,8 +61,14 @@ export default function ArticlePage({
         const articlesData = await cmsArticleService.getPublishedArticles(20, 0);
         setArticles(articlesData.articles);
       } else {
-        const articlesData = await cmsArticleService.getPublishedArticlesByCategory(categorySlug, 20, 0);
-        setArticles(articlesData.articles);
+        // Filter articles client-side to ensure proper category matching
+        const articlesData = await cmsArticleService.getPublishedArticles(100, 0); // Get more articles to filter
+        const filteredArticles = articlesData.articles.filter(article => 
+          article.categories && 
+          article.categories.length > 0 && 
+          article.categories.some(cat => cat.slug === categorySlug)
+        );
+        setArticles(filteredArticles);
       }
     } catch (error) {
       console.error('Error filtering articles:', error);
@@ -227,7 +233,7 @@ export default function ArticlePage({
                       key={article.id}
                       className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group"
                     >
-                      <Link href={`/artikel/${article.categories && article.categories.length > 0 && article.categories[0] ? article.categories[0].slug : 'uncategorized'}/${article.slug}`}>
+                      <Link href={`/artikel/${article.categories && article.categories.length > 0 && article.categories[0] && article.categories[0].slug ? article.categories[0].slug : 'uncategorized'}/${article.slug}`}>
                         <div className="aspect-video relative overflow-hidden">
                           {article.featured_image ? (
                             <Image
@@ -246,7 +252,7 @@ export default function ArticlePage({
                         
                         <div className="p-6">
                           {/* Category */}
-                          {article.categories && article.categories.length > 0 && article.categories[0] && (
+                          {article.categories && article.categories.length > 0 && article.categories[0] && article.categories[0].name && (
                             <div className="mb-4">
                               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(index)}`}>
                                 <Folder className="h-3 w-3 mr-1" />
@@ -295,7 +301,7 @@ export default function ArticlePage({
                       <Eye className="h-5 w-5 mr-2 text-primary-600" />
                       Artikel Unggulan
                     </h3>
-                    <Link href={`/artikel/${featuredArticle.categories && featuredArticle.categories.length > 0 && featuredArticle.categories[0] ? featuredArticle.categories[0].slug : 'uncategorized'}/${featuredArticle.slug}`}>
+                    <Link href={`/artikel/${featuredArticle.categories && featuredArticle.categories.length > 0 && featuredArticle.categories[0] && featuredArticle.categories[0].slug ? featuredArticle.categories[0].slug : 'uncategorized'}/${featuredArticle.slug}`}>
                       <div className="group">
                         {featuredArticle.featured_image && (
                           <div className="aspect-video relative overflow-hidden rounded-lg mb-4">
@@ -330,7 +336,7 @@ export default function ArticlePage({
                       {latestArticles.map(article => (
                         <Link
                           key={article.id}
-                          href={`/artikel/${article.categories && article.categories.length > 0 && article.categories[0] ? article.categories[0].slug : 'uncategorized'}/${article.slug}`}
+                          href={`/artikel/${article.categories && article.categories.length > 0 && article.categories[0] && article.categories[0].slug ? article.categories[0].slug : 'uncategorized'}/${article.slug}`}
                           className="block group"
                         >
                           <div className="flex space-x-3">
