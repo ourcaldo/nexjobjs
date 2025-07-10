@@ -39,7 +39,7 @@ const CmsPages: React.FC = () => {
     pages: true,
     jobs: false
   });
-  
+
   // Initialize activeContentType from URL parameter
   const getInitialContentType = (): ContentType => {
     const type = router.query.type as string;
@@ -48,7 +48,7 @@ const CmsPages: React.FC = () => {
     }
     return 'pages'; // default fallback
   };
-  
+
   const [activeContentType, setActiveContentType] = useState<ContentType>(getInitialContentType());
 
   // Pages state
@@ -137,7 +137,7 @@ const CmsPages: React.FC = () => {
   const handleContentTypeChange = (type: ContentType) => {
     setActiveContentType(type);
     setFilters(prev => ({ ...prev, offset: 0 }));
-    
+
     // Update URL to reflect the content type
     router.push({
       pathname: router.pathname,

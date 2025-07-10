@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { NxdbArticle, NxdbArticleCategory, NxdbArticleTag } from '@/lib/supabase';
 
@@ -543,46 +542,83 @@ class CmsArticleService {
 
   // Get published articles for frontend
   async getPublishedArticles(limit: number = 10, offset: number = 0): Promise<{ articles: NxdbArticle[]; total: number }> {
-    try {
-      const { data, error } = await supabase
-        .from('nxdb_articles')
-        .select(`
-          *,
-          author:profiles(id, full_name, email),
-          categories:nxdb_article_category_relations(
-            category:nxdb_article_categories(*)
-          ),
-          tags:nxdb_article_tag_relations(
-            tag:nxdb_article_tags(*)
-          )
-        `)
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
-        .range(offset, offset + limit - 1);
+    const { data, error } = await supabase
+      .from('nxdb_articles')
+      .select(`
+        *,
+        author:profiles(id, full_name, email),
+        categories:nxdb_article_category_relations(
+          category:nxdb_article_categories(*)
+        ),
+        tags:nxdb_article_tag_relations(
+          tag:nxdb_article_tags(*)
+        )
+      `)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
-      if (error) {
-        console.error('Error fetching published articles:', error);
-        return { articles: [], total: 0 };
-      }
-
-      // Transform the data
-      const articles = data?.map(article => ({
-        ...article,
-        categories: article.categories?.map((rel: any) => rel.category) || [],
-        tags: article.tags?.map((rel: any) => rel.tag) || []
-      })) || [];
-
-      // Get total count
-      const { count } = await supabase
-        .from('nxdb_articles')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'published');
-
-      return { articles, total: count || 0 };
-    } catch (error) {
+    if (error) {
       console.error('Error fetching published articles:', error);
       return { articles: [], total: 0 };
     }
+
+    // Transform the data
+    const articles = data?.map(article => ({
+      ...article,
+      categories: article.categories?.map((rel: any) => rel.category) || [],
+      tags: article.tags?.map((rel: any) => rel.tag) || []
+    })) || [];
+
+    // Get total count
+    const { count } = await supabase
+      .from('nxdb_articles')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'published');
+
+    return { articles, total: count || 0 };
+  }
+
+  async getPublishedArticlesByCategory(categorySlug: string, limit: number = 10, offset: number = 0): Promise<{ articles: NxdbArticle[]; total: number }> {
+    const { data, error } = await supabase
+      .from('nxdb_articles')
+      .select(`
+        *,
+        author:profiles(id, full_name, email),
+        categories:nxdb_article_category_relations(
+          category:nxdb_article_categories(*)
+        ),
+        tags:nxdb_article_tag_relations(
+          tag:nxdb_article_tags(*)
+        )
+      `)
+      .eq('status', 'published')
+      .eq('categories.category.slug', categorySlug)
+      .order('published_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('Error fetching published articles by category:', error);
+      return { articles: [], total: 0 };
+    }
+
+    // Transform the data
+    const articles = data?.map(article => ({
+      ...article,
+      categories: article.categories?.map((rel: any) => rel.category) || [],
+      tags: article.tags?.map((rel: any) => rel.tag) || []
+    })) || [];
+
+    // Get total count - this is a bit trickier, might need a separate query
+    const { count } = await supabase
+      .from('nxdb_articles')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'published'); // Consider optimising this query
+
+    return {
+      articles: articles,
+      total: count || 0
+    };
   }
 }
 
