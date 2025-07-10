@@ -85,7 +85,9 @@ const Toast: React.FC<ToastProps> = ({ type, message, onClose, duration = 5000 }
           </div>
           <div className="ml-4 flex-shrink-0">
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 setIsVisible(false);
                 setTimeout(onClose, 300);
               }}

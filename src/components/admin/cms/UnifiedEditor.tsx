@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
@@ -141,7 +140,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       // Load content data if editing
       if (itemId) {
         let item: ContentItem | null = null;
-        
+
         if (contentType === 'articles') {
           item = await cmsArticleService.getArticleById(itemId);
         } else if (contentType === 'pages') {
@@ -431,6 +430,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.stopPropagation();
                     }
                   }}
+                  autoComplete="off"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   placeholder={`Enter ${getContentTypeName().toLowerCase()} title`}
                 />
@@ -456,6 +456,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                         e.stopPropagation();
                       }
                     }}
+                    autoComplete="off"
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-primary-500 focus:border-primary-500"
                     placeholder={`${getContentTypeName().toLowerCase()}-slug`}
                   />
@@ -475,6 +476,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.stopPropagation();
                     }
                   }}
+                  autoComplete="off"
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   placeholder={`Brief description of your ${getContentTypeName().toLowerCase()}`}
@@ -517,6 +519,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.stopPropagation();
                     }
                   }}
+                  autoComplete="off"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Custom SEO title (optional)"
                 />
@@ -535,6 +538,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.stopPropagation();
                     }
                   }}
+                  autoComplete="off"
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Brief description for search engines"
@@ -605,6 +609,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.stopPropagation();
                     }
                   }}
+                  autoComplete="off"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
@@ -624,6 +629,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                         e.stopPropagation();
                       }
                     }}
+                    autoComplete="off"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
