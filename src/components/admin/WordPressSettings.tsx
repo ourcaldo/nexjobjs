@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Save, TestTube, Loader2, CheckCircle, XCircle, Globe, Key } from 'lucide-react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { wpService } from '@/services/wpService';
 import { useToast } from '@/components/ui/ToastProvider';
-import NextLink from 'next/link'; // Import Next.js Link
-import Image from 'next/image'; // Import Next.js Image
 
 const WordPressSettings: React.FC = () => {
   const { showToast } = useToast();
@@ -20,11 +18,7 @@ const WordPressSettings: React.FC = () => {
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState<any>(null);
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const adminSettings = await supabaseAdminService.getSettings();
       if (adminSettings) {
@@ -42,7 +36,11 @@ const WordPressSettings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -143,9 +141,6 @@ const WordPressSettings: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                <NextLink href="#" className="h-4 w-4 inline mr-2">
-                  <Key className="h-4 w-4 inline mr-2" />
-                </NextLink>
                 WordPress API Base URL
               </label>
               <input
@@ -163,9 +158,6 @@ const WordPressSettings: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                <NextLink href="#" className="h-4 w-4 inline mr-2">
-                  <Key className="h-4 w-4 inline mr-2" />
-                </NextLink>
                 Filters API URL
               </label>
               <input
@@ -185,7 +177,6 @@ const WordPressSettings: React.FC = () => {
           {/* Authentication */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Key className="h-4 w-4 inline mr-2" />
               Authentication Token (Optional)
             </label>
             <input

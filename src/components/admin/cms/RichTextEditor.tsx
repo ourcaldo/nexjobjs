@@ -175,7 +175,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const insertImage = useCallback(() => {
     const url = prompt('Enter image URL:');
     if (url) {
-      insertHTML(`<img src="${url}" alt="Uploaded content" style="max-width: 100%; height: auto; margin: 10px 0;" />`);
+      insertHTML(`<img src="${url}" alt="Uploaded image" style="max-width: 100%; height: auto; margin: 10px 0;" />`);
     }
   }, [insertHTML]);
 

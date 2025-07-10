@@ -136,7 +136,7 @@ const SitemapManagement: React.FC = () => {
             Sitemap Status
           </h2>
           <p className="mt-1 text-sm text-gray-600">
-            Monitor and manage your website's sitemap generation.
+            Monitor and manage your website&apos;s sitemap generation.
           </p>
         </div>
 
