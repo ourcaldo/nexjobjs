@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { 
@@ -13,22 +14,22 @@ import {
   Plus,
   X
 } from 'lucide-react';
-import { cmsPageService, CreatePageData, UpdatePageData } from '@/services/cmsPageService';
+import { cmsArticleService, CreateArticleData, UpdateArticleData } from '@/services/cmsArticleService';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { supabaseStorageService } from '@/services/supabaseStorageService';
-import { NxdbPage, NxdbPageCategory, NxdbPageTag } from '@/lib/supabase';
+import { NxdbArticle, NxdbArticleCategory, NxdbArticleTag } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastProvider';
 import TiptapEditor from './TiptapEditor';
 
-interface PageEditorProps {
-  pageId?: string;
+interface ArticleEditorProps {
+  articleId?: string;
 }
 
-const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
+const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
   const router = useRouter();
   const { showToast } = useToast();
   
-  const [loading, setLoading] = useState(!!pageId);
+  const [loading, setLoading] = useState(!!articleId);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   
@@ -42,31 +43,31 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     featured_image: '',
     seo_title: '',
     meta_description: '',
-    schema_types: ['WebPage'] as string[],
+    schema_types: ['Article'] as string[],
     post_date: new Date().toISOString().slice(0, 16),
     published_at: ''
   });
   
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [categories, setCategories] = useState<NxdbPageCategory[]>([]);
-  const [tags, setTags] = useState<NxdbPageTag[]>([]);
+  const [categories, setCategories] = useState<NxdbArticleCategory[]>([]);
+  const [tags, setTags] = useState<NxdbArticleTag[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newTagName, setNewTagName] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   const schemaOptions = [
-    'WebPage',
-    'Article', 
-    'Product',
-    'FAQPage',
-    'LocalBusiness',
-    'Event'
+    'Article',
+    'NewsArticle', 
+    'BlogPosting',
+    'TechArticle',
+    'ScholarlyArticle',
+    'Review'
   ];
 
   useEffect(() => {
     loadInitialData();
-  }, [pageId]);
+  }, [articleId]);
 
   const loadInitialData = async () => {
     try {
@@ -76,33 +77,33 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
 
       // Load categories and tags
       const [categoriesData, tagsData] = await Promise.all([
-        cmsPageService.getCategories(),
-        cmsPageService.getTags()
+        cmsArticleService.getCategories(),
+        cmsArticleService.getTags()
       ]);
       
       setCategories(categoriesData);
       setTags(tagsData);
 
-      // Load page data if editing
-      if (pageId) {
-        const page = await cmsPageService.getPageById(pageId);
-        if (page) {
+      // Load article data if editing
+      if (articleId) {
+        const article = await cmsArticleService.getArticleById(articleId);
+        if (article) {
           setFormData({
-            title: page.title,
-            slug: page.slug,
-            content: page.content,
-            excerpt: page.excerpt,
-            status: page.status,
-            featured_image: page.featured_image || '',
-            seo_title: page.seo_title || '',
-            meta_description: page.meta_description || '',
-            schema_types: page.schema_types,
-            post_date: page.post_date.slice(0, 16),
-            published_at: page.published_at?.slice(0, 16) || ''
+            title: article.title,
+            slug: article.slug,
+            content: article.content,
+            excerpt: article.excerpt,
+            status: article.status,
+            featured_image: article.featured_image || '',
+            seo_title: article.seo_title || '',
+            meta_description: article.meta_description || '',
+            schema_types: article.schema_types,
+            post_date: article.post_date.slice(0, 16),
+            published_at: article.published_at?.slice(0, 16) || ''
           });
           
-          setSelectedCategories(page.categories?.map(cat => cat.id) || []);
-          setSelectedTags(page.tags?.map(tag => tag.id) || []);
+          setSelectedCategories(article.categories?.map(cat => cat.id) || []);
+          setSelectedTags(article.tags?.map(tag => tag.id) || []);
         }
       }
     } catch (error) {
@@ -115,7 +116,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
 
   const generateSlug = async (title: string) => {
     if (!title) return '';
-    const slug = await cmsPageService.generateUniqueSlug(title, pageId);
+    const slug = await cmsArticleService.generateUniqueSlug(title, articleId);
     return slug;
   };
 
@@ -163,7 +164,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     try {
       const result = await supabaseStorageService.uploadFile(
         file,
-        `pages/${Date.now()}-${file.name}`,
+        `articles/${Date.now()}-${file.name}`,
         file.type
       );
       
@@ -185,7 +186,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     if (!newCategoryName.trim()) return;
 
     try {
-      const result = await cmsPageService.createCategory(newCategoryName.trim());
+      const result = await cmsArticleService.createCategory(newCategoryName.trim());
       if (result.success && result.category) {
         setCategories(prev => [...prev, result.category!]);
         setSelectedCategories(prev => [...prev, result.category!.id]);
@@ -204,7 +205,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     if (!newTagName.trim()) return;
 
     try {
-      const result = await cmsPageService.createTag(newTagName.trim());
+      const result = await cmsArticleService.createTag(newTagName.trim());
       if (result.success && result.tag) {
         setTags(prev => [...prev, result.tag!]);
         setSelectedTags(prev => [...prev, result.tag!.id]);
@@ -237,7 +238,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
 
     setSaving(true);
     try {
-      const pageData = {
+      const articleData = {
         ...formData,
         status,
         author_id: currentUser.id,
@@ -248,26 +249,35 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
       };
 
       let result;
-      if (pageId) {
-        result = await cmsPageService.updatePage({ id: pageId, ...pageData } as UpdatePageData);
+      if (articleId) {
+        result = await cmsArticleService.updateArticle({ id: articleId, ...articleData } as UpdateArticleData);
       } else {
-        result = await cmsPageService.createPage(pageData as CreatePageData);
+        result = await cmsArticleService.createArticle(articleData as CreateArticleData);
       }
 
       if (result.success) {
-        showToast('success', `Page ${pageId ? 'updated' : 'created'} successfully`);
-        if (!pageId && result.page) {
-          router.push(`/backend/admin/cms/pages/edit/${result.page.id}`);
+        showToast('success', `Article ${articleId ? 'updated' : 'created'} successfully`);
+        if (!articleId && result.article) {
+          router.push(`/backend/admin/cms/articles/edit/${result.article.id}`);
         }
       } else {
-        showToast('error', result.error || `Failed to ${pageId ? 'update' : 'create'} page`);
+        showToast('error', result.error || `Failed to ${articleId ? 'update' : 'create'} article`);
       }
     } catch (error) {
-      console.error('Error saving page:', error);
-      showToast('error', `Failed to ${pageId ? 'update' : 'create'} page`);
+      console.error('Error saving article:', error);
+      showToast('error', `Failed to ${articleId ? 'update' : 'create'} article`);
     } finally {
       setSaving(false);
     }
+  };
+
+  const getPreviewUrl = () => {
+    if (!formData.slug || formData.status !== 'published') return null;
+    
+    const primaryCategory = categories.find(cat => selectedCategories.includes(cat.id));
+    const categorySlug = primaryCategory?.slug || 'uncategorized';
+    
+    return `/artikel/${categorySlug}/${formData.slug}`;
   };
 
   if (loading) {
@@ -275,7 +285,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading page editor...</p>
+          <p className="text-gray-600">Loading article editor...</p>
         </div>
       </div>
     );
@@ -295,17 +305,17 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {pageId ? 'Edit Page' : 'Add New Page'}
+                {articleId ? 'Edit Article' : 'Add New Article'}
               </h1>
               <p className="text-gray-600">
-                {pageId ? 'Update your page content and settings' : 'Create a new page for your website'}
+                {articleId ? 'Update your article content and settings' : 'Create a new article for your website'}
               </p>
             </div>
           </div>
           
-          {formData.status === 'published' && formData.slug && (
+          {formData.status === 'published' && getPreviewUrl() && (
             <a
-              href={`/${formData.slug}`}
+              href={getPreviewUrl()!}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -332,7 +342,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Enter page title"
+                  placeholder="Enter article title"
                 />
               </div>
               
@@ -342,16 +352,29 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
                 </label>
                 <div className="flex">
                   <span className="inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-lg">
-                    /
+                    /artikel/category/
                   </span>
                   <input
                     type="text"
                     value={formData.slug}
                     onChange={(e) => handleSlugChange(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="page-slug"
+                    placeholder="article-slug"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Excerpt
+                </label>
+                <textarea
+                  value={formData.excerpt}
+                  onChange={(e) => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Brief description of your article"
+                />
               </div>
             </div>
           </div>
@@ -364,7 +387,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
             <TiptapEditor
               value={formData.content}
               onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-              placeholder="Enter your page content..."
+              placeholder="Write your article content here..."
               className="w-full"
             />
             <p className="mt-2 text-xs text-gray-500">
@@ -644,4 +667,4 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
   );
 };
 
-export default PageEditor;
+export default ArticleEditor;

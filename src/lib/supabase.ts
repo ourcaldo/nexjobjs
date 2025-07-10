@@ -71,6 +71,46 @@ export interface NxdbPage {
   tags?: NxdbPageTag[];
 }
 
+// CMS Article Types
+export interface NxdbArticle {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  status: 'draft' | 'published' | 'trash' | 'scheduled';
+  author_id?: string;
+  featured_image?: string;
+  seo_title?: string;
+  meta_description?: string;
+  schema_types: string[];
+  post_date: string;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  author?: Profile;
+  categories?: NxdbArticleCategory[];
+  tags?: NxdbArticleTag[];
+}
+
+export interface NxdbArticleCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NxdbArticleTag {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface NxdbPageCategory {
   id: string;
   name: string;

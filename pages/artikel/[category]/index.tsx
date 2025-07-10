@@ -11,28 +11,30 @@ import { getCurrentDomain } from '@/lib/env';
 import { formatDistance } from 'date-fns';
 import { Calendar, User, Tag, Folder, ArrowRight } from 'lucide-react';
 
-interface ArticlePageProps {
+interface ArticleCategoryPageProps {
   articles: NxdbArticle[];
-  categories: NxdbArticleCategory[];
+  category: NxdbArticleCategory;
+  allCategories: NxdbArticleCategory[];
   total: number;
 }
 
-export default function ArticlePage({ articles, categories, total }: ArticlePageProps) {
+export default function ArticleCategoryPage({ articles, category, allCategories, total }: ArticleCategoryPageProps) {
   const currentUrl = getCurrentDomain();
   
   const breadcrumbItems = [
     { name: 'Home', href: '/' },
-    { name: 'Artikel', href: '/artikel' }
+    { name: 'Artikel', href: '/artikel' },
+    { name: category.name, href: `/artikel/${category.slug}` }
   ];
 
   const articleListingSchema = generateArticleListingSchema({
-    title: 'Artikel - Tips Karir dan Berita Kerja Terbaru',
-    description: 'Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia.',
-    url: `${currentUrl}/artikel`,
+    title: `${category.name} - Artikel ${category.name}`,
+    description: category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`,
+    url: `${currentUrl}/artikel/${category.slug}`,
     articles: articles.map(article => ({
       title: article.title,
       description: article.excerpt,
-      url: `${currentUrl}/artikel/${article.categories?.[0]?.slug || 'uncategorized'}/${article.slug}`,
+      url: `${currentUrl}/artikel/${category.slug}/${article.slug}`,
       publishDate: article.published_at || article.post_date,
       author: article.author?.full_name || article.author?.email || 'Nexjob',
       imageUrl: article.featured_image || `${currentUrl}/logo.png`
@@ -44,25 +46,25 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
   return (
     <>
       <Head>
-        <title>Artikel - Tips Karir dan Berita Kerja Terbaru - Nexjob</title>
-        <meta name="description" content="Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia. Dapatkan insight berharga untuk mengembangkan karir Anda." />
-        <meta name="keywords" content="artikel kerja, tips karir, berita kerja, panduan kerja, lowongan kerja, karir indonesia" />
+        <title>{category.name} - Artikel - Nexjob</title>
+        <meta name="description" content={category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`} />
+        <meta name="keywords" content={`${category.name}, artikel kerja, tips karir, berita kerja, panduan kerja`} />
         
         {/* Open Graph */}
-        <meta property="og:title" content="Artikel - Tips Karir dan Berita Kerja Terbaru - Nexjob" />
-        <meta property="og:description" content="Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia." />
+        <meta property="og:title" content={`${category.name} - Artikel - Nexjob`} />
+        <meta property="og:description" content={category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={`${currentUrl}/artikel`} />
+        <meta property="og:url" content={`${currentUrl}/artikel/${category.slug}`} />
         <meta property="og:image" content={`${currentUrl}/logo.png`} />
         
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Artikel - Tips Karir dan Berita Kerja Terbaru - Nexjob" />
-        <meta name="twitter:description" content="Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia." />
+        <meta name="twitter:title" content={`${category.name} - Artikel - Nexjob`} />
+        <meta name="twitter:description" content={category.description || `Baca artikel terbaru tentang ${category.name} dan tips karir terkait.`} />
         <meta name="twitter:image" content={`${currentUrl}/logo.png`} />
         
         {/* Canonical URL */}
-        <link rel="canonical" href={`${currentUrl}/artikel`} />
+        <link rel="canonical" href={`${currentUrl}/artikel/${category.slug}`} />
       </Head>
       
       <SchemaMarkup schema={[articleListingSchema, breadcrumbSchema]} />
@@ -91,14 +93,16 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
             </nav>
             
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Artikel & Tips Karir
+              {category.name}
             </h1>
-            <p className="text-lg text-gray-600 mb-6">
-              Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia.
-            </p>
+            {category.description && (
+              <p className="text-lg text-gray-600 mb-6">
+                {category.description}
+              </p>
+            )}
             
             <div className="flex items-center text-sm text-gray-500">
-              <span>{total} artikel tersedia</span>
+              <span>{total} artikel dalam kategori ini</span>
             </div>
           </div>
 
@@ -106,7 +110,7 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
             {/* Categories Sidebar */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-8">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Kategori</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Kategori Lainnya</h2>
                 <ul className="space-y-2">
                   <li>
                     <a
@@ -114,18 +118,16 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
                       className="flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                     >
                       <span>Semua Artikel</span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                        {total}
-                      </span>
+                      <ArrowRight className="h-4 w-4" />
                     </a>
                   </li>
-                  {categories.map(category => (
-                    <li key={category.id}>
+                  {allCategories.filter(cat => cat.id !== category.id).map(cat => (
+                    <li key={cat.id}>
                       <a
-                        href={`/artikel/${category.slug}`}
+                        href={`/artikel/${cat.slug}`}
                         className="flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                       >
-                        <span>{category.name}</span>
+                        <span>{cat.name}</span>
                         <ArrowRight className="h-4 w-4" />
                       </a>
                     </li>
@@ -142,7 +144,7 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
                     <Folder className="h-12 w-12 text-gray-400 mx-auto" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Belum ada artikel
+                    Belum ada artikel di kategori ini
                   </h3>
                   <p className="text-gray-500">
                     Artikel akan segera hadir. Kembali lagi nanti untuk membaca konten menarik.
@@ -181,7 +183,7 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
                           
                           <h2 className="text-xl font-semibold text-gray-900 mb-2">
                             <a
-                              href={`/artikel/${article.categories?.[0]?.slug || 'uncategorized'}/${article.slug}`}
+                              href={`/artikel/${category.slug}/${article.slug}`}
                               className="hover:text-primary-600 transition-colors"
                             >
                               {article.title}
@@ -207,7 +209,7 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
                             </div>
                             
                             <a
-                              href={`/artikel/${article.categories?.[0]?.slug || 'uncategorized'}/${article.slug}`}
+                              href={`/artikel/${category.slug}/${article.slug}`}
                               className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
                             >
                               Baca Selengkapnya
@@ -230,28 +232,36 @@ export default function ArticlePage({ articles, categories, total }: ArticlePage
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  const categorySlug = params?.category as string;
+  
   try {
-    const [articlesData, categories] = await Promise.all([
-      cmsArticleService.getPublishedArticles(20, 0),
+    const [allCategories] = await Promise.all([
       cmsArticleService.getCategories()
     ]);
+    
+    const category = allCategories.find(cat => cat.slug === categorySlug);
+    
+    if (!category) {
+      return {
+        notFound: true
+      };
+    }
+    
+    const articlesData = await cmsArticleService.getArticlesByCategory(categorySlug, 20, 0);
     
     return {
       props: {
         articles: articlesData.articles,
-        categories,
+        category,
+        allCategories,
         total: articlesData.total
       }
     };
   } catch (error) {
     console.error('Error fetching articles:', error);
     return {
-      props: {
-        articles: [],
-        categories: [],
-        total: 0
-      }
+      notFound: true
     };
   }
 };
