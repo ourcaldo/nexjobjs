@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import Toast from './Toast';
 
 interface ToastContextType {
-  showToast: (type: 'success' | 'error' | 'warning', message: string, duration?: number) => void;
+  showToast: (type: 'success' | 'error' | 'warning' | 'info', message: string, duration?: number) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -21,7 +21,7 @@ interface ToastProviderProps {
 
 interface ToastItem {
   id: string;
-  type: 'success' | 'error' | 'warning';
+  type: 'success' | 'error' | 'warning' | 'info';
   message: string;
   duration?: number;
 }
@@ -29,7 +29,7 @@ interface ToastItem {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = (type: 'success' | 'error' | 'warning', message: string, duration?: number) => {
+  const showToast = (type: 'success' | 'error' | 'warning' | 'info', message: string, duration?: number) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: ToastItem = { id, type, message, duration };
     

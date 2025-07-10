@@ -39,7 +39,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     slug: '',
     content: '',
     excerpt: '',
-    status: 'draft' as 'draft' | 'published' | 'scheduled',
+    status: 'draft' as 'draft' | 'published' | 'scheduled' | 'trash',
     featured_image: '',
     seo_title: '',
     meta_description: '',
@@ -169,7 +169,10 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
       );
 
       if (result.success && result.url) {
-        setFormData(prev => ({ ...prev, featured_image: result.url }));
+        setFormData(prev => ({ 
+          ...prev, 
+          featured_image: typeof result.url === 'string' ? result.url : '' 
+        }));
         showToast('success', 'Image uploaded successfully');
       } else {
         showToast('error', result.error || 'Failed to upload image');
@@ -220,7 +223,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ pageId }) => {
     }
   };
 
-  const handleSave = async (status: 'draft' | 'published' | 'scheduled') => {
+  const handleSave = async (status: 'draft' | 'published' | 'scheduled' | 'trash') => {
     if (!formData.title.trim()) {
       showToast('error', 'Title is required');
       return;

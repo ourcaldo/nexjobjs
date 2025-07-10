@@ -111,6 +111,29 @@ export interface NxdbArticleTag {
   updated_at: string;
 }
 
+// CMS Page Types
+export interface NxdbPage {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  status: 'draft' | 'published' | 'trash' | 'scheduled';
+  author_id?: string;
+  featured_image?: string;
+  seo_title?: string;
+  meta_description?: string;
+  schema_types: string[];
+  post_date: string;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  author?: Profile;
+  categories?: NxdbPageCategory[];
+  tags?: NxdbPageTag[];
+}
+
 export interface NxdbPageCategory {
   id: string;
   name: string;

@@ -170,7 +170,10 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId }) => {
       );
 
       if (result.success && result.url) {
-        setFormData(prev => ({ ...prev, featured_image: result.url || '' }));
+        setFormData(prev => ({ 
+          ...prev, 
+          featured_image: typeof result.url === 'string' ? result.url : '' 
+        }));
         showToast('success', 'Image uploaded successfully');
       } else {
         showToast('error', result.error || 'Failed to upload image');
