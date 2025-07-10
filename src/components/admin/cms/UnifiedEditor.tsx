@@ -123,20 +123,25 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
   const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
-      // Load current user
-      const user = await supabaseAdminService.getCurrentProfile();
-      setCurrentUser(user);
+      
+      // Load current user only if not already loaded
+      if (!currentUser) {
+        const user = await supabaseAdminService.getCurrentProfile();
+        setCurrentUser(user);
+      }
 
       const service = getService();
 
-      // Load categories and tags
-      const [categoriesData, tagsData] = await Promise.all([
-        service.getCategories(),
-        service.getTags()
-      ]);
+      // Load categories and tags only if not already loaded
+      if (categories.length === 0 || tags.length === 0) {
+        const [categoriesData, tagsData] = await Promise.all([
+          service.getCategories(),
+          service.getTags()
+        ]);
 
-      setCategories(categoriesData);
-      setTags(tagsData);
+        setCategories(categoriesData);
+        setTags(tagsData);
+      }
 
       // Load content data if editing
       if (itemId) {
@@ -247,6 +252,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       showToast('error', 'Failed to create category');
     }
   };
+
+  const handleCreateTag = async (e?: React.FormEvent) => {
 
   const handleCreateTag = async (e?: React.FormEvent | React.KeyboardEvent) => {
     if (e) {
@@ -359,16 +366,9 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
 
       if (result?.success) {
         showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
-
-        // For new content creation, update the URL and component state without reload
-        if (!itemId && (result.article || result.page)) {
-          const newItemId = result.article?.id || result.page?.id;
-          if (newItemId) {
-            // Update URL using router.replace to avoid reload
-            const newUrl = `/backend/admin/cms/${contentType}/edit/${newItemId}`;
-            router.replace(newUrl, undefined, { shallow: true });
-          }
-        }
+        
+        // Don't modify router/URL for now to prevent reloads
+        // Just update local state if needed
       } else {
         showToast('error', result?.error || `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
       }

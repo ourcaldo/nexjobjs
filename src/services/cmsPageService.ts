@@ -376,12 +376,13 @@ class CmsPageService {
     try {
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+      // Use a more controlled insert to prevent triggers that might cause reloads
       const { data, error } = await supabase
         .from('nxdb_page_categories')
         .insert({
-          name,
+          name: name.trim(),
           slug,
-          description: description || ''
+          description: description?.trim() || ''
         })
         .select()
         .single();
