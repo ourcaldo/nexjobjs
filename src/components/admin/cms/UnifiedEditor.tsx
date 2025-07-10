@@ -228,7 +228,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       e.stopPropagation();
     }
 
-    if (!newCategoryName.trim()) return false;
+    if (!newCategoryName.trim()) return;
 
     try {
       const service = getService();
@@ -245,8 +245,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       console.error('Error creating category:', error);
       showToast('error', 'Failed to create category');
     }
-    return false;
-  };
+  };</old_str>
 
   const handleCreateTag = async (e?: React.FormEvent) => {
     if (e) {
@@ -254,7 +253,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       e.stopPropagation();
     }
 
-    if (!newTagName.trim()) return false;
+    if (!newTagName.trim()) return;
 
     try {
       const service = getService();
@@ -271,15 +270,14 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       console.error('Error creating tag:', error);
       showToast('error', 'Failed to create tag');
     }
-    return false;
-  };
+  };</old_str>
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
     const file = e.target.files?.[0];
-    if (!file || !currentUser) return false;
+    if (!file || !currentUser) return;
 
     setUploadingImage(true);
     try {
@@ -307,33 +305,32 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     } finally {
       setUploadingImage(false);
     }
-    return false;
-  };
+  };</old_str>
 
   const handleSave = async (status: 'draft' | 'published' | 'scheduled' | 'trash') => {
     if (!formData.title.trim()) {
       showToast('error', 'Title is required');
-      return false;
+      return;
     }
 
     if (!formData.slug.trim()) {
       showToast('error', 'Slug is required');
-      return false;
+      return;
     }
 
     if (!currentUser) {
       showToast('error', 'User not authenticated');
-      return false;
+      return;
     }
 
     // Check if jobs functionality is implemented
     if (contentType === 'jobs') {
       showToast('info', 'Jobs CMS functionality is under development');
-      return false;
+      return;
     }
 
     setSaving(true);
-    try {
+    try {</old_str>
       const contentData = {
         ...formData,
         status,
@@ -385,7 +382,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     } finally {
       setSaving(false);
     }
-    return false;
   };
 
   if (loading) {
@@ -400,9 +396,14 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }}>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6"></div>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
@@ -790,9 +791,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.preventDefault();
                       e.stopPropagation();
                       handleCreateCategory();
-                      return false;
                     }
-                  }}
+                  }}</old_str>
                 />
                 <button
                   type="button"
@@ -800,12 +800,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                     e.preventDefault();
                     e.stopPropagation();
                     handleCreateCategory();
-                    return false;
                   }}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
-                </button>
+                </button></old_str>
               </div>
             </div>
           </div>
@@ -861,9 +860,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                       e.preventDefault();
                       e.stopPropagation();
                       handleCreateTag();
-                      return false;
                     }
-                  }}
+                  }}</old_str>
                 />
                 <button
                   type="button"
@@ -871,12 +869,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
                     e.preventDefault();
                     e.stopPropagation();
                     handleCreateTag();
-                    return false;
                   }}
                   className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
-                </button>
+                </button></old_str>
               </div>
             </div>
           </div>
@@ -937,6 +934,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
         </div>
       </div>
     </div>
+    </form>
   );
 };
 
