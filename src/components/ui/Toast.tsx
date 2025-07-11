@@ -72,8 +72,18 @@ const Toast: React.FC<ToastProps> = ({ type, message, onClose, duration = 5000 }
       className={`fixed bottom-4 right-4 z-50 max-w-sm w-full transform transition-all duration-300 ${
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
       }`}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
     >
-      <div className={`rounded-lg border p-4 shadow-lg ${getBackgroundColor()}`}>
+      <div 
+        className={`rounded-lg border p-4 shadow-lg ${getBackgroundColor()}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
         <div className="flex items-start">
           <div className="flex-shrink-0">
             {getIcon()}
@@ -91,6 +101,10 @@ const Toast: React.FC<ToastProps> = ({ type, message, onClose, duration = 5000 }
                 e.stopPropagation();
                 setIsVisible(false);
                 setTimeout(onClose, 300);
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
               }}
               className={`inline-flex rounded-md p-1.5 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2 ${getTextColor()}`}
             >

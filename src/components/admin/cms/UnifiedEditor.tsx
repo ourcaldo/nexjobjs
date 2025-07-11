@@ -176,7 +176,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       }
     } catch (error) {
       console.error('Error loading initial data:', error);
-      //showToast('error', 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -244,13 +243,9 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
         setCategories(prev => [...prev, result.category!]);
         setSelectedCategories(prev => [...prev, result.category!.id]);
         setNewCategoryName('');
-        //showToast('success', 'Category created successfully');
-      } else {
-        //showToast('error', result.error || 'Failed to create category');
       }
     } catch (error) {
       console.error('Error creating category:', error);
-      //showToast('error', 'Failed to create category');
     }
   };
 
@@ -269,48 +264,38 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
         setTags(prev => [...prev, result.tag!]);
         setSelectedTags(prev => [...prev, result.tag!.id]);
         setNewTagName('');
-        //showToast('success', 'Tag created successfully');
-      } else {
-        //showToast('error', result.error || 'Failed to create tag');
       }
     } catch (error) {
       console.error('Error creating tag:', error);
-      //showToast('error', 'Failed to create tag');
     }
   };
 
   // Handle media manager image selection
   const handleImageSelect = (imageUrl: string) => {
     setFormData(prev => ({ ...prev, featured_image: imageUrl }));
-    //showToast('success', 'Featured image updated');
     setShowMediaManager(false);
   };
 
   // Handle remove featured image
   const handleRemoveImage = () => {
     setFormData(prev => ({ ...prev, featured_image: '' }));
-    //showToast('success', 'Featured image removed');
   };
 
   const handleSave = async (status: 'draft' | 'published' | 'scheduled' | 'trash') => {
     if (!formData.title.trim()) {
-      //showToast('error', 'Title is required');
       return;
     }
 
     if (!formData.slug.trim()) {
-      //showToast('error', 'Slug is required');
       return;
     }
 
     if (!currentUser) {
-      //showToast('error', 'User not authenticated');
       return;
     }
 
     // Check if jobs functionality is implemented
     if (contentType === 'jobs') {
-      //showToast('info', 'Jobs CMS functionality is under development');
       return;
     }
 
@@ -342,16 +327,27 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       }
 
       if (result?.success) {
-        //showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
+        // Only show toast for draft and published status
+        if (status === 'draft' || status === 'published') {
+          const actionText = itemId ? 'updated' : 'created';
+          const statusText = status === 'draft' ? 'saved as draft' : 'published';
+          showToast('success', `${getContentTypeName()} ${actionText} and ${statusText} successfully`);
+        }
 
-        // Don't modify router/URL for now to prevent reloads
-        // Just update local state if needed
+        // Update form data status to reflect the save
+        setFormData(prev => ({ ...prev, status }));
       } else {
-        //showToast('error', result?.error || `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
+        // Only show error toast for draft and published operations
+        if (status === 'draft' || status === 'published') {
+          showToast('error', result?.error || `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
+        }
       }
     } catch (error) {
       console.error('Error saving content:', error);
-      //showToast('error', `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
+      // Only show error toast for draft and published operations
+      if (status === 'draft' || status === 'published') {
+        showToast('error', `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
+      }
     } finally {
       setSaving(false);
     }
