@@ -44,13 +44,13 @@ const Toast: React.FC<ToastProps> = ({ type, message, onClose, duration = 5000 }
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 border-green-200';
+        return 'bg-green-100 border-green-300';
       case 'error':
-        return 'bg-red-50 border-red-200';
+        return 'bg-red-100 border-red-300';
       case 'warning':
-        return 'bg-yellow-50 border-yellow-200';
+        return 'bg-yellow-100 border-yellow-300';
       case 'info':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-blue-100 border-blue-300';
     }
   };
 

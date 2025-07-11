@@ -43,14 +43,14 @@ const MediaManager: React.FC<MediaManagerProps> = ({
 
       if (error) {
         console.error('Error loading media items:', error);
-        showToast('Failed to load media library', 'error');
+        showToast('error', 'Failed to load media library');
         return;
       }
 
       setMediaItems(data || []);
     } catch (error) {
       console.error('Error loading media items:', error);
-      showToast('Failed to load media library', 'error');
+      showToast('error', 'Failed to load media library');
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
       const uploadResult = await supabaseStorageService.uploadFile(file, path, file.type);
 
       if (!uploadResult.success || !uploadResult.url) {
-        showToast(uploadResult.error || 'Upload failed', 'error');
+        showToast('error', uploadResult.error || 'Upload failed');
         return;
       }
 
@@ -97,7 +97,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
 
       if (error) {
         console.error('Error saving media to database:', error);
-        showToast('Failed to save media information', 'error');
+        showToast('error', 'Failed to save media information');
         return;
       }
 
@@ -105,11 +105,11 @@ const MediaManager: React.FC<MediaManagerProps> = ({
       setMediaItems(prev => [data, ...prev]);
       setSelectedImage(uploadResult.url);
       setActiveTab('library');
-      showToast('Image uploaded successfully', 'success');
+      showToast('success', 'Image uploaded successfully');
 
     } catch (error) {
       console.error('Error uploading file:', error);
-      showToast('Upload failed', 'error');
+      showToast('error', 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -139,7 +139,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
 
       if (error) {
         console.error('Error deleting media item:', error);
-        showToast('Failed to delete image', 'error');
+        showToast('error', 'Failed to delete image');
         return;
       }
 
@@ -151,10 +151,10 @@ const MediaManager: React.FC<MediaManagerProps> = ({
         setSelectedImage('');
       }
 
-      showToast('Image deleted successfully', 'success');
+      showToast('success', 'Image deleted successfully');
     } catch (error) {
       console.error('Error deleting media item:', error);
-      showToast('Failed to delete image', 'error');
+      showToast('error', 'Failed to delete image');
     }
   };
 
