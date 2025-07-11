@@ -176,11 +176,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       }
     } catch (error) {
       console.error('Error loading initial data:', error);
-      showToast('error', 'Failed to load data');
+      //showToast('error', 'Failed to load data');
     } finally {
       setLoading(false);
     }
-  }, [itemId, contentType, showToast]);
+  }, [itemId, contentType]);
 
   useEffect(() => {
     loadInitialData();
@@ -244,13 +244,13 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
         setCategories(prev => [...prev, result.category!]);
         setSelectedCategories(prev => [...prev, result.category!.id]);
         setNewCategoryName('');
-        showToast('success', 'Category created successfully');
+        //showToast('success', 'Category created successfully');
       } else {
-        showToast('error', result.error || 'Failed to create category');
+        //showToast('error', result.error || 'Failed to create category');
       }
     } catch (error) {
       console.error('Error creating category:', error);
-      showToast('error', 'Failed to create category');
+      //showToast('error', 'Failed to create category');
     }
   };
 
@@ -269,48 +269,48 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
         setTags(prev => [...prev, result.tag!]);
         setSelectedTags(prev => [...prev, result.tag!.id]);
         setNewTagName('');
-        showToast('success', 'Tag created successfully');
+        //showToast('success', 'Tag created successfully');
       } else {
-        showToast('error', result.error || 'Failed to create tag');
+        //showToast('error', result.error || 'Failed to create tag');
       }
     } catch (error) {
       console.error('Error creating tag:', error);
-      showToast('error', 'Failed to create tag');
+      //showToast('error', 'Failed to create tag');
     }
   };
 
   // Handle media manager image selection
   const handleImageSelect = (imageUrl: string) => {
     setFormData(prev => ({ ...prev, featured_image: imageUrl }));
-    showToast('success', 'Featured image updated');
+    //showToast('success', 'Featured image updated');
     setShowMediaManager(false);
   };
 
   // Handle remove featured image
   const handleRemoveImage = () => {
     setFormData(prev => ({ ...prev, featured_image: '' }));
-    showToast('success', 'Featured image removed');
+    //showToast('success', 'Featured image removed');
   };
 
   const handleSave = async (status: 'draft' | 'published' | 'scheduled' | 'trash') => {
     if (!formData.title.trim()) {
-      showToast('error', 'Title is required');
+      //showToast('error', 'Title is required');
       return;
     }
 
     if (!formData.slug.trim()) {
-      showToast('error', 'Slug is required');
+      //showToast('error', 'Slug is required');
       return;
     }
 
     if (!currentUser) {
-      showToast('error', 'User not authenticated');
+      //showToast('error', 'User not authenticated');
       return;
     }
 
     // Check if jobs functionality is implemented
     if (contentType === 'jobs') {
-      showToast('info', 'Jobs CMS functionality is under development');
+      //showToast('info', 'Jobs CMS functionality is under development');
       return;
     }
 
@@ -342,16 +342,16 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       }
 
       if (result?.success) {
-        showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
+        //showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
 
         // Don't modify router/URL for now to prevent reloads
         // Just update local state if needed
       } else {
-        showToast('error', result?.error || `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
+        //showToast('error', result?.error || `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
       }
     } catch (error) {
       console.error('Error saving content:', error);
-      showToast('error', `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
+      //showToast('error', `Failed to ${itemId ? 'update' : 'create'} ${getContentTypeName().toLowerCase()}`);
     } finally {
       setSaving(false);
     }
@@ -881,7 +881,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
               <div className="border-2 border-dashed border-gray-300 rounded-lg">
                 <button
                   type="button"
-                  onClick={() => setShowMediaManager(true)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowMediaManager(true);
+                  }}
                   className="cursor-pointer flex flex-col items-center justify-center h-32 w-full text-center hover:border-gray-400 transition-colors"
                   disabled={!currentUser}
                 >

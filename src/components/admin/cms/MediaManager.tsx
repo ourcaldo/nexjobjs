@@ -164,7 +164,11 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   );
 
   // Handle select and close
-  const handleSelectAndClose = () => {
+  const handleSelectAndClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     onSelect(selectedImage);
     onClose();
   };
@@ -278,7 +282,11 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                             ? 'border-primary-500'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
-                        onClick={() => setSelectedImage(item.url)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedImage(item.url);
+                        }}
                       >
                         <div className="aspect-square relative">
                           <Image
@@ -335,13 +343,23 @@ const MediaManager: React.FC<MediaManagerProps> = ({
           </div>
           <div className="flex space-x-2">
             <button
-              onClick={onClose}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+              }}
               className="px-4 py-2 text-gray-600 hover:text-gray-800"
             >
               Cancel
             </button>
             <button
-              onClick={handleSelectAndClose}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSelectAndClose(e);
+              }}
               disabled={!selectedImage}
               className={`px-4 py-2 rounded-md ${
                 selectedImage
