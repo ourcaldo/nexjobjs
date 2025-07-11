@@ -21,6 +21,7 @@ import { supabaseStorageService } from '@/services/supabaseStorageService';
 import { NxdbArticle, NxdbPage, NxdbArticleCategory, NxdbArticleTag, NxdbPageCategory, NxdbPageTag } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastProvider';
 import TiptapEditor from './TiptapEditor';
+import MediaManager from './MediaManager';
 
 interface UnifiedEditorProps {
   contentType: 'articles' | 'pages' | 'jobs';
@@ -899,16 +900,14 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       </div>
 
       {/* Media Manager Modal */}
-      {showMediaManager && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Media Manager</h2>
-              {/* Implement MediaManager Component Here */}
-              {/* <MediaManager onSelect={handleImageSelect} onClose={() => setShowMediaManager(false)} /> */}
-            </div>
-          </div>
-        </div>
+      {showMediaManager && currentUser && (
+        <MediaManager
+          isOpen={showMediaManager}
+          onClose={() => setShowMediaManager(false)}
+          onSelect={handleImageSelect}
+          currentImageUrl={formData.featured_image}
+          userId={currentUser.id}
+        />
       )}
     </div>
   );

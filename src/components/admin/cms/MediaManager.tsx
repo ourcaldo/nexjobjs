@@ -3,16 +3,10 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X, Upload, Loader2, Check, Trash2, Search } from 'lucide-react';
 import { supabaseStorageService } from '@/services/supabaseStorageService';
-import { supabase } from '@/lib/supabase';
+import { supabase, NxdbMedia } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastProvider';
 
-interface MediaItem {
-  id: string;
-  url: string;
-  name: string;
-  size: number;
-  created_at: string;
-}
+type MediaItem = NxdbMedia;
 
 interface MediaManagerProps {
   isOpen: boolean;
@@ -133,7 +127,9 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   const deleteMediaItem = async (item: MediaItem) => {
     try {
       // Delete from storage
-      await supabaseStorageService.deleteFile(item.path);
+      if (item.path) {
+        await supabaseStorageService.deleteFile(item.path);
+      }
 
       // Delete from database
       const { error } = await supabase

@@ -147,11 +147,11 @@ export interface NxdbPageTag {
   id: string;
   name: string;
   slug: string;
+  description?: string;
   created_at: string;
   updated_at: string;
 }
 
-// Media Types
 export interface NxdbMedia {
   id: string;
   user_id: string;
