@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
@@ -39,6 +38,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
   const [loading, setLoading] = useState(!!itemId);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showMediaManager, setShowMediaManager] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -123,7 +123,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
   const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Load current user only if not already loaded
       if (!currentUser) {
         const user = await supabaseAdminService.getCurrentProfile();
@@ -278,39 +278,17 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Handle media manager image selection
+  const handleImageSelect = (imageUrl: string) => {
+    setFormData(prev => ({ ...prev, featured_image: imageUrl }));
+    showToast('success', 'Featured image updated');
+    setShowMediaManager(false);
+  };
 
-    const file = e.target.files?.[0];
-    if (!file || !currentUser) return;
-
-    setUploadingImage(true);
-    try {
-      const result = await supabaseStorageService.uploadFile(
-        file,
-        `${contentType}/${Date.now()}-${file.name}`,
-        file.type
-      );
-
-      if (result.success && result.url) {
-        const imageUrl = typeof result.url === 'string' ? result.url : '';
-        setFormData(prev => ({ 
-          ...prev, 
-          featured_image: imageUrl
-        }));
-        showToast('success', 'Image uploaded successfully');
-        // Clear the input value properly
-        e.target.value = '';
-      } else {
-        showToast('error', result.error || 'Failed to upload image');
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      showToast('error', 'Failed to upload image');
-    } finally {
-      setUploadingImage(false);
-    }
+  // Handle remove featured image
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, featured_image: '' }));
+    showToast('success', 'Featured image removed');
   };
 
   const handleSave = async (status: 'draft' | 'published' | 'scheduled' | 'trash') => {
@@ -364,7 +342,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
 
       if (result?.success) {
         showToast('success', `${getContentTypeName()} ${itemId ? 'updated' : 'created'} successfully`);
-        
+
         // Don't modify router/URL for now to prevent reloads
         // Just update local state if needed
       } else {
@@ -875,54 +853,63 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
             </h3>
 
             {formData.featured_image ? (
-              <div className="space-y-4">
+              <div className="relative inline-block">
                 <Image
                   src={formData.featured_image}
-                  alt="Featured image preview"
+                  alt="Featured image"
                   width={400}
                   height={192}
                   className="w-full h-32 object-cover rounded-lg"
                 />
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setFormData(prev => ({ ...prev, featured_image: '' }));
-                  }}
-                  className="w-full px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+                  onClick={handleRemoveImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                 >
-                  Remove Image
+                  <X className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMediaManager(true)}
+                  className="absolute bottom-2 left-2 bg-primary-500 text-white rounded px-2 py-1 text-xs hover:bg-primary-600"
+                >
+                  Change
                 </button>
               </div>
             ) : (
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="featured-image"
-                  disabled={uploadingImage}
-                />
-                <label
-                  htmlFor="featured-image"
-                  className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary-500 transition-colors block"
+              <div className="border-2 border-dashed border-gray-300 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setShowMediaManager(true)}
+                  className="cursor-pointer flex flex-col items-center justify-center h-32 w-full text-center hover:border-gray-400 transition-colors"
+                  disabled={!currentUser}
                 >
-                  {uploadingImage ? (
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  ) : (
-                    <ImageIcon className="h-6 w-6 mx-auto mb-2 text-gray-400" />
-                  )}
+                  <ImageIcon className="h-6 w-6 mx-auto mb-2 text-gray-400" />
                   <span className="text-sm text-gray-600">
-                    {uploadingImage ? 'Uploading...' : 'Click to upload image'}
+                    Click to select image
                   </span>
-                </label>
+                  <span className="text-xs text-gray-400 mt-1">
+                    Upload new or choose from library
+                  </span>
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Media Manager Modal */}
+      {showMediaManager && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-4">Media Manager</h2>
+              {/* Implement MediaManager Component Here */}
+              {/* <MediaManager onSelect={handleImageSelect} onClose={() => setShowMediaManager(false)} /> */}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

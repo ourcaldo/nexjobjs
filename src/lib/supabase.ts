@@ -148,6 +148,20 @@ export interface NxdbPageTag {
   name: string;
   slug: string;
   created_at: string;
+  updated_at: string;
+}
+
+// Media Types
+export interface NxdbMedia {
+  id: string;
+  user_id: string;
+  url: string;
+  name: string;
+  path: string;
+  size: number;
+  mime_type: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface NxdbPageCategoryRelation {

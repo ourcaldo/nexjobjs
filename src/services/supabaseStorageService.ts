@@ -151,6 +151,24 @@ class SupabaseStorageService {
 
     return data.publicUrl;
   }
+
+  // Extract path from Supabase storage URL
+  extractPathFromUrl(url: string): string | null {
+    try {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split('/');
+      const bucketIndex = pathParts.findIndex(part => part === this.bucketName);
+
+      if (bucketIndex === -1) {
+        return null;
+      }
+
+      return pathParts.slice(bucketIndex + 1).join('/');
+    } catch (error) {
+      console.error('Error extracting path from URL:', error);
+      return null;
+    }
+  }
 }
 
 export const supabaseStorageService = new SupabaseStorageService();
