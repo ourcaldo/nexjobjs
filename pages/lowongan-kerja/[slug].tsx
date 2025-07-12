@@ -99,10 +99,10 @@ export default function JobPage({ job, slug, settings, currentUrl }: JobPageProp
         
         {/* Additional SEO */}
         <meta name="author" content="Nexjob" />
-        <meta property="article:published_time" content={job.post_date} />
-        <meta property="article:modified_time" content={job.post_date} />
-        <meta property="article:section" content={job.kategori} />
-        <meta property="article:tag" content={job.kategori} />
+        <meta property="article:published_time" content={job.created_at} />
+        <meta property="article:modified_time" content={job.created_at} />
+        <meta property="article:section" content={job.kategori_pekerjaan} />
+        <meta property="article:tag" content={job.kategori_pekerjaan} />
         
         {/* Canonical URL */}
         <link rel="canonical" href={canonicalUrl} />
