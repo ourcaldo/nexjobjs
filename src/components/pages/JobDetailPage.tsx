@@ -23,8 +23,6 @@ import { bookmarkService } from '@/services/bookmarkService';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import JobCard from '@/components/JobCard';
-import SchemaMarkup from '@/components/SEO/SchemaMarkup';
-import { generateJobPostingSchema, generateBreadcrumbSchema } from '@/utils/schemaUtils';
 
 interface JobDetailPageProps {
   job: Job;
@@ -151,10 +149,6 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Schema Markup */}
-      <SchemaMarkup schema={generateJobPostingSchema(job)} />
-      <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
-
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <Breadcrumbs items={breadcrumbItems} />
