@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router';
 import { Search, Filter, X, Loader2, AlertCircle } from 'lucide-react';
 import { Job } from '@/types/job';
-import { wpService } from '@/services/wpService';
+import { wpService, FilterData } from '@/services/wpService';
 import { userBookmarkService } from '@/services/userBookmarkService';
 import { supabase } from '@/lib/supabase';
 import { useAnalytics } from '@/hooks/useAnalytics';
