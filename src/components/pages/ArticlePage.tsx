@@ -76,7 +76,9 @@ const ArticlePage: React.FC<ArticlePageProps> = ({ settings }) => {
       {/* Articles */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Breadcrumbs */}
-        <Breadcrumbs items={breadcrumbItems} />
+        <div className="flex justify-center">
+          <Breadcrumbs items={breadcrumbItems} />
+        </div>
 
         {/* Loading State */}
         {loading && (
