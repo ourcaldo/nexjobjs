@@ -351,6 +351,13 @@ const SEOSettings: React.FC = () => {
                 placeholder="https://nexjob.tech/og-home.jpg"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
               />
+              <Image
+                          src={settings.home_og_image}
+                          alt="Home OG Image Preview"
+                          width={200}
+                          height={100}
+                          className="rounded border object-cover"
+                        />
             </div>
 
             <div>
