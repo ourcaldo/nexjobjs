@@ -7,6 +7,9 @@ import Footer from '@/components/Layout/Footer';
 import JobSearchPage from '@/components/pages/JobSearchPage';
 import SchemaMarkup from '@/components/SEO/SchemaMarkup';
 import { generateBreadcrumbSchema } from '@/utils/schemaUtils';
+import { getCurrentDomain } from '@/lib/env';
+import { wpCategoryMappings } from '@/utils/urlUtils';
+import { renderTemplate } from '@/utils/templateUtils';
 
 interface CategoryJobsPageProps {
   category: string;
@@ -15,16 +18,6 @@ interface CategoryJobsPageProps {
   settings: any;
   currentUrl: string;
 }
-
-// Helper function to render dynamic templates
-const renderTemplate = (template: string, variables: Record<string, string>): string => {
-  let result = template;
-  Object.entries(variables).forEach(([key, value]) => {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    result = result.replace(regex, value);
-  });
-  return result;
-};
 
 export default function CategoryJobs({ category, categorySlug, location, settings, currentUrl }: CategoryJobsPageProps) {
   // Prepare template variables
@@ -57,9 +50,9 @@ export default function CategoryJobs({ category, categorySlug, location, setting
         <meta name="twitter:description" content={pageDescription} />
         <link rel="canonical" href={`${currentUrl}/lowongan-kerja/`} />
       </Head>
-      
+
       <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
-      
+
       <Header />
       <main>
         <JobSearchPage 
@@ -77,12 +70,12 @@ export const getServerSideProps: GetServerSideProps = async ({ params, query, re
   const categorySlug = params?.slug as string;
   const location = query?.location as string;
   const settings = await SupabaseAdminService.getSettingsServerSide();
-  
+
   // Get current URL from request headers
   const protocol = req.headers['x-forwarded-proto'] || 'http';
   const host = req.headers.host;
   const currentUrl = `${protocol}://${host}`;
-  
+
   if (!categorySlug) {
     return { notFound: true };
   }
@@ -93,9 +86,9 @@ export const getServerSideProps: GetServerSideProps = async ({ params, query, re
     currentWpService.setBaseUrl(settings.api_url);
     currentWpService.setFiltersApiUrl(settings.filters_api_url);
     currentWpService.setAuthToken(settings.auth_token || '');
-    
+
     const filterData = await currentWpService.getFiltersData();
-    
+
     // Find matching category by converting slug back to category name
     let matchedCategory = '';
     if (filterData.nexjob_kategori_pekerjaan) {

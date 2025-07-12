@@ -15,6 +15,7 @@ import { Calendar, User, Tag, Folder, ArrowRight, Clock, Eye } from 'lucide-reac
 import Link from 'next/link';
 import Image from 'next/image';
 import AdDisplay from '@/components/Advertisement/AdDisplay';
+import { renderTemplate } from '@/utils/templateUtils';
 
 interface ArticlePageProps {
   articles: NxdbArticle[];
@@ -104,9 +105,19 @@ export default function ArticlePage({
     href: item.href 
   })));
 
-  // Get SEO title and description with fallbacks
-  const seoTitle = seoSettings?.articles_title || 'Artikel - Tips Karir dan Berita Kerja Terbaru - Nexjob';
-  const seoDescription = seoSettings?.articles_description || 'Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia. Dapatkan insight berharga untuk mengembangkan karir Anda.';
+  // Prepare template variables
+  const templateVars = {
+    site_title: seoSettings?.site_title || 'Nexjob',
+    lokasi: '',
+    kategori: ''
+  };
+
+  // Get SEO title and description with template rendering
+  const rawSeoTitle = seoSettings?.articles_title || 'Artikel - Tips Karir dan Berita Kerja Terbaru - {{site_title}}';
+  const rawSeoDescription = seoSettings?.articles_description || 'Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia. Dapatkan insight berharga untuk mengembangkan karir Anda.';
+  
+  const seoTitle = renderTemplate(rawSeoTitle, templateVars);
+  const seoDescription = renderTemplate(rawSeoDescription, templateVars);
 
   return (
     <>
@@ -159,7 +170,7 @@ export default function ArticlePage({
 
             <div className="text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                {seoSettings?.articles_title?.replace(' - Nexjob', '') || 'Artikel & Tips Karir'}
+                {renderTemplate(seoSettings?.articles_title || 'Artikel & Tips Karir - {{site_title}}', templateVars).replace(` - ${templateVars.site_title}`, '') || 'Artikel & Tips Karir'}
               </h1>
               <p className="text-xl text-primary-100 max-w-3xl mx-auto leading-relaxed">
                 {seoDescription}

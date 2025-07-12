@@ -7,6 +7,9 @@ import Footer from '@/components/Layout/Footer';
 import JobSearchPage from '@/components/pages/JobSearchPage';
 import SchemaMarkup from '@/components/SEO/SchemaMarkup';
 import { generateBreadcrumbSchema } from '@/utils/schemaUtils';
+import { getCurrentDomain } from '@/lib/env';
+import { wpLocationMappings } from '@/utils/urlUtils';
+import { renderTemplate } from '@/utils/templateUtils';
 
 interface LocationJobsPageProps {
   location: string;
@@ -16,16 +19,6 @@ interface LocationJobsPageProps {
   settings: any;
   currentUrl: string;
 }
-
-// Helper function to render dynamic templates
-const renderTemplate = (template: string, variables: Record<string, string>): string => {
-  let result = template;
-  Object.entries(variables).forEach(([key, value]) => {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    result = result.replace(regex, value);
-  });
-  return result;
-};
 
 export default function LocationJobs({ location, locationSlug, locationType, category, settings, currentUrl }: LocationJobsPageProps) {
   // Prepare template variables
@@ -58,9 +51,9 @@ export default function LocationJobs({ location, locationSlug, locationType, cat
         <meta name="twitter:description" content={pageDescription} />
         <link rel="canonical" href={`${currentUrl}/lowongan-kerja/`} />
       </Head>
-      
+
       <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
-      
+
       <Header />
       <main>
         <JobSearchPage 
@@ -79,12 +72,12 @@ export const getServerSideProps: GetServerSideProps = async ({ params, query, re
   const locationSlug = params?.slug as string;
   const category = query?.category as string;
   const settings = await SupabaseAdminService.getSettingsServerSide();
-  
+
   // Get current URL from request headers
   const protocol = req.headers['x-forwarded-proto'] || 'http';
   const host = req.headers.host;
   const currentUrl = `${protocol}://${host}`;
-  
+
   if (!locationSlug) {
     return { notFound: true };
   }
@@ -95,12 +88,12 @@ export const getServerSideProps: GetServerSideProps = async ({ params, query, re
     currentWpService.setBaseUrl(settings.api_url);
     currentWpService.setFiltersApiUrl(settings.filters_api_url);
     currentWpService.setAuthToken(settings.auth_token || '');
-    
+
     const filterData = await currentWpService.getFiltersData();
-    
+
     let matchedLocation = '';
     let locationType: 'province' | 'city' = 'city';
-    
+
     if (filterData.nexjob_lokasi_provinsi) {
       // First check if it's a province
       const provinces = Object.keys(filterData.nexjob_lokasi_provinsi);
@@ -113,7 +106,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, query, re
           .replace(/^-|-$/g, '');
         return provinceSlug === locationSlug;
       }) || '';
-      
+
       if (matchedLocation) {
         locationType = 'province';
       } else {
@@ -128,7 +121,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, query, re
               .replace(/^-|-$/g, '');
             return citySlug === locationSlug;
           });
-          
+
           if (foundCity) {
             matchedLocation = foundCity;
             locationType = 'city';
