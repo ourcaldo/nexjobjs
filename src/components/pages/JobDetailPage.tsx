@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { 
@@ -14,9 +14,12 @@ import {
   Bookmark,
   Share2,
   CalendarDays,
-  Badge
+  Badge,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Job } from '@/types/job';
+import { wpService } from '@/services/wpService';
 import { bookmarkService } from '@/services/bookmarkService';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -26,34 +29,147 @@ import { generateJobPostingSchema, generateBreadcrumbSchema } from '@/utils/sche
 import Head from 'next/head';
 
 interface JobDetailPageProps {
-  job: Job;
-  relatedJobs: Job[];
+  slug: string;
   settings: any;
 }
 
-const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, relatedJobs, settings }) => {
+const JobDetailPage: React.FC<JobDetailPageProps> = ({ slug, settings }) => {
   const router = useRouter();
   const { trackPageView, trackJobApplication, trackBookmark } = useAnalytics();
-
+  
+  // Refs to prevent infinite loops
+  const initialDataLoadedRef = useRef(false);
+  const isLoadingRef = useRef(false);
+  const currentSlugRef = useRef<string>('');
+  
+  // State
+  const [job, setJob] = useState<Job | null>(null);
+  const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Track page view on mount
+  // Update page metadata
+  const updatePageMetadata = useCallback((jobData: Job) => {
+    if (typeof window === 'undefined') return;
+    
+    const pageTitle = jobData.seo_title || `${jobData.title} - ${jobData.company_name} | Nexjob`;
+    const pageDescription = jobData.seo_description || `Lowongan ${jobData.title} di ${jobData.company_name}, ${jobData.lokasi_kota}. Gaji: ${jobData.gaji}. Lamar sekarang!`;
+    const currentUrl = window.location.origin;
+    const canonicalUrl = `${currentUrl}/lowongan-kerja/${slug}/`;
+    const ogImage = settings.default_job_og_image || `${currentUrl}/og-job-default.jpg`;
+    
+    document.title = pageTitle;
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', pageDescription);
+    }
+    
+    // Update or create canonical link
+    let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.rel = 'canonical';
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.href = canonicalUrl;
+    
+    // Update OG tags
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', pageTitle);
+    
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) ogDescription.setAttribute('content', pageDescription);
+    
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.setAttribute('content', canonicalUrl);
+
+    const ogImageMeta = document.querySelector('meta[property="og:image"]');
+    if (ogImageMeta) ogImageMeta.setAttribute('content', ogImage);
+    
+    // Update Twitter tags
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) twitterTitle.setAttribute('content', pageTitle);
+    
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) twitterDescription.setAttribute('content', pageDescription);
+
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) twitterImage.setAttribute('content', ogImage);
+    
+    // Update robots meta to allow indexing
+    const robotsMeta = document.querySelector('meta[name="robots"]');
+    if (robotsMeta) {
+      robotsMeta.setAttribute('content', 'index, follow');
+    }
+  }, [slug, settings]);
+
+  // Load job data
+  const loadJob = useCallback(async () => {
+    // Prevent duplicate loading
+    if (isLoadingRef.current || currentSlugRef.current === slug) return;
+    
+    isLoadingRef.current = true;
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const jobData = await wpService.getJobBySlug(slug);
+      
+      if (!jobData) {
+        setError('Lowongan tidak ditemukan');
+        return;
+      }
+
+      setJob(jobData);
+      currentSlugRef.current = slug;
+      
+      // Load related jobs
+      const relatedData = await wpService.getRelatedJobs(jobData.id, jobData.kategori_pekerjaan, 4);
+      setRelatedJobs(relatedData);
+
+      // Update page metadata
+      updatePageMetadata(jobData);
+
+      // Track page view with job details
+      trackPageView({
+        page_title: `${jobData.title} - ${jobData.company_name}`,
+        content_group1: 'job_detail',
+        content_group2: jobData.kategori_pekerjaan,
+        content_group3: jobData.lokasi_kota,
+      });
+
+      initialDataLoadedRef.current = true;
+    } catch (err) {
+      setError('Gagal memuat lowongan. Silakan coba lagi.');
+      console.error('Error loading job:', err);
+    } finally {
+      setLoading(false);
+      isLoadingRef.current = false;
+    }
+  }, [slug, updatePageMetadata, trackPageView]);
+
+  // Initialize component - only run once per slug change
   useEffect(() => {
-    trackPageView({
-      page_title: `${job.title} - ${job.company_name}`,
-      content_group1: 'job_detail',
-      content_group2: job.kategori_pekerjaan,
-      content_group3: job.lokasi_kota,
-    });
-  }, [job, trackPageView]);
+    if (slug && slug !== currentSlugRef.current) {
+      initialDataLoadedRef.current = false;
+      currentSlugRef.current = '';
+      loadJob();
+    }
+  }, [slug, loadJob]);
 
   // Update bookmark state when job changes
   useEffect(() => {
+    if (!job) return;
     setIsBookmarked(bookmarkService.isBookmarked(job.id));
   }, [job]);
 
   // Listen for bookmark changes
   useEffect(() => {
+    if (!job) return;
+
     const handleBookmarkUpdate = () => {
       setIsBookmarked(bookmarkService.isBookmarked(job.id));
     };
@@ -64,6 +180,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, relatedJobs, setting
       }
     };
 
+    // Listen to both custom events and storage events
     window.addEventListener('bookmarkUpdated', handleBookmarkUpdate);
     window.addEventListener('storage', handleStorageChange);
 
@@ -74,17 +191,25 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, relatedJobs, setting
   }, [job]);
 
   const handleBookmarkToggle = () => {
+    if (!job) return;
     const newBookmarkState = bookmarkService.toggleBookmark(job.id);
     setIsBookmarked(newBookmarkState);
-
+    
     // Track bookmark action
     trackBookmark(newBookmarkState ? 'add' : 'remove', job.title, job.id);
   };
 
+  const handleRelatedJobClick = (relatedJob: Job) => {
+    // JobCard now handles navigation internally with Link
+    return;
+  };
+
   const handleApplyClick = () => {
+    if (!job) return;
+    
     // Track job application click
     trackJobApplication(job.title, job.company_name, job.id);
-
+    
     // Open application link
     window.open(job.link, '_blank');
   };
@@ -96,12 +221,12 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, relatedJobs, setting
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+    
     if (diffHours < 24) {
       if (diffHours === 1) return 'Dipublikasikan 1 jam lalu';
       return `Dipublikasikan ${diffHours} jam lalu`;
     }
-
+    
     if (diffDays === 1) return 'Dipublikasikan 1 hari lalu';
     if (diffDays < 7) return `Dipublikasikan ${diffDays} hari lalu`;
     if (diffDays < 30) return `Dipublikasikan ${Math.ceil(diffDays / 7)} minggu lalu`;
@@ -119,31 +244,65 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, relatedJobs, setting
 
   const getJobTags = (tagString: string) => {
     if (!tagString) return [];
-
+    
+    // Tags are already decoded in wpService, so just split them
     return tagString.split(', ').map(tag => tag.trim()).filter(tag => tag.length > 0);
   };
 
   const breadcrumbItems = [
     { label: 'Lowongan Kerja', href: '/lowongan-kerja/' },
-    { label: job.title }
+    { label: loading ? 'Loading...' : (job?.title || 'Lowongan') }
   ];
+
+  // Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Breadcrumbs items={breadcrumbItems} />
+          
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Memuat Lowongan</h2>
+              <p className="text-gray-600">Sedang mengambil detail lowongan...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ExternalLink className="h-12 w-12 text-gray-400" />
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Lowongan Tidak Ditemukan</h2>
+          <p className="text-gray-600 mb-6">Lowongan yang Anda cari tidak tersedia</p>
+          <Link 
+            href="/lowongan-kerja/"
+            className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Kembali ke Pencarian
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!job) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Schema Markup */}
       <SchemaMarkup schema={generateJobPostingSchema(job)} />
       <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
-      <Head>
-        <title>{job.seo_title || `${job.title} - ${job.company_name} | Nexjob`}</title>
-        <meta name="description" content={job.seo_description || `Lowongan ${job.title} di ${job.company_name}, ${job.lokasi_kota}. Gaji: ${job.gaji}. Lamar sekarang!`} />
-        <meta property="og:title" content={job.seo_title || `${job.title} - ${job.company_name} | Nexjob`} />
-        <meta property="og:description" content={job.seo_description || `Lowongan ${job.title} di ${job.company_name}, ${job.lokasi_kota}. Gaji: ${job.gaji}. Lamar sekarang!`} />
-        <meta property="og:url" content={`/lowongan-kerja/${job.slug}/`} />
-        <meta property="og:image" content={settings.default_job_og_image || `/og-job-default.jpg`} />
-        <meta name="twitter:title" content={job.seo_title || `${job.title} - ${job.company_name} | Nexjob`} />
-        <meta name="twitter:description" content={job.seo_description || `Lowongan ${job.title} di ${job.company_name}, ${job.lokasi_kota}. Gaji: ${job.gaji}. Lamar sekarang!`} />
-        <meta name="twitter:image" content={settings.default_job_og_image || `/og-job-default.jpg`} />
-        <link rel="canonical" href={`/lowongan-kerja/${job.slug}/`} />
-      </Head>
+
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <Breadcrumbs items={breadcrumbItems} />
@@ -340,8 +499,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, relatedJobs, setting
                     <JobCard 
                       key={relatedJob.id} 
                       job={relatedJob} 
-                      isBookmarked={bookmarkService.isBookmarked(relatedJob.id)}
-                      onBookmarkChange={() => {}}
+                      onClick={handleRelatedJobClick} 
                     />
                   ))}
                 </div>
@@ -349,7 +507,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, relatedJobs, setting
             )}
           </div>
 
-          {/* Desktop Sidebar */}
+          {/* Desktop Sidebar - Not sticky */}
           <div className="hidden lg:block space-y-6">
             {/* Company Info Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
