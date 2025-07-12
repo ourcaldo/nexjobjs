@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { advertisementService } from '@/services/advertisementService';
 
 interface AdDisplayProps {
-  position: 'popup' | 'sidebar_archive' | 'sidebar_single' | 'single_top' | 'single_bottom' | 'single_middle';
+  position: 'popup_ad_code' | 'sidebar_archive_ad_code' | 'sidebar_single_ad_code' | 'single_top_ad_code' | 'single_bottom_ad_code' | 'single_middle_ad_code' | 'popup' | 'sidebar_archive' | 'sidebar_single' | 'single_top' | 'single_bottom' | 'single_middle';
   className?: string;
 }
 
@@ -14,7 +14,13 @@ const AdDisplay: React.FC<AdDisplayProps> = ({ position, className = '' }) => {
   useEffect(() => {
     const loadAd = async () => {
       try {
-        const code = await advertisementService.getAdCode(`${position}_ad_code` as any);
+        // Normalize position to include _ad_code suffix if not already present
+        let adPosition = position;
+        if (!position.endsWith('_ad_code')) {
+          adPosition = `${position}_ad_code` as any;
+        }
+        
+        const code = await advertisementService.getAdCode(adPosition as any);
         setAdCode(code);
       } catch (error) {
         console.error('Error loading advertisement:', error);

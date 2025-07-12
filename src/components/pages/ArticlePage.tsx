@@ -105,46 +105,56 @@ const ArticlePage: React.FC<ArticlePageProps> = ({ settings }) => {
           </div>
         )}
 
-        {/* Articles Grid */}
+        {/* Main Content with Sidebar */}
         {!loading && articles.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {articles.map((article, index) => (
-              <Link
-                key={article.id}
-                href={`/artikel/${article.slug}/`}
-                className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group block"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                {article.featured_media_url && (
-                  <div className="aspect-video overflow-hidden relative">
-                    <Image
-                      src={article.featured_media_url}
-                      alt={article.title.rendered}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  </div>
-                )}
-                <div className="p-6">
-                  <div className="flex items-center text-sm text-gray-500 mb-3">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    {formatDate(article.date)}
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors line-clamp-2">
-                    {article.title.rendered}
-                  </h2>
-                  <div
-                    className="text-gray-600 mb-4 line-clamp-3"
-                    dangerouslySetInnerHTML={{ __html: article.excerpt.rendered }}
-                  />
-                  <div className="flex items-center text-primary-600 font-medium group-hover:text-primary-700">
-                    Baca Selengkapnya
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Articles Grid */}
+            <div className="lg:col-span-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {articles.map((article, index) => (
+                  <Link
+                    key={article.id}
+                    href={`/artikel/${article.slug}/`}
+                    className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group block"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    {article.featured_media_url && (
+                      <div className="aspect-video overflow-hidden relative">
+                        <Image
+                          src={article.featured_media_url}
+                          alt={article.title.rendered}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <div className="flex items-center text-sm text-gray-500 mb-3">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {formatDate(article.date)}
+                      </div>
+                      <h2 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors line-clamp-2">
+                        {article.title.rendered}
+                      </h2>
+                      <div
+                        className="text-gray-600 mb-4 line-clamp-3"
+                        dangerouslySetInnerHTML={{ __html: article.excerpt.rendered }}
+                      />
+                      <div className="flex items-center text-primary-600 font-medium group-hover:text-primary-700">
+                        Baca Selengkapnya
+                        <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <ArticleSidebar relatedArticles={articles.slice(0, 5)} isArchive={true} />
+            </div>
           </div>
         )}
 

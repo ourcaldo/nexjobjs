@@ -21,7 +21,7 @@ const ArticleSidebar: React.FC<ArticleSidebarProps> = ({
   relatedArticles = [], 
   isArchive = false 
 }) => {
-  const adPosition = isArchive ? 'sidebar_archive' : 'sidebar_single';
+  const adPosition = isArchive ? 'sidebar_archive_ad_code' : 'sidebar_single_ad_code';
 
   return (
     <aside className="space-y-8">
@@ -77,7 +77,7 @@ const ArticleSidebar: React.FC<ArticleSidebarProps> = ({
       {/* Another Ad Space */}
       {!isArchive && (
         <div className="bg-gray-50 p-4 rounded-lg">
-          <AdDisplay position="sidebar_single" />
+          <AdDisplay position="sidebar_single_ad_code" />
         </div>
       )}
 
