@@ -12,6 +12,7 @@ const Header: React.FC = () => {
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const loadBookmarkCount = useCallback(async (userId: string) => {
     try {
@@ -22,28 +23,31 @@ const Header: React.FC = () => {
     }
   }, []);
 
-  const checkUser = useCallback(async () => {
+  const initializeAuth = useCallback(async () => {
+    if (isInitialized) return;
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       if (user) {
-        loadBookmarkCount(user.id);
+        await loadBookmarkCount(user.id);
       }
+      setIsInitialized(true);
     } catch (error) {
       console.error('Error checking user:', error);
+      setIsInitialized(true);
     }
-  }, [loadBookmarkCount]);
+  }, [loadBookmarkCount, isInitialized]);
 
   useEffect(() => {
-    checkUser();
+    // Initialize auth state only once
+    initializeAuth();
     
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        setUser(session?.user);
-        if (session?.user) {
-          loadBookmarkCount(session.user.id);
-        }
+    // Listen for auth changes (login/logout events)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        await loadBookmarkCount(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setBookmarkCount(0);
@@ -51,13 +55,7 @@ const Header: React.FC = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [checkUser, loadBookmarkCount]);
-
-  useEffect(() => {
-    if (user) {
-      loadBookmarkCount(user.id);
-    }
-  }, [user, loadBookmarkCount]);
+  }, [initializeAuth, loadBookmarkCount]);
 
   const handleLogout = async () => {
     try {
