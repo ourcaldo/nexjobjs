@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { 
@@ -14,9 +15,7 @@ import {
   Bookmark,
   Share2,
   CalendarDays,
-  Badge,
-  Loader2,
-  AlertCircle
+  Badge
 } from 'lucide-react';
 import { Job } from '@/types/job';
 import { wpService } from '@/services/wpService';
@@ -26,53 +25,22 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import JobCard from '@/components/JobCard';
 import SchemaMarkup from '@/components/SEO/SchemaMarkup';
 import { generateJobPostingSchema, generateBreadcrumbSchema } from '@/utils/schemaUtils';
-import Head from 'next/head';
 
 interface JobDetailPageProps {
+  job: Job;
   slug: string;
   settings: any;
-  job: Job; // Job data passed directly as a prop
 }
 
 const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) => {
-  const router = useRouter();
   const { trackPageView, trackJobApplication, trackBookmark } = useAnalytics();
 
-  // Refs to prevent infinite loops
-  const initialDataLoadedRef = useRef(false);
-  const isLoadingRef = useRef(false);
-  const currentSlugRef = useRef<string>('');
-
   // State
-  // const [job, setJob] = useState<Job | null>(null);  // Job is now passed as a prop
   const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
-  // const [loading, setLoading] = useState(true);  // No more loading state
-  // const [error, setError] = useState<string | null>(null);  // No more error state
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Metadata is now handled server-side via Head component in the page
-  // No need for client-side metadata updates
-
-  // Load job data (REMOVED as job is passed as prop)
-  // const loadJob = useCallback(async () => { ... }, [slug, updatePageMetadata, trackPageView]);
-
-  // Initialize component - only run once per slug change
+  // Load related jobs and setup analytics
   useEffect(() => {
-    if (!job) return;  // Ensure job data exists
-
-    if (slug && slug !== currentSlugRef.current) {
-      initialDataLoadedRef.current = false;
-      currentSlugRef.current = slug;
-      
-      // Track page view for analytics
-      trackPageView({
-        page_title: `${job.title} - ${job.company_name}`,
-        content_group1: 'job_detail',
-        content_group2: job.kategori_pekerjaan,
-        content_group3: job.lokasi_kota,
-      });
-    }
-
     const fetchRelatedJobs = async () => {
       try {
         const relatedData = await wpService.getRelatedJobs(job.id, job.kategori_pekerjaan, 4);
@@ -84,18 +52,22 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
 
     fetchRelatedJobs();
 
-  }, [slug, job, trackPageView]);
+    // Track page view for analytics
+    trackPageView({
+      page_title: `${job.title} - ${job.company_name}`,
+      content_group1: 'job_detail',
+      content_group2: job.kategori_pekerjaan,
+      content_group3: job.lokasi_kota,
+    });
+  }, [job, trackPageView]);
 
   // Update bookmark state when job changes
   useEffect(() => {
-    if (!job) return;
     setIsBookmarked(bookmarkService.isBookmarked(job.id));
-  }, [job]);
+  }, [job.id]);
 
   // Listen for bookmark changes
   useEffect(() => {
-    if (!job) return;
-
     const handleBookmarkUpdate = () => {
       setIsBookmarked(bookmarkService.isBookmarked(job.id));
     };
@@ -114,10 +86,9 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
       window.removeEventListener('bookmarkUpdated', handleBookmarkUpdate);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [job]);
+  }, [job.id]);
 
   const handleBookmarkToggle = () => {
-    if (!job) return;
     const newBookmarkState = bookmarkService.toggleBookmark(job.id);
     setIsBookmarked(newBookmarkState);
 
@@ -131,8 +102,6 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
   };
 
   const handleApplyClick = () => {
-    if (!job) return;
-
     // Track job application click
     trackJobApplication(job.title, job.company_name, job.id);
 
@@ -177,19 +146,8 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
 
   const breadcrumbItems = [
     { label: 'Lowongan Kerja', href: '/lowongan-kerja/' },
-    { label: job?.title || 'Lowongan' } // Job title from props
+    { label: job.title }
   ];
-
-  // Loading State (REMOVED)
-  // if (loading) { ... }
-
-  // Error State (REMOVED as we're receiving job as prop)
-  // if (error) { ... }
-
-  // Job should always be available since we handle missing jobs at the page level
-  if (!job) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
