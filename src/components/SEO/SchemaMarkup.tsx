@@ -1,17 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface SchemaMarkupProps {
-  schema: object;
+  schema: object | object[];
 }
 
 const SchemaMarkup: React.FC<SchemaMarkupProps> = ({ schema }) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Don't render on server to prevent hydration mismatch
+  if (!isClient) {
+    return null;
+  }
+
+  const schemaArray = Array.isArray(schema) ? schema : [schema];
+
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(schema)
-      }}
-    />
+    <>
+      {schemaArray.map((schemaObj, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schemaObj, null, 0)
+          }}
+        />
+      ))}
+    </>
   );
 };
 

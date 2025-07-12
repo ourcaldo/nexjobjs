@@ -114,6 +114,12 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Baru dipublikasikan';
+    
+    // Use a fixed date for SSR to prevent hydration mismatch
+    if (!isHydrated) {
+      return 'Baru dipublikasikan';
+    }
+    
     const date = new Date(dateStr);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -177,7 +183,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
                     </div>
                     <div className="flex items-center">
                       <CalendarDays className="h-4 w-4 mr-2" />
-                      {formatDate(job.created_at)}
+                      {isHydrated ? formatDate(job.created_at) : 'Baru dipublikasikan'}
                     </div>
                   </div>
                 </div>

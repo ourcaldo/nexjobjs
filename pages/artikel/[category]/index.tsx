@@ -227,7 +227,9 @@ export default function ArticleCategoryPage({ articles, category, allCategories,
                               </div>
                               <div className="flex items-center">
                                 <Calendar className="h-4 w-4 mr-1" />
-                                <span>{formatDistance(new Date(article.published_at || article.post_date), new Date(), { addSuffix: true })}</span>
+                                <span>
+                                  {formatDistance(new Date(article.published_at || article.post_date), new Date(), { addSuffix: true })}
+                                </span>
                               </div>
                             </div>
 
