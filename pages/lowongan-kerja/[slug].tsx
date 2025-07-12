@@ -19,28 +19,7 @@ interface JobPageProps {
 }
 
 export default function JobPage({ job, slug, settings, currentUrl }: JobPageProps) {
-  if (!job) {
-    return (
-      <>
-        <Head>
-          <title>Job Not Found - Nexjob</title>
-          <meta name="description" content="The job you're looking for could not be found." />
-          <meta name="robots" content="noindex, nofollow" />
-        </Head>
-        <Header />
-        <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Job Not Found</h1>
-            <p className="text-gray-600 mb-8">The job you're looking for could not be found.</p>
-            <a href="/lowongan-kerja/" className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors">
-              Browse All Jobs
-            </a>
-          </div>
-        </main>
-        <Footer />
-      </>
-    );
-  }
+  // Job is guaranteed to exist since we return notFound: true for missing jobs
 
   const pageTitle = job.seo_title || `${job.title} - ${job.company_name} | Nexjob`;
   const pageDescription = job.seo_description || `Lowongan ${job.title} di ${job.company_name}, ${job.lokasi_kota}. Gaji: ${job.gaji}. Lamar sekarang!`;
@@ -112,13 +91,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 
     if (!job) {
       return {
-        props: {
-          job: null,
-          slug,
-          settings,
-          currentUrl
-        },
-        revalidate: 3600, // 1 hour
+        notFound: true
       };
     }
 
@@ -134,13 +107,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   } catch (error) {
     console.error('Error fetching job:', error);
     return {
-      props: {
-        job: null,
-        slug,
-        settings: {},
-        currentUrl: getCurrentDomain()
-      },
-      revalidate: 3600,
+      notFound: true
     };
   }
 };
@@ -155,7 +122,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
     return {
       paths,
-      fallback: 'blocking' // Generate other pages on-demand
+      fallback: false // Pre-generate only the paths we return, 404 for others initially
     };
   } catch (error) {
     console.error('Error generating static paths:', error);

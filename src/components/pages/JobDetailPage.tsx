@@ -186,25 +186,9 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
   // Error State (REMOVED as we're receiving job as prop)
   // if (error) { ... }
 
+  // Job should always be available since we handle missing jobs at the page level
   if (!job) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-12 w-12 text-gray-400" />
-          </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Lowongan Tidak Ditemukan</h2>
-          <p className="text-gray-600 mb-6">Lowongan yang Anda cari tidak tersedia</p>
-          <Link 
-            href="/lowongan-kerja/"
-            className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali ke Pencarian
-          </Link>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
