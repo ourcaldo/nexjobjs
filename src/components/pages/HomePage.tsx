@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, TrendingUp, ArrowRight, Users, Building, Code, Heart, Calculator, Truck, Briefcase } from 'lucide-react';
-import { wpService } from '@/services/wpService';
+import { wpService, FilterData } from '@/services/wpService';
 import { userBookmarkService } from '@/services/userBookmarkService';
 import { supabase } from '@/lib/supabase';
 import { adminService } from '@/services/adminService';
