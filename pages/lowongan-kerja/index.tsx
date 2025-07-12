@@ -1,14 +1,15 @@
-
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
-import { WordPressService, FilterData } from '@/services/wpService';
+import { useRouter } from 'next/router';
+import { wpService } from '@/services/wpService';
 import { SupabaseAdminService } from '@/services/supabaseAdminService';
 import { getCurrentDomain } from '@/lib/env';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 import JobSearchPage from '@/components/pages/JobSearchPage';
+import JobArchiveSkeleton from '@/components/ui/JobArchiveSkeleton';
 import SchemaMarkup from '@/components/SEO/SchemaMarkup';
-import { generateJobListingSchema, generateBreadcrumbSchema } from '@/utils/schemaUtils';
+import { generateBreadcrumbSchema } from '@/utils/schemaUtils';
 import { renderTemplate } from '@/utils/templateUtils';
 
 interface JobsPageProps {
@@ -17,6 +18,24 @@ interface JobsPageProps {
 }
 
 export default function Jobs({ settings, currentUrl }: JobsPageProps) {
+  const router = useRouter();
+
+  // Show skeleton loading while page is being generated
+  if (router.isFallback) {
+    return (
+      <>
+        <Head>
+          <title>Loading... - Nexjob</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Head>
+        <Header />
+        <main>
+          <JobArchiveSkeleton />
+        </main>
+        <Footer />
+      </>
+    );
+  }
   const breadcrumbItems = [{ label: 'Lowongan Kerja' }];
 
   // Prepare template variables

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
@@ -14,6 +13,8 @@ import { getCurrentDomain } from '@/lib/env';
 import CMSContent from '@/components/CMSContent';
 import { formatDistance } from 'date-fns';
 import { Calendar, User, Tag, Folder, Eye } from 'lucide-react';
+import { useRouter } from 'next/router';
+import ArticleDetailSkeleton from '@/components/ui/ArticleDetailSkeleton';
 
 interface ArticleDetailProps {
   article: NxdbArticle;
@@ -21,6 +22,24 @@ interface ArticleDetailProps {
 }
 
 export default function ArticleDetail({ article, categorySlug }: ArticleDetailProps) {
+  const router = useRouter();
+
+  // Show skeleton loading while page is being generated
+  if (router.isFallback) {
+    return (
+      <>
+        <Head>
+          <title>Loading... - Nexjob</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Head>
+        <Header />
+        <main>
+          <ArticleDetailSkeleton />
+        </main>
+        <Footer />
+      </>
+    );
+  }
   const currentUrl = getCurrentDomain();
 
   const breadcrumbItems = [

@@ -1,4 +1,3 @@
-
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
@@ -16,6 +15,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import AdDisplay from '@/components/Advertisement/AdDisplay';
 import { renderTemplate } from '@/utils/templateUtils';
+import { useRouter } from 'next/router';
+import { wpService } from '@/services/wpService';
+import { SupabaseAdminService } from '@/services/supabaseAdminService';
+import ArticleArchiveSkeleton from '@/components/ui/ArticleArchiveSkeleton';
 
 interface ArticlePageProps {
   articles: NxdbArticle[];
@@ -52,12 +55,13 @@ export default function ArticlePage({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(false);
   const currentUrl = getCurrentDomain();
+  const router = useRouter();
 
   // Handle category filter
   const handleCategoryChange = async (categorySlug: string) => {
     setLoading(true);
     setSelectedCategory(categorySlug);
-    
+
     try {
       if (categorySlug === 'all') {
         const articlesData = await cmsArticleService.getPublishedArticles(20, 0);
@@ -115,9 +119,25 @@ export default function ArticlePage({
   // Get SEO title and description with template rendering
   const rawSeoTitle = seoSettings?.articles_title || 'Artikel - Tips Karir dan Berita Kerja Terbaru - {{site_title}}';
   const rawSeoDescription = seoSettings?.articles_description || 'Baca artikel terbaru seputar tips karir, berita kerja, dan panduan mencari pekerjaan di Indonesia. Dapatkan insight berharga untuk mengembangkan karir Anda.';
-  
+
   const seoTitle = renderTemplate(rawSeoTitle, templateVars);
   const seoDescription = renderTemplate(rawSeoDescription, templateVars);
+
+  if (router.isFallback) {
+    return (
+      <>
+        <Head>
+          <title>Loading... - Nexjob</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Head>
+        <Header />
+        <main>
+          <ArticleArchiveSkeleton />
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
@@ -261,7 +281,7 @@ export default function ArticlePage({
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="p-6">
                           {/* Category */}
                           {article.categories && article.categories.length > 0 && article.categories[0] && article.categories[0].name && (

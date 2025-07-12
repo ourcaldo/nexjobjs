@@ -7,9 +7,11 @@ import { getCurrentDomain } from '@/lib/env';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 import JobDetailPage from '@/components/pages/JobDetailPage';
+import JobDetailSkeleton from '@/components/ui/JobDetailSkeleton';
 import SchemaMarkup from '@/components/SEO/SchemaMarkup';
 import { generateJobPostingSchema, generateBreadcrumbSchema } from '@/utils/schemaUtils';
 import { Job } from '@/types/job';
+import { useRouter } from 'next/router';
 
 interface JobPageProps {
   job: Job | null;
@@ -19,6 +21,25 @@ interface JobPageProps {
 }
 
 export default function JobPage({ job, slug, settings, currentUrl }: JobPageProps) {
+  const router = useRouter();
+
+  // Show skeleton loading while page is being generated
+  if (router.isFallback) {
+    return (
+      <>
+        <Head>
+          <title>Loading... - Nexjob</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Head>
+        <Header />
+        <main>
+          <JobDetailSkeleton />
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
   // Add null check for job
   if (!job) {
     return (
@@ -59,7 +80,7 @@ export default function JobPage({ job, slug, settings, currentUrl }: JobPageProp
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={`${job.title}, ${job.company_name}, ${job.lokasi_kota}, ${job.kategori}, lowongan kerja`} />
+        <meta name="keywords" content={`${job.title}, ${job.company_name}, ${job.lokasi_kota}, ${job.kategori_pekerjaan}, lowongan kerja`} />
         <meta name="robots" content="index, follow" />
         
         {/* Open Graph */}

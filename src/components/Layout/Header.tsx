@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Bookmark, User, LogOut } from 'lucide-react';
+import { Search, Bookmark, User, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +13,7 @@ const Header: React.FC = () => {
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const loadBookmarkCount = useCallback(async (userId: string) => {
@@ -61,6 +63,7 @@ const Header: React.FC = () => {
     try {
       await supabase.auth.signOut();
       setShowUserMenu(false);
+      setShowMobileMenu(false);
       router.push('/');
     } catch (error) {
       console.error('Error logging out:', error);
@@ -73,6 +76,7 @@ const Header: React.FC = () => {
     } else {
       setShowBookmarkModal(true);
     }
+    setShowMobileMenu(false);
   };
 
   const handleBookmarkModalLogin = () => {
@@ -83,6 +87,10 @@ const Header: React.FC = () => {
   const handleBookmarkModalSignup = () => {
     setShowBookmarkModal(false);
     router.push('/signup/');
+  };
+
+  const handleMobileNavClick = () => {
+    setShowMobileMenu(false);
   };
 
   const isActive = (path: string) => {
@@ -132,7 +140,7 @@ const Header: React.FC = () => {
               </span>
             </Link>
 
-            {/* Navigation */}
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               <Link 
                 href="/" 
@@ -166,8 +174,8 @@ const Header: React.FC = () => {
               </Link>
             </nav>
 
-            {/* Right Side */}
-            <div className="flex items-center space-x-4">
+            {/* Desktop Right Side */}
+            <div className="hidden md:flex items-center space-x-4">
               {/* Bookmarks - Always visible */}
               <button
                 onClick={handleBookmarkClick}
@@ -187,7 +195,7 @@ const Header: React.FC = () => {
               </button>
 
               {user ? (
-                /* User Menu */
+                /* Desktop User Menu */
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
@@ -196,7 +204,7 @@ const Header: React.FC = () => {
                     <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
                       <User className="h-5 w-5 text-white" />
                     </div>
-                    <span className="hidden md:block text-gray-700 font-medium">
+                    <span className="text-gray-700 font-medium">
                       {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
                     </span>
                   </button>
@@ -222,7 +230,7 @@ const Header: React.FC = () => {
                   )}
                 </div>
               ) : (
-                /* Login/Signup buttons */
+                /* Desktop Login/Signup buttons */
                 <>
                   <Link
                     href="/login/"
@@ -239,10 +247,43 @@ const Header: React.FC = () => {
                 </>
               )}
             </div>
+
+            {/* Mobile Right Side */}
+            <div className="flex md:hidden items-center space-x-2">
+              {/* Mobile Bookmarks */}
+              <button
+                onClick={handleBookmarkClick}
+                className={`relative p-2 rounded-lg transition-colors ${
+                  user && isActive('/profile/')
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-600 hover:text-primary-600 hover:bg-primary-50'
+                }`}
+                title="Lowongan Tersimpan"
+              >
+                <Bookmark className="h-5 w-5" />
+                {bookmarkCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {bookmarkCount > 99 ? '99+' : bookmarkCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="p-2 rounded-lg text-gray-600 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+              >
+                {showMobileMenu ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Click outside to close user menu */}
+        {/* Click outside to close desktop user menu */}
         {showUserMenu && (
           <div
             className="fixed inset-0 z-40"
@@ -250,6 +291,128 @@ const Header: React.FC = () => {
           />
         )}
       </header>
+
+      {/* Mobile Off-Canvas Menu */}
+      <div className={`fixed inset-0 z-50 md:hidden transition-transform duration-300 ease-in-out ${showMobileMenu ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Overlay */}
+        <div 
+          className={`fixed inset-0 bg-black transition-opacity duration-300 ${showMobileMenu ? 'opacity-50' : 'opacity-0'}`}
+          onClick={() => setShowMobileMenu(false)}
+        />
+        
+        {/* Menu Panel */}
+        <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <Link href="/" className="flex items-center space-x-2" onClick={handleMobileNavClick}>
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
+                  <Search className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-gray-900">
+                  Nex<span className="text-primary-600">job</span>
+                </span>
+              </Link>
+              <button
+                onClick={() => setShowMobileMenu(false)}
+                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 p-4">
+              <div className="space-y-2">
+                <Link
+                  href="/"
+                  onClick={handleMobileNavClick}
+                  className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
+                    isActive('/')
+                      ? 'text-primary-600 bg-primary-50'
+                      : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
+                  }`}
+                >
+                  Beranda
+                </Link>
+                <Link
+                  href="/lowongan-kerja/"
+                  onClick={handleMobileNavClick}
+                  className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
+                    isActive('/lowongan-kerja/')
+                      ? 'text-primary-600 bg-primary-50'
+                      : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
+                  }`}
+                >
+                  Cari Lowongan
+                </Link>
+                <Link
+                  href="/artikel/"
+                  onClick={handleMobileNavClick}
+                  className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
+                    isActive('/artikel/')
+                      ? 'text-primary-600 bg-primary-50'
+                      : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
+                  }`}
+                >
+                  Tips Karir
+                </Link>
+              </div>
+            </nav>
+
+            {/* User Section */}
+            <div className="p-4 border-t border-gray-200">
+              {user ? (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
+                      <User className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">
+                        {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                      </p>
+                      <p className="text-sm text-gray-500">{user.email}</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/profile/"
+                    onClick={handleMobileNavClick}
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <User className="h-5 w-5 mr-3" />
+                    Profil Saya
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <LogOut className="h-5 w-5 mr-3" />
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Link
+                    href="/login/"
+                    onClick={handleMobileNavClick}
+                    className="block w-full text-center px-4 py-3 text-gray-700 hover:text-primary-600 font-medium border border-gray-300 rounded-lg hover:border-primary-300 transition-colors"
+                  >
+                    Masuk
+                  </Link>
+                  <Link
+                    href="/signup/"
+                    onClick={handleMobileNavClick}
+                    className="block w-full text-center px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                  >
+                    Daftar
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Bookmark Login Modal */}
       <BookmarkLoginModal

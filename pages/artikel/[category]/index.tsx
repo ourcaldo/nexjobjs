@@ -1,5 +1,6 @@
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { cmsArticleService } from '@/services/cmsArticleService';
 import { NxdbArticle, NxdbArticleCategory } from '@/lib/supabase';
 import Header from '@/components/Layout/Header';
@@ -11,6 +12,7 @@ import { formatDistance } from 'date-fns';
 import { Calendar, User, Tag, Folder, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ArticleArchiveSkeleton from '@/components/ui/ArticleArchiveSkeleton';
 
 interface ArticleCategoryPageProps {
   articles: NxdbArticle[];
@@ -21,6 +23,24 @@ interface ArticleCategoryPageProps {
 
 export default function ArticleCategoryPage({ articles, category, allCategories, total }: ArticleCategoryPageProps) {
   const currentUrl = getCurrentDomain();
+  const router = useRouter();
+
+  // Show skeleton loading while page is being generated
+  if (router.isFallback) {
+    return (
+      <>
+        <Head>
+          <title>Loading... - Nexjob</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Head>
+        <Header />
+        <main>
+          <ArticleArchiveSkeleton />
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   const breadcrumbItems = [
     { name: 'Home', href: '/' },
@@ -289,3 +309,4 @@ export const getStaticPaths: GetStaticPaths = async () => {
     };
   }
 };
+```
