@@ -32,7 +32,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   const [activeTab, setActiveTab] = useState<'upload' | 'library'>('library');
 
   // Load user's media items
-  const loadMediaItems = async () => {
+  const loadMediaItems = React.useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -54,7 +54,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, showToast]);
 
   useEffect(() => {
     if (isOpen) {
