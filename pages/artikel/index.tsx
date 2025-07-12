@@ -14,6 +14,7 @@ import { formatDistance } from 'date-fns';
 import { Calendar, User, Tag, Folder, ArrowRight, Clock, Eye } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import AdDisplay from '@/components/Advertisement/AdDisplay';
 
 interface ArticlePageProps {
   articles: NxdbArticle[];
@@ -386,14 +387,9 @@ export default function ArticlePage({
                   </div>
                 )}
 
-                {/* Advertisement Placeholder */}
+                {/* Advertisement */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">
-                    Advertisement
-                  </h3>
-                  <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400 text-sm">Iklan akan muncul di sini</span>
-                  </div>
+                  <AdDisplay position="sidebar_archive_ad_code" />
                 </div>
               </div>
             </div>
