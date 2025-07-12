@@ -140,11 +140,11 @@ const JobCard: React.FC<JobCardProps> = ({
         // Notify parent component about bookmark change
         onBookmarkChange?.(job.id, result.isBookmarked);
         showToast(
-          result.isBookmarked ? 'Lowongan berhasil disimpan!' : 'Lowongan dihapus dari bookmark',
-          result.isBookmarked ? 'success' : 'info'
+          result.isBookmarked ? 'success' : 'info',
+          result.isBookmarked ? 'Lowongan berhasil disimpan!' : 'Lowongan dihapus dari bookmark'
         );
       } else {
-        showToast(result.error || 'Gagal mengubah bookmark', 'error');
+        showToast('error', result.error || 'Gagal mengubah bookmark');
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
