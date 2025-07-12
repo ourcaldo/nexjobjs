@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
 import { WordPressService, FilterData } from '@/services/wpService';
 import { SupabaseAdminService } from '@/services/supabaseAdminService';
@@ -11,45 +11,48 @@ import { getCurrentDomain } from '@/lib/env';
 import { wpLocationMappings } from '@/utils/urlUtils';
 import { renderTemplate } from '@/utils/templateUtils';
 
-interface LocationJobsPageProps {
+interface JobLocationPageProps {
+  slug: string;
   location: string;
-  locationSlug: string;
-  locationType: 'province' | 'city';
-  category?: string;
+  category: string;
+  locationType: string;
   settings: any;
   currentUrl: string;
 }
 
-export default function LocationJobs({ location, locationSlug, locationType, category, settings, currentUrl }: LocationJobsPageProps) {
-  // Prepare template variables
-  const templateVars = {
-    lokasi: location,
-    site_title: settings.site_title,
-    kategori: category || ''
-  };
-
-  // Generate dynamic title and description
-  const pageTitle = renderTemplate(settings.location_page_title_template || 'Lowongan Kerja di {{lokasi}} - {{site_title}}', templateVars);
-  const pageDescription = renderTemplate(settings.location_page_description_template || 'Temukan lowongan kerja terbaru di {{lokasi}}. Dapatkan pekerjaan impian Anda dengan gaji terbaik di {{site_title}}.', templateVars);
-
+export default function JobLocationPage({ slug, location, category, locationType, settings, currentUrl }: JobLocationPageProps) {
   const breadcrumbItems = [
     { label: 'Lowongan Kerja', href: '/lowongan-kerja/' },
     { label: `Lokasi: ${location}` }
   ];
+
+  // Prepare template variables
+  const templateVars = {
+    site_title: settings?.site_title || 'Nexjob',
+    lokasi: location,
+    kategori: category
+  };
+
+  // Get SEO settings with template rendering
+  const pageTitle = renderTemplate(settings?.job_location_title || 'Lowongan Kerja di {{lokasi}} - {{site_title}}', templateVars);
+  const pageDescription = renderTemplate(settings?.job_location_description || 'Temukan lowongan kerja terbaru di {{lokasi}} dari berbagai perusahaan terpercaya. Dapatkan pekerjaan impian Anda di {{lokasi}}.', templateVars);
 
   return (
     <>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
+        <meta name="keywords" content={`lowongan kerja ${location}, jobs ${location}, karir ${location}, pekerjaan ${location}`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={`${currentUrl}/lowongan-kerja/lokasi/${locationSlug}/`} />
+        <meta property="og:url" content={`${currentUrl}/lowongan-kerja/lokasi/${slug}/`} />
+        <meta property="og:image" content={settings.jobs_og_image || `${currentUrl}/og-jobs.jpg`} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <link rel="canonical" href={`${currentUrl}/lowongan-kerja/lokasi/${locationSlug}/`} />
+        <meta name="twitter:image" content={settings.jobs_og_image || `${currentUrl}/og-jobs.jpg`} />
+        <link rel="canonical" href={`${currentUrl}/lowongan-kerja/lokasi/${slug}/`} />
       </Head>
 
       <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
@@ -95,85 +98,37 @@ export default function LocationJobs({ location, locationSlug, locationType, cat
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ params, query, req }) => {
-  const locationSlug = params?.slug as string;
-  const category = query?.category as string;
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const slug = params?.slug as string;
+  const location = wpLocationMappings[slug] || slug.charAt(0).toUpperCase() + slug.slice(1);
+  const category = '';
+  const locationType = 'kota';
+
   const settings = await SupabaseAdminService.getSettingsServerSide();
+  const currentUrl = getCurrentDomain();
 
-  // Get current URL from request headers
-  const protocol = req.headers['x-forwarded-proto'] || 'http';
-  const host = req.headers.host;
-  const currentUrl = `${protocol}://${host}`;
+  return {
+    props: {
+      slug,
+      location,
+      category,
+      locationType,
+      settings,
+      currentUrl
+    },
+    revalidate: 300, // 5 minutes
+  };
+};
 
-  if (!locationSlug) {
-    return { notFound: true };
-  }
+export const getStaticPaths: GetStaticPaths = async () => {
+  // Generate paths for common locations
+  const commonLocations = Object.keys(wpLocationMappings);
+  const paths = commonLocations.map(slug => ({
+    params: { slug }
+  }));
 
-  try {
-    // Get filter data to find the actual location name
-    const currentWpService = new WordPressService();
-    currentWpService.setBaseUrl(settings.api_url);
-    currentWpService.setFiltersApiUrl(settings.filters_api_url);
-    currentWpService.setAuthToken(settings.auth_token || '');
-
-    const filterData = await currentWpService.getFiltersData();
-
-    let matchedLocation = '';
-    let locationType: 'province' | 'city' = 'city';
-
-    if (filterData.nexjob_lokasi_provinsi) {
-      // First check if it's a province
-      const provinces = Object.keys(filterData.nexjob_lokasi_provinsi);
-      matchedLocation = provinces.find(province => {
-        const provinceSlug = province
-          .toLowerCase()
-          .replace(/[^a-z0-9\s]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '');
-        return provinceSlug === locationSlug;
-      }) || '';
-
-      if (matchedLocation) {
-        locationType = 'province';
-      } else {
-        // Check if it's a city
-        for (const [province, cities] of Object.entries(filterData.nexjob_lokasi_provinsi)) {
-          const foundCity = cities.find(city => {
-            const citySlug = city
-              .toLowerCase()
-              .replace(/[^a-z0-9\s]/g, '')
-              .replace(/\s+/g, '-')
-              .replace(/-+/g, '-')
-              .replace(/^-|-$/g, '');
-            return citySlug === locationSlug;
-          });
-
-          if (foundCity) {
-            matchedLocation = foundCity;
-            locationType = 'city';
-            break;
-          }
-        }
-      }
-    }
-
-    if (!matchedLocation) {
-      return { notFound: true };
-    }
-
-    return {
-      props: {
-        location: matchedLocation,
-        locationSlug,
-        locationType,
-        category: category || null,
-        settings,
-        currentUrl
-      }
-    };
-  } catch (error) {
-    console.error('Error in getServerSideProps:', error);
-    return { notFound: true };
-  }
+  return {
+    paths,
+    fallback: 'blocking'
+  };
 };

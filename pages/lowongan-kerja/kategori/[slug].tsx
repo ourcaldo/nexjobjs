@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
 import { WordPressService, FilterData } from '@/services/wpService';
 import { SupabaseAdminService } from '@/services/supabaseAdminService';
@@ -11,44 +11,47 @@ import { getCurrentDomain } from '@/lib/env';
 import { wpCategoryMappings } from '@/utils/urlUtils';
 import { renderTemplate } from '@/utils/templateUtils';
 
-interface CategoryJobsPageProps {
+interface JobCategoryPageProps {
+  slug: string;
   category: string;
-  categorySlug: string;
-  location?: string;
+  location: string;
   settings: any;
   currentUrl: string;
 }
 
-export default function CategoryJobs({ category, categorySlug, location, settings, currentUrl }: CategoryJobsPageProps) {
-  // Prepare template variables
-  const templateVars = {
-    kategori: category,
-    site_title: settings.site_title,
-    lokasi: location || ''
-  };
-
-  // Generate dynamic title and description
-  const pageTitle = renderTemplate(settings.category_page_title_template || 'Lowongan Kerja {{kategori}} - {{site_title}}', templateVars);
-  const pageDescription = renderTemplate(settings.category_page_description_template || 'Temukan lowongan kerja {{kategori}} terbaru. Dapatkan pekerjaan impian Anda dengan gaji terbaik di {{site_title}}.', templateVars);
-
+export default function JobCategoryPage({ slug, category, location, settings, currentUrl }: JobCategoryPageProps) {
   const breadcrumbItems = [
     { label: 'Lowongan Kerja', href: '/lowongan-kerja/' },
     { label: `Kategori: ${category}` }
   ];
+
+  // Prepare template variables
+  const templateVars = {
+    site_title: settings?.site_title || 'Nexjob',
+    lokasi: location,
+    kategori: category
+  };
+
+  // Get SEO settings with template rendering
+  const pageTitle = renderTemplate(settings?.job_category_title || 'Lowongan Kerja {{kategori}} - {{site_title}}', templateVars);
+  const pageDescription = renderTemplate(settings?.job_category_description || 'Temukan lowongan kerja {{kategori}} terbaru dari berbagai perusahaan terpercaya. Dapatkan pekerjaan impian Anda di bidang {{kategori}}.', templateVars);
 
   return (
     <>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
+        <meta name="keywords" content={`lowongan kerja ${category}, jobs ${category}, karir ${category}, pekerjaan ${category}`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={`${currentUrl}/lowongan-kerja/kategori/${categorySlug}/`} />
+        <meta property="og:url" content={`${currentUrl}/lowongan-kerja/kategori/${slug}/`} />
+        <meta property="og:image" content={settings.jobs_og_image || `${currentUrl}/og-jobs.jpg`} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <link rel="canonical" href={`${currentUrl}/lowongan-kerja/kategori/${categorySlug}/`} />
+        <meta name="twitter:image" content={settings.jobs_og_image || `${currentUrl}/og-jobs.jpg`} />
+        <link rel="canonical" href={`${currentUrl}/lowongan-kerja/kategori/${slug}/`} />
       </Head>
 
       <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
@@ -93,59 +96,35 @@ export default function CategoryJobs({ category, categorySlug, location, setting
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ params, query, req }) => {
-  const categorySlug = params?.slug as string;
-  const location = query?.location as string;
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const slug = params?.slug as string;
+  const category = wpCategoryMappings[slug] || slug.charAt(0).toUpperCase() + slug.slice(1);
+  const location = '';
+
   const settings = await SupabaseAdminService.getSettingsServerSide();
+  const currentUrl = getCurrentDomain();
 
-  // Get current URL from request headers
-  const protocol = req.headers['x-forwarded-proto'] || 'http';
-  const host = req.headers.host;
-  const currentUrl = `${protocol}://${host}`;
+  return {
+    props: {
+      slug,
+      category,
+      location,
+      settings,
+      currentUrl
+    },
+    revalidate: 300, // 5 minutes
+  };
+};
 
-  if (!categorySlug) {
-    return { notFound: true };
-  }
+export const getStaticPaths: GetStaticPaths = async () => {
+  // Generate paths for common job categories
+  const commonCategories = Object.keys(wpCategoryMappings);
+  const paths = commonCategories.map(slug => ({
+    params: { slug }
+  }));
 
-  try {
-    // Get filter data to find the actual category name
-    const currentWpService = new WordPressService();
-    currentWpService.setBaseUrl(settings.api_url);
-    currentWpService.setFiltersApiUrl(settings.filters_api_url);
-    currentWpService.setAuthToken(settings.auth_token || '');
-
-    const filterData = await currentWpService.getFiltersData();
-
-    // Find matching category by converting slug back to category name
-    let matchedCategory = '';
-    if (filterData.nexjob_kategori_pekerjaan) {
-      matchedCategory = filterData.nexjob_kategori_pekerjaan.find(cat => {
-        const catSlug = cat
-          .toLowerCase()
-          .replace(/[&]/g, '')
-          .replace(/[^a-z0-9\s]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '');
-        return catSlug === categorySlug;
-      }) || '';
-    }
-
-    if (!matchedCategory) {
-      return { notFound: true };
-    }
-
-    return {
-      props: {
-        category: matchedCategory,
-        categorySlug,
-        location: location || null,
-        settings,
-        currentUrl
-      }
-    };
-  } catch (error) {
-    console.error('Error in getServerSideProps:', error);
-    return { notFound: true };
-  }
+  return {
+    paths,
+    fallback: 'blocking'
+  };
 };

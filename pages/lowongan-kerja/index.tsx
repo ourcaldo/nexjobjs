@@ -1,3 +1,4 @@
+
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { WordPressService, FilterData } from '@/services/wpService';
@@ -34,6 +35,7 @@ export default function Jobs({ settings, currentUrl }: JobsPageProps) {
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
+        <meta name="keywords" content="lowongan kerja, jobs, karir, pekerjaan, rekrutmen" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
@@ -91,6 +93,6 @@ export const getStaticProps: GetStaticProps = async () => {
       settings,
       currentUrl
     },
-    revalidate: 300, // Revalidate every 5 minutes
+    revalidate: 300, // 5 minutes
   };
 };

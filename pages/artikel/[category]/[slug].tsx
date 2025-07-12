@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
@@ -208,7 +209,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         article,
         categorySlug
       },
-      revalidate: 86400, // 24 hours ISR revalidation
+      revalidate: 3600, // 1 hour
     };
   } catch (error) {
     console.error('Error fetching article:', error);

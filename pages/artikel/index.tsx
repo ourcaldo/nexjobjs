@@ -447,7 +447,7 @@ export const getStaticProps: GetStaticProps = async () => {
         tags,
         seoSettings
       },
-      revalidate: 3600, // 1 hour ISR revalidation
+      revalidate: 300, // 5 minutes
     };
   } catch (error) {
     console.error('Error fetching articles:', error);
@@ -460,7 +460,7 @@ export const getStaticProps: GetStaticProps = async () => {
         tags: [],
         seoSettings: null
       },
-      revalidate: 3600,
+      revalidate: 300,
     };
   }
 };

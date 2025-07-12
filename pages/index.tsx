@@ -100,7 +100,7 @@ export const getStaticProps: GetStaticProps = async () => {
         filterData: null,
         settings: await SupabaseAdminService.getSettingsServerSide()
       },
-      revalidate: 300, // ISR: Retry in 5 minutes on error
+      revalidate: 300, // 5 minutes
     };
   }
 };
