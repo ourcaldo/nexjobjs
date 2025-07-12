@@ -311,4 +311,3 @@ export const getStaticPaths: GetStaticPaths = async () => {
     };
   }
 };
-```
