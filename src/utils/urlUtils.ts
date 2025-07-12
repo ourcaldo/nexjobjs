@@ -25,3 +25,8 @@ export const wpCategoryMappings: Record<string, string> = {
   // Add your category mappings here
   // Example: 'teknologi-informasi': 'IT & Technology'
 };
+
+export const wpLocationMappings: Record<string, string> = {
+  // Add your location mappings here
+  // Example: 'jakarta': 'Jakarta', 'jawa-barat': 'Jawa Barat'
+};
