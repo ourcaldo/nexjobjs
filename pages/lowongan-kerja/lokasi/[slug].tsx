@@ -90,7 +90,7 @@ export default function JobLocationPage({ slug, location, category, locationType
           settings={settings} 
           initialLocation={location}
           initialCategory={category}
-          locationType={locationType}
+          locationType={locationType as 'province' | 'city'}
         />
       </main>
       <Footer />
