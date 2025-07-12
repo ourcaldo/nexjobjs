@@ -128,7 +128,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     console.error('Error generating static paths:', error);
     return {
       paths: [],
-      fallback: 'blocking'
+      fallback: false
     };
   }
 };
