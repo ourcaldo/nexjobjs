@@ -35,21 +35,73 @@ const AdDisplay: React.FC<AdDisplayProps> = ({ position, className = '' }) => {
   // Execute any scripts in the ad code
   useEffect(() => {
     if (adCode) {
-      const scripts = adCode.match(/<script[^>]*>([\s\S]*?)<\/script>/gi);
-      if (scripts) {
-        scripts.forEach(scriptTag => {
-          const scriptContent = scriptTag.replace(/<script[^>]*>|<\/script>/gi, '');
-          if (scriptContent.trim()) {
-            try {
-              eval(scriptContent);
-            } catch (error) {
-              console.error('Error executing ad script:', error);
+      console.log(`Processing ad code for position ${position}:`, adCode);
+      
+      // Create a temporary container to parse the HTML
+      const tempContainer = document.createElement('div');
+      tempContainer.innerHTML = adCode;
+      
+      // Handle external script tags with src attribute
+      const externalScripts = tempContainer.querySelectorAll('script[src]');
+      externalScripts.forEach((script) => {
+        const newScript = document.createElement('script');
+        const src = script.getAttribute('src');
+        
+        if (src) {
+          console.log(`Loading external script for ${position}:`, src);
+          newScript.src = src;
+          
+          // Copy other attributes
+          Array.from(script.attributes).forEach(attr => {
+            if (attr.name !== 'src') {
+              newScript.setAttribute(attr.name, attr.value);
             }
+          });
+          
+          // Add load and error handlers
+          newScript.onload = () => {
+            console.log(`External script loaded successfully for ${position}:`, src);
+          };
+          
+          newScript.onerror = () => {
+            console.error(`Failed to load external script for ${position}:`, src);
+          };
+          
+          // Append to document head to execute
+          document.head.appendChild(newScript);
+        }
+      });
+      
+      // Handle inline script tags
+      const inlineScripts = tempContainer.querySelectorAll('script:not([src])');
+      inlineScripts.forEach((script) => {
+        if (script.innerHTML.trim()) {
+          console.log(`Executing inline script for ${position}:`, script.innerHTML);
+          try {
+            // Create new script element for inline scripts
+            const newScript = document.createElement('script');
+            newScript.textContent = script.innerHTML;
+            
+            // Copy attributes
+            Array.from(script.attributes).forEach(attr => {
+              newScript.setAttribute(attr.name, attr.value);
+            });
+            
+            document.head.appendChild(newScript);
+            
+            // Clean up after a short delay
+            setTimeout(() => {
+              if (document.head.contains(newScript)) {
+                document.head.removeChild(newScript);
+              }
+            }, 1000);
+          } catch (error) {
+            console.error(`Error executing inline script for ${position}:`, error);
           }
-        });
-      }
+        }
+      });
     }
-  }, [adCode]);
+  }, [adCode, position]);
 
   if (loading) {
     return (
