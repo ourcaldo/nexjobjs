@@ -99,11 +99,6 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
     trackBookmark(newBookmarkState ? 'add' : 'remove', job.title, job.id);
   };
 
-  const handleRelatedJobClick = (relatedJob: Job) => {
-    // JobCard now handles navigation internally with Link
-    return;
-  };
-
   const handleApplyClick = () => {
     // Track job application click
     trackJobApplication(job.title, job.company_name, job.id);
@@ -114,12 +109,12 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Baru dipublikasikan';
-    
+
     // Use a fixed date for SSR to prevent hydration mismatch
     if (!isHydrated) {
       return 'Baru dipublikasikan';
     }
-    
+
     const date = new Date(dateStr);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -355,8 +350,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
                   {relatedJobs.map((relatedJob) => (
                     <JobCard 
                       key={relatedJob.id} 
-                      job={relatedJob} 
-                      onClick={handleRelatedJobClick} 
+                      job={relatedJob}
                     />
                   ))}
                 </div>
