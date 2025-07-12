@@ -61,6 +61,7 @@ export default function JobPage({ job, slug, settings, currentUrl }: JobPageProp
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
         <meta name="keywords" content={`${job.title}, ${job.company_name}, ${job.lokasi_kota}, ${job.kategori}, lowongan kerja`} />
+        <meta name="robots" content="index, follow" />
         
         {/* Open Graph */}
         <meta property="og:title" content={pageTitle} />

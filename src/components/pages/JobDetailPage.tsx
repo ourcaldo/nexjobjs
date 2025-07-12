@@ -50,62 +50,8 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
   // const [error, setError] = useState<string | null>(null);  // No more error state
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Update page metadata
-  const updatePageMetadata = useCallback((jobData: Job) => {
-    if (typeof window === 'undefined') return;
-
-    const pageTitle = jobData.seo_title || `${jobData.title} - ${jobData.company_name} | Nexjob`;
-    const pageDescription = jobData.seo_description || `Lowongan ${jobData.title} di ${jobData.company_name}, ${jobData.lokasi_kota}. Gaji: ${jobData.gaji}. Lamar sekarang!`;
-    const currentUrl = window.location.origin;
-    const canonicalUrl = `${currentUrl}/lowongan-kerja/${slug}/`;
-    const ogImage = settings.default_job_og_image || `${currentUrl}/og-job-default.jpg`;
-
-    document.title = pageTitle;
-
-    // Update meta description
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', pageDescription);
-    }
-
-    // Update or create canonical link
-    let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-    if (!canonicalLink) {
-      canonicalLink = document.createElement('link');
-      canonicalLink.rel = 'canonical';
-      document.head.appendChild(canonicalLink);
-    }
-    canonicalLink.href = canonicalUrl;
-
-    // Update OG tags
-    const ogTitle = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) ogTitle.setAttribute('content', pageTitle);
-
-    const ogDescription = document.querySelector('meta[property="og:description"]');
-    if (ogDescription) ogDescription.setAttribute('content', pageDescription);
-
-    const ogUrl = document.querySelector('meta[property="og:url"]');
-    if (ogUrl) ogUrl.setAttribute('content', canonicalUrl);
-
-    const ogImageMeta = document.querySelector('meta[property="og:image"]');
-    if (ogImageMeta) ogImageMeta.setAttribute('content', ogImage);
-
-    // Update Twitter tags
-    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
-    if (twitterTitle) twitterTitle.setAttribute('content', pageTitle);
-
-    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
-    if (twitterDescription) twitterDescription.setAttribute('content', pageDescription);
-
-    const twitterImage = document.querySelector('meta[name="twitter:image"]');
-    if (twitterImage) twitterImage.setAttribute('content', ogImage);
-
-    // Update robots meta to allow indexing
-    const robotsMeta = document.querySelector('meta[name="robots"]');
-    if (robotsMeta) {
-      robotsMeta.setAttribute('content', 'index, follow');
-    }
-  }, [slug, settings]);
+  // Metadata is now handled server-side via Head component in the page
+  // No need for client-side metadata updates
 
   // Load job data (REMOVED as job is passed as prop)
   // const loadJob = useCallback(async () => { ... }, [slug, updatePageMetadata, trackPageView]);
@@ -116,8 +62,9 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
 
     if (slug && slug !== currentSlugRef.current) {
       initialDataLoadedRef.current = false;
-      currentSlugRef.current = '';
-      updatePageMetadata(job); // Use the job prop for metadata update
+      currentSlugRef.current = slug;
+      
+      // Track page view for analytics
       trackPageView({
         page_title: `${job.title} - ${job.company_name}`,
         content_group1: 'job_detail',
@@ -137,7 +84,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
 
     fetchRelatedJobs();
 
-  }, [slug, job, updatePageMetadata, trackPageView]);
+  }, [slug, job, trackPageView]);
 
   // Update bookmark state when job changes
   useEffect(() => {
