@@ -122,7 +122,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         settings,
         currentUrl
       },
-      revalidate: 3600, // 1 hour
+      revalidate: 300, // 5 minutes ISR for faster updates
     };
   } catch (error) {
     console.error('Error fetching job:', error);
@@ -135,20 +135,20 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
     // Get some popular jobs for initial static generation
-    const jobs = await wpService.getJobs(1, 50); // Get first 50 jobs
-    const paths = jobs.map(job => ({
+    const response = await wpService.getJobs({}, 1, 50); // Get first 50 jobs
+    const paths = response.jobs.map(job => ({
       params: { slug: job.slug }
     }));
 
     return {
       paths,
-      fallback: false // Pre-generate only the paths we return, 404 for others initially
+      fallback: 'blocking' // Enable ISR - generate pages on-demand
     };
   } catch (error) {
     console.error('Error generating static paths:', error);
     return {
       paths: [],
-      fallback: false
+      fallback: 'blocking' // Still enable ISR even if initial paths fail
     };
   }
 };
