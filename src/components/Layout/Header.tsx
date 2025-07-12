@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Bookmark, User, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
@@ -27,33 +26,34 @@ const Header: React.FC = () => {
 
   const initializeAuth = useCallback(async () => {
     try {
-      // Always check current session, don't rely on isInitialized flag
+      // First try to get session (includes token validation)
       const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
-      
-      setUser(user);
-      if (user) {
-        await loadBookmarkCount(user.id);
+
+      if (session?.user) {
+        setUser(session.user);
+        await loadBookmarkCount(session.user.id);
       } else {
-        setBookmarkCount(0);
+        // Fallback to getUser if no session
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+        if (user) {
+          await loadBookmarkCount(user.id);
+        }
       }
-      setIsInitialized(true);
     } catch (error) {
-      console.error('Error checking user:', error);
+      console.error('Error initializing auth:', error);
       setUser(null);
-      setBookmarkCount(0);
-      setIsInitialized(true);
     }
   }, [loadBookmarkCount]);
 
   useEffect(() => {
     // Initialize auth state
     initializeAuth();
-    
+
     // Listen for auth changes (login/logout events)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.id);
-      
+
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
         await loadBookmarkCount(session.user.id);
@@ -120,7 +120,7 @@ const Header: React.FC = () => {
     if (path === '/') {
       return router.pathname === '/' && router.asPath === '/';
     }
-    
+
     if (path === '/lowongan-kerja/') {
       return router.pathname === '/lowongan-kerja' || 
              router.pathname === '/lowongan-kerja/index' ||
@@ -128,7 +128,7 @@ const Header: React.FC = () => {
              router.asPath === '/lowongan-kerja' ||
              router.pathname.startsWith('/lowongan-kerja');
     }
-    
+
     if (path === '/artikel/') {
       return router.pathname === '/artikel' || 
              router.pathname === '/artikel/index' ||
@@ -136,7 +136,7 @@ const Header: React.FC = () => {
              router.asPath === '/artikel' ||
              router.pathname.startsWith('/artikel');
     }
-    
+
     if (path === '/profile/') {
       return router.pathname === '/profile' || 
              router.pathname === '/profile/index' ||
@@ -144,7 +144,7 @@ const Header: React.FC = () => {
              router.asPath === '/profile' ||
              router.pathname.startsWith('/profile');
     }
-    
+
     return router.pathname === path || router.asPath === path;
   };
 
@@ -322,7 +322,7 @@ const Header: React.FC = () => {
           className={`fixed inset-0 bg-black transition-opacity duration-300 ${showMobileMenu ? 'opacity-50' : 'opacity-0'}`}
           onClick={() => setShowMobileMenu(false)}
         />
-        
+
         {/* Menu Panel */}
         <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl">
           <div className="flex flex-col h-full">

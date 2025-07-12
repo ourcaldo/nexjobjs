@@ -259,6 +259,34 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
     }
   };
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Get current session first
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          setUser(session.user);
+          await loadProfile(session.user.id);
+        } else {
+          // Fallback to getUser
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            router.push('/login/');
+            return;
+          }
+          setUser(user);
+          await loadProfile(user.id);
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        router.push('/login/');
+      }
+    };
+
+    checkAuth();
+  }, [router, loadProfile]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">

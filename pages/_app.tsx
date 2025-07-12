@@ -14,15 +14,20 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     // Set up auth state change listener for the entire app
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Global auth state change:', event, session?.user?.id);
+      
       if (event === 'SIGNED_OUT') {
         // Clear any cached data and redirect to home
         router.push('/');
-      } else if (event === 'SIGNED_IN') {
-        // Refresh current page to sync auth state
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        // If on login page, redirect to home
         if (router.pathname === '/login' || router.pathname === '/login/') {
           router.push('/');
         }
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Force a re-render to update auth state
+        router.replace(router.asPath);
       }
     });
 

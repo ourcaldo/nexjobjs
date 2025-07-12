@@ -59,8 +59,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ settings }) => {
       if (data.user && data.session) {
         showToast('success', 'Berhasil masuk!');
 
-        // Force a hard refresh to ensure auth state is properly synced
-        window.location.href = '/';
+        // Wait a bit for auth state to propagate, then navigate
+        setTimeout(() => {
+          router.push('/');
+        }, 500);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat login';
