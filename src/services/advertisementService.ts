@@ -48,6 +48,12 @@ class AdvertisementService {
     this.configLoaded = false;
   }
 
+  // Force refresh of ad config
+  async refreshConfig(): Promise<AdvertisementConfig> {
+    this.clearCache();
+    return await this.loadAdConfig();
+  }
+
   // Insert ad in content at H2 tags (for middle ads)
   insertMiddleAd(content: string, adCode: string): string {
     if (!adCode || !content) return content;
