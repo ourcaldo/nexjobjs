@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Save, Loader2, FileText, Image, Globe, Search } from 'lucide-react';
+import { Save, Loader2, FileText, Image as ImageIcon, Globe, Search } from 'lucide-react';
+import Image from 'next/image';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { useToast } from '@/components/ui/ToastProvider';
 
@@ -329,7 +330,7 @@ const SEOSettings: React.FC = () => {
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <Image className="h-6 w-6 mr-3 text-primary-600" />
+            <ImageIcon className="h-6 w-6 mr-3 text-primary-600" />
             Open Graph Images
           </h2>
           <p className="mt-1 text-sm text-gray-600">
@@ -351,13 +352,17 @@ const SEOSettings: React.FC = () => {
                 placeholder="https://nexjob.tech/og-home.jpg"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
               />
-              <Image
-                          src={settings.home_og_image}
-                          alt="Home OG Image Preview"
-                          width={200}
-                          height={100}
-                          className="rounded border object-cover"
-                        />
+              {settings.home_og_image && (
+                <div className="mt-2">
+                  <Image
+                    src={settings.home_og_image}
+                    alt="Home OG Image Preview"
+                    width={200}
+                    height={100}
+                    className="rounded border object-cover"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
