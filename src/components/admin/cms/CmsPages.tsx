@@ -364,7 +364,7 @@ const CmsPages: React.FC = () => {
                     {item.author?.full_name || item.author?.email || 'Unknown'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.categories?.map(cat => cat.name).join(', ') || 'Uncategorized'}
+                    {item.categories?.map((cat: any) => cat.name).join(', ') || 'Uncategorized'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDistance(new Date(item.updated_at), new Date(), { addSuffix: true })}
