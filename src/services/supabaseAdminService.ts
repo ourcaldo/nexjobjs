@@ -618,6 +618,45 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
     } as AdminSettings;
   }
 
+  static async getCurrentProfileServerSide(context: any): Promise<Profile | null> {
+    try {
+      const supabaseServer = createServerSupabaseClient();
+      
+      // Get user from request cookies/headers
+      const { req } = context;
+      const token = req.cookies['sb-access-token'] || req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!token) {
+        return null;
+      }
+
+      // Get user from token
+      const { data: { user }, error: authError } = await supabaseServer.auth.getUser(token);
+      
+      if (authError || !user) {
+        console.warn('Auth error in server-side profile check:', authError);
+        return null;
+      }
+
+      // Get profile
+      const { data: profile, error: profileError } = await supabaseServer
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.warn('Profile error in server-side check:', profileError);
+        return null;
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('Error getting current profile server-side:', error);
+      return null;
+    }
+  }
+
   static async updateSettingsServerSide(settings: Partial<AdminSettings>): Promise<{ success: boolean; error?: string }> {
     try {
       const supabaseServer = createServerSupabaseClient();
