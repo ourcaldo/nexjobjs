@@ -6,49 +6,81 @@ import { supabase } from '@/lib/supabase';
 import { userBookmarkService } from '@/services/userBookmarkService';
 import { useToast } from '@/components/ui/ToastProvider';
 import BookmarkLoginModal from '@/components/ui/BookmarkLoginModal';
+import { useRouter } from 'next/router';
 
 interface JobCardProps {
   job: Job;
-  onClick?: (job: Job) => void;
+  showBookmark?: boolean;
+  isBookmarked?: boolean;
+  onBookmarkChange?: (jobId: string, isBookmarked: boolean) => void;
 }
 
-const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
+const JobCard: React.FC<JobCardProps> = ({ 
+  job, 
+  showBookmark = true, 
+  isBookmarked: initialIsBookmarked,
+  onBookmarkChange 
+}) => {
+  const router = useRouter();
   const { showToast } = useToast();
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [showSalaryText, setShowSalaryText] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked || false);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [showSalaryText, setShowSalaryText] = useState(false);
   const cardRef = React.useRef<HTMLDivElement>(null);
 
-  const checkUser = useCallback(async () => {
+
+  const initializeAuth = useCallback(async () => {
+    if (isInitialized) return;
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+
+      // Only check bookmark status if not provided via props
+      if (user && showBookmark && initialIsBookmarked === undefined) {
+        const bookmarked = await userBookmarkService.isBookmarked(user.id, job.id);
+        setIsBookmarked(bookmarked);
+      }
+      setIsInitialized(true);
     } catch (error) {
       console.error('Error checking user:', error);
+      setIsInitialized(true);
     }
-  }, []);
-
-  const loadBookmarkStatus = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      const isBookmarked = await userBookmarkService.isBookmarked(user.id, job.id);
-      setIsBookmarked(isBookmarked);
-    } catch (error) {
-      console.error('Error checking bookmark status:', error);
-    }
-  }, [user, job.id]);
+  }, [job.id, showBookmark, initialIsBookmarked, isInitialized]);
 
   useEffect(() => {
-    checkUser();
-  }, [checkUser]);
-
-  useEffect(() => {
-    if (user) {
-      loadBookmarkStatus();
+    // If bookmark status is provided via props, use it
+    if (initialIsBookmarked !== undefined) {
+      setIsBookmarked(initialIsBookmarked);
+      setIsInitialized(true);
+      return;
     }
-  }, [user, loadBookmarkStatus]);
+
+    // Only initialize if not already done
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        // Don't auto-check bookmark status here to prevent excessive requests
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setIsBookmarked(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [initializeAuth, initialIsBookmarked]);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    if (initialIsBookmarked !== undefined) {
+      setIsBookmarked(initialIsBookmarked);
+    }
+  }, [initialIsBookmarked]);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Baru saja';
@@ -105,9 +137,14 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
 
       if (result.success) {
         setIsBookmarked(result.isBookmarked);
-        showToast('success', result.isBookmarked ? 'Lowongan berhasil disimpan' : 'Lowongan dihapus dari simpanan');
+        // Notify parent component about bookmark change
+        onBookmarkChange?.(job.id, result.isBookmarked);
+        showToast(
+          result.isBookmarked ? 'Lowongan berhasil disimpan!' : 'Lowongan dihapus dari bookmark',
+          result.isBookmarked ? 'success' : 'info'
+        );
       } else {
-        showToast('error', result.error || 'Gagal menyimpan lowongan');
+        showToast(result.error || 'Gagal mengubah bookmark', 'error');
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
@@ -149,7 +186,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
 
   const tags = getJobTags();
 
-  
+
 
   return (
     <>

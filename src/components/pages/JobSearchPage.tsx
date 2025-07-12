@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/router';
 import { Search, Filter, X, Loader2, AlertCircle } from 'lucide-react';
 import { Job } from '@/types/job';
-import { wpService, FilterData, JobsResponse } from '@/services/wpService';
+import { wpService } from '@/services/wpService';
+import { userBookmarkService } from '@/services/userBookmarkService';
+import { supabase } from '@/lib/supabase';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import JobCard from '@/components/JobCard';
 import JobSidebar from '@/components/JobSidebar';
@@ -42,6 +44,8 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [totalJobs, setTotalJobs] = useState(0);
   const [displayedJobsCount, setDisplayedJobsCount] = useState(0); // Track currently displayed jobs
+  const [userBookmarks, setUserBookmarks] = useState<Set<string>>(new Set());
+  const [user, setUser] = useState<any>(null);
 
   // Main search filters
   const [keyword, setKeyword] = useState('');
@@ -245,10 +249,44 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
     }
   }, [currentPage, hasMore, loadingMore, getCurrentFilters]);
 
-  // Initialize component
+  const loadUserBookmarks = useCallback(async (userId: string) => {
+    try {
+      const bookmarks = await userBookmarkService.getUserBookmarks(userId);
+      const bookmarkSet = new Set(bookmarks.map(b => b.job_id));
+      setUserBookmarks(bookmarkSet);
+    } catch (error) {
+      console.error('Error loading user bookmarks:', error);
+    }
+  }, []);
+
+  const initializeAuth = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        await loadUserBookmarks(user.id);
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    }
+  }, [loadUserBookmarks]);
+
   useEffect(() => {
     loadInitialData();
-  }, [loadInitialData]);
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        loadUserBookmarks(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setUserBookmarks(new Set());
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [initializeAuth, loadUserBookmarks, loadInitialData]);
 
   // Track page view on mount
   useEffect(() => {
@@ -604,9 +642,20 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {jobs.map((job, index) => (
-                    <div key={job.id} style={{ animationDelay: `${index * 0.05}s` }}>
-                      <JobCard job={job} onClick={handleJobClick} />
-                    </div>
+                    <JobCard 
+                      key={job.id} 
+                      job={job} 
+                      isBookmarked={userBookmarks.has(job.id)}
+                      onBookmarkChange={(jobId, isBookmarked) => {
+                        const newBookmarks = new Set(userBookmarks);
+                        if (isBookmarked) {
+                          newBookmarks.add(jobId);
+                        } else {
+                          newBookmarks.delete(jobId);
+                        }
+                        setUserBookmarks(newBookmarks);
+                      }}
+                    />
                   ))}
                 </div>
 

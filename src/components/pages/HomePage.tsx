@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, TrendingUp, ArrowRight, Users, Building, Code, Heart, Calculator, Truck, Briefcase } from 'lucide-react';
-import { wpService, FilterData } from '@/services/wpService';
+import { wpService } from '@/services/wpService';
+import { userBookmarkService } from '@/services/userBookmarkService';
+import { supabase } from '@/lib/supabase';
 import { adminService } from '@/services/adminService';
 import SearchableSelect from '@/components/SearchableSelect';
 import SchemaMarkup from '@/components/SEO/SchemaMarkup';
 import { generateWebsiteSchema, generateOrganizationSchema } from '@/utils/schemaUtils';
+import { Job } from '@/types/job';
+import JobCard from '@/components/JobCard';
 
 interface HomePageProps {
   initialArticles: any[];
@@ -22,6 +26,10 @@ const HomePage: React.FC<HomePageProps> = ({ initialArticles, initialFilterData,
   const [articles, setArticles] = useState<any[]>(initialArticles || []);
   const [filterData, setFilterData] = useState<FilterData | null>(initialFilterData);
   const [jobCategories, setJobCategories] = useState<string[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userBookmarks, setUserBookmarks] = useState<Set<string>>(new Set());
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     // Load filter data if not provided initially
@@ -51,7 +59,7 @@ const HomePage: React.FC<HomePageProps> = ({ initialArticles, initialFilterData,
     const params = new URLSearchParams();
     if (searchKeyword) params.set('search', searchKeyword);
     if (selectedLocation) params.set('location', selectedLocation);
-    
+
     // Navigate to jobs page in new tab
     const url = `/lowongan-kerja/?${params.toString()}`;
     window.open(url, '_blank');
@@ -80,7 +88,7 @@ const HomePage: React.FC<HomePageProps> = ({ initialArticles, initialFilterData,
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/-+/g, '-') // Replace multiple hyphens with single
       .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
-    
+
     return `/lowongan-kerja/kategori/${slug}/`;
   };
 
@@ -92,6 +100,61 @@ const HomePage: React.FC<HomePageProps> = ({ initialArticles, initialFilterData,
   const CategoryIcon = () => (
     <Briefcase className="h-6 w-6 text-white" />
   );
+
+    // Dummy function to simulate loading jobs (replace with actual data fetching)
+    const loadData = async () => {
+      setLoading(true);
+      // Simulate fetching job data
+      const jobData = [
+          { id: '1', title: 'Software Engineer', location: 'Jakarta' },
+          { id: '2', title: 'Data Scientist', location: 'Bandung' },
+          { id: '3', title: 'Web Developer', location: 'Surabaya' },
+          { id: '4', title: 'Mobile Developer', location: 'Medan' },
+          { id: '5', title: 'UI/UX Designer', location: 'Makassar' },
+          { id: '6', title: 'Product Manager', location: 'Palembang' },
+      ];
+      setJobs(jobData);
+      setLoading(false);
+  };
+
+  const loadUserBookmarks = useCallback(async (userId: string) => {
+    try {
+      const bookmarks = await userBookmarkService.getUserBookmarks(userId);
+      const bookmarkSet = new Set(bookmarks.map(b => b.job_id));
+      setUserBookmarks(bookmarkSet);
+    } catch (error) {
+      console.error('Error loading user bookmarks:', error);
+    }
+  }, []);
+
+  const initializeAuth = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        await loadUserBookmarks(user.id);
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    }
+  }, [loadUserBookmarks]);
+
+  useEffect(() => {
+    loadData();
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        await loadUserBookmarks(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setUserBookmarks(new Set());
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [initializeAuth, loadUserBookmarks]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -180,7 +243,7 @@ const HomePage: React.FC<HomePageProps> = ({ initialArticles, initialFilterData,
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {jobCategories.map((category, index) => {
             const categoryUrl = getCategoryUrl(category);
-            
+
             return (
               <a
                 key={index}
@@ -207,6 +270,58 @@ const HomePage: React.FC<HomePageProps> = ({ initialArticles, initialFilterData,
         </div>
       </div>
 
+      {/* Jobs Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Lowongan Kerja Terbaru</h2>
+          <p className="text-xl text-gray-600">Temukan posisi yang sesuai dengan keahlian dan minat Anda</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {loading ? (
+            <p>Loading jobs...</p>
+          ) : (
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            {jobs.slice(0, 6).map((job) => (
+                      <JobCard 
+                        key={job.id} 
+                        job={job} 
+                        isBookmarked={userBookmarks.has(job.id)}
+                        onBookmarkChange={(jobId, isBookmarked) => {
+                          const newBookmarks = new Set(userBookmarks);
+                          if (isBookmarked) {
+                            newBookmarks.add(jobId);
+                          } else {
+                            newBookmarks.delete(jobId);
+                          }
+                          setUserBookmarks(newBookmarks);
+                        }}
+                      />
+                    ))}
+          )}
+        </div>
+
+        <div className="text-center mt-12">
+          <a
+            href="/lowongan-kerja/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium inline-flex items-center"
+          >
+            Lihat Semua Lowongan
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </a>
+        </div>
+      </div>
+
       {/* Articles Section */}
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -218,7 +333,7 @@ const HomePage: React.FC<HomePageProps> = ({ initialArticles, initialFilterData,
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {articles.map((article, index) => {
               const articleUrl = getArticleUrl(article.slug);
-              
+
               return (
                 <a
                   key={article.id}
