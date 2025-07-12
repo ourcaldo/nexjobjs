@@ -51,13 +51,31 @@ const AdDisplay: React.FC<AdDisplayProps> = ({ position, className = '' }) => {
     }
   }, [adCode]);
 
-  if (loading || !adCode) {
-    return null;
+  if (loading) {
+    return (
+      <div className={`advertisement-${position} ${className}`}>
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Advertisement</h3>
+        <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+          <span className="text-gray-400 text-sm">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!adCode) {
+    return (
+      <div className={`advertisement-${position} ${className}`}>
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Advertisement</h3>
+        <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+          <span className="text-gray-400 text-sm">No advertisement configured</span>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className={`advertisement-${position} ${className}`}>
-      <div className="text-xs text-gray-500 mb-2 text-center">Advertisement</div>
+      <h3 className="text-lg font-bold text-gray-900 mb-4">Advertisement</h3>
       <div dangerouslySetInnerHTML={{ __html: adCode }} />
     </div>
   );

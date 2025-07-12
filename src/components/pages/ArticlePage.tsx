@@ -153,8 +153,7 @@ const ArticlePage: React.FC<ArticlePageProps> = ({ settings }) => {
 
             {/* Sidebar */}
             <div className="lg:col-span-1">
-              <ArticleSidebar relatedArticles={articles.slice(0, 5)} isArchive={true} />
-            </div>
+              <ArticleSidebar isArchive={true} /></div>
           </div>
         )}
 

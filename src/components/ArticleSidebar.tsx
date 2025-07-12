@@ -26,7 +26,7 @@ const ArticleSidebar: React.FC<ArticleSidebarProps> = ({
   return (
     <aside className="space-y-8">
       {/* Advertisement */}
-      <div className="bg-gray-50 p-4 rounded-lg">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <AdDisplay position={adPosition} />
       </div>
 
