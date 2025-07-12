@@ -28,8 +28,8 @@ export default function CategoryJobs({ category, categorySlug, location, setting
   };
 
   // Generate dynamic title and description
-  const pageTitle = renderTemplate(settings.category_page_title_template, templateVars);
-  const pageDescription = renderTemplate(settings.category_page_description_template, templateVars);
+  const pageTitle = renderTemplate(settings.category_page_title_template || 'Lowongan Kerja {{kategori}} - {{site_title}}', templateVars);
+  const pageDescription = renderTemplate(settings.category_page_description_template || 'Temukan lowongan kerja {{kategori}} terbaru. Dapatkan pekerjaan impian Anda dengan gaji terbaik di {{site_title}}.', templateVars);
 
   const breadcrumbItems = [
     { label: 'Lowongan Kerja', href: '/lowongan-kerja/' },
@@ -48,13 +48,40 @@ export default function CategoryJobs({ category, categorySlug, location, setting
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <link rel="canonical" href={`${currentUrl}/lowongan-kerja/`} />
+        <link rel="canonical" href={`${currentUrl}/lowongan-kerja/kategori/${categorySlug}/`} />
       </Head>
 
       <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
 
       <Header />
-      <main>
+      <main className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <nav className="mb-8">
+              <ol className="flex items-center justify-center space-x-2 text-sm text-primary-100">
+                <li className="flex items-center">
+                  <span className="text-white">Home</span>
+                  <span className="mx-2">/</span>
+                  <span className="text-white">Lowongan Kerja</span>
+                  <span className="mx-2">/</span>
+                  <span className="text-white">Kategori: {category}</span>
+                </li>
+              </ol>
+            </nav>
+
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                {pageTitle.replace(` - ${templateVars.site_title}`, '') || `Lowongan Kerja ${category}`}
+              </h1>
+              <p className="text-xl text-primary-100 max-w-3xl mx-auto leading-relaxed">
+                {pageDescription}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Job Search Content */}
         <JobSearchPage 
           settings={settings} 
           initialCategory={category}

@@ -24,13 +24,13 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
 }) => {
   const router = useRouter();
   const { trackPageView, trackSearch, trackFilterUsage } = useAnalytics();
-  
+
   // Refs to prevent infinite loops
   const initialDataLoadedRef = useRef(false);
   const isSearchingRef = useRef(false);
   const currentFiltersRef = useRef<any>({});
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-  
+
   // State
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,11 +42,11 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [totalJobs, setTotalJobs] = useState(0);
   const [displayedJobsCount, setDisplayedJobsCount] = useState(0); // Track currently displayed jobs
-  
+
   // Main search filters
   const [keyword, setKeyword] = useState('');
   const [selectedProvince, setSelectedProvince] = useState(initialLocation || '');
-  
+
   // Sidebar filters
   const [sidebarFilters, setSidebarFilters] = useState({
     cities: initialLocation && locationType === 'city' ? [initialLocation] : [] as string[],
@@ -65,7 +65,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   // Get current filters object - memoized to prevent unnecessary recreations
   const getCurrentFilters = useCallback(() => {
     const locationFilter = initialLocation && locationType === 'province' ? initialLocation : selectedProvince;
-    
+
     return {
       search: keyword,
       location: locationFilter,
@@ -82,32 +82,32 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   // Load initial data
   const loadInitialData = useCallback(async () => {
     if (initialDataLoadedRef.current) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Load filter data
       const filterDataResult = await wpService.getFiltersData();
       setFilterData(filterDataResult);
-      
+
       // Initialize filters from URL params
       const { search, location, category } = router.query;
-      
+
       let initialKeyword = '';
       let initialProvince = selectedProvince;
       let initialSidebarFilters = { ...sidebarFilters };
-      
+
       if (search && typeof search === 'string') {
         initialKeyword = search;
         setKeyword(search);
       }
-      
+
       if (location && typeof location === 'string' && !initialLocation) {
         initialProvince = location;
         setSelectedProvince(location);
       }
-      
+
       if (category && typeof category === 'string' && !initialCategory) {
         initialSidebarFilters = {
           ...initialSidebarFilters,
@@ -115,7 +115,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
         };
         setSidebarFilters(initialSidebarFilters);
       }
-      
+
       // Build initial filters
       const filters = {
         search: initialKeyword,
@@ -123,19 +123,19 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
         sortBy: 'newest',
         ...initialSidebarFilters
       };
-      
+
       // Store current filters
       currentFiltersRef.current = filters;
-      
+
       // Load jobs
       const jobsResult = await wpService.getJobs(filters, 1, 24);
-      
+
       setJobs(jobsResult.jobs);
       setCurrentPage(jobsResult.currentPage);
       setHasMore(jobsResult.hasMore);
       setTotalJobs(jobsResult.totalJobs);
       setDisplayedJobsCount(jobsResult.jobs.length); // Set initial displayed count
-      
+
       initialDataLoadedRef.current = true;
     } catch (err) {
       setError('Gagal memuat data. Silakan coba lagi.');
@@ -148,39 +148,39 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   // Search with filters
   const searchWithFilters = useCallback(async (filters: any, isManualSearch = false) => {
     if (isSearchingRef.current) return;
-    
+
     isSearchingRef.current = true;
     setSearching(true);
     setJobs([]);
     setCurrentPage(1);
     setHasMore(true);
     setDisplayedJobsCount(0); // Reset displayed count when searching
-    
+
     try {
       setError(null);
-      
+
       // Track search if there's a keyword and it's a manual search
       if (filters.search && isManualSearch) {
         trackSearch(filters.search, filters.location, filters.categories[0]);
       }
-      
+
       // Update URL for non-category/location pages
       if (!initialCategory && !initialLocation && isManualSearch) {
         const params = new URLSearchParams();
         if (filters.search) params.set('search', filters.search);
         if (filters.location && filters.location !== selectedProvince) params.set('location', filters.location);
-        
+
         const newUrl = `/lowongan-kerja/${params.toString() ? '?' + params.toString() : ''}`;
         router.replace(newUrl, undefined, { shallow: true });
       }
-      
+
       const response = await wpService.getJobs(filters, 1, 24);
       setJobs(response.jobs);
       setCurrentPage(response.currentPage);
       setHasMore(response.hasMore);
       setTotalJobs(response.totalJobs);
       setDisplayedJobsCount(response.jobs.length); // Update displayed count with new results
-      
+
       // Update current filters ref
       currentFiltersRef.current = filters;
     } catch (err) {
@@ -195,7 +195,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   // Handle manual search (button click or enter key)
   const handleManualSearch = useCallback(async () => {
     if (!initialDataLoadedRef.current) return;
-    
+
     const filters = getCurrentFilters();
     await searchWithFilters(filters, true);
   }, [searchWithFilters, getCurrentFilters]);
@@ -203,17 +203,17 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   // Debounced filter search
   const debouncedFilterSearch = useCallback(() => {
     if (!initialDataLoadedRef.current) return;
-    
+
     const filters = getCurrentFilters();
-    
+
     // Only search if filters have actually changed
     if (!hasFiltersChanged(filters)) return;
-    
+
     // Clear existing timeout
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
-    
+
     // Set new timeout
     debounceTimeoutRef.current = setTimeout(() => {
       searchWithFilters(filters, false);
@@ -228,7 +228,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
     try {
       const filters = getCurrentFilters();
       const response = await wpService.getJobs(filters, currentPage + 1, 24);
-      
+
       if (response.jobs.length > 0) {
         setJobs(prevJobs => [...prevJobs, ...response.jobs]);
         setCurrentPage(response.currentPage);
@@ -263,9 +263,9 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   // Watch for filter changes (debounced)
   useEffect(() => {
     if (!initialDataLoadedRef.current) return;
-    
+
     debouncedFilterSearch();
-    
+
     // Cleanup timeout on unmount
     return () => {
       if (debounceTimeoutRef.current) {
@@ -290,7 +290,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   // Event handlers
   const handleSidebarFilterChange = useCallback((newFilters: any) => {
     setSidebarFilters(newFilters);
-    
+
     // Track filter usage
     Object.entries(newFilters).forEach(([filterType, values]) => {
       if (Array.isArray(values) && values.length > 0) {
@@ -330,7 +330,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
       salaries: []
     });
     setSortBy('newest');
-    
+
     if (!initialCategory && !initialLocation) {
       router.replace('/lowongan-kerja/', undefined, { shallow: true });
     }
@@ -340,7 +340,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
     let count = 0;
     if (keyword) count++;
     if (selectedProvince && selectedProvince !== (initialLocation && locationType === 'province' ? initialLocation : '')) count++;
-    
+
     Object.entries(sidebarFilters).forEach(([key, filterArray]) => {
       if (key === 'categories' && initialCategory) {
         count += filterArray.filter(cat => cat !== initialCategory).length;
@@ -413,10 +413,10 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header Search */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="bg-gray-50">
+      {/* Search Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
           {/* Centered Search Form */}
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -479,7 +479,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
           {getActiveFiltersCount > 0 && (
             <div className="mt-4 flex flex-wrap gap-2 items-center justify-center">
               <span className="text-sm text-gray-600">Filter aktif:</span>
-              
+
               {keyword && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800">
                   Keyword: {keyword}
@@ -491,7 +491,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
                   </button>
                 </span>
               )}
-              
+
               {selectedProvince && selectedProvince !== (initialLocation && locationType === 'province' ? initialLocation : '') && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800">
                   Provinsi: {selectedProvince}
@@ -524,7 +524,7 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
                     </span>
                   ))
               )}
-              
+
               <button
                 onClick={clearAllFilters}
                 className="text-sm text-red-600 hover:text-red-700 font-medium"
