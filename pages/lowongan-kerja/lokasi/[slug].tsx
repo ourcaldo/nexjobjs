@@ -102,7 +102,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = params?.slug as string;
   const location = wpLocationMappings[slug] || slug.charAt(0).toUpperCase() + slug.slice(1);
   const category = '';
-  const locationType = 'kota';
+  const locationType: 'province' | 'city' = 'city';
 
   const settings = await SupabaseAdminService.getSettingsServerSide();
   const currentUrl = getCurrentDomain();
