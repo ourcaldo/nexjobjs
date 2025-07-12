@@ -14,7 +14,7 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ settings }) => {
   const router = useRouter();
   const { showToast } = useToast();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +31,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ settings }) => {
         router.push('/profile/');
       }
     };
-    
+
     checkUser();
   }, [router]);
 
@@ -47,14 +47,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ settings }) => {
       });
 
       if (error) {
-        setError(error.message);
-        showToast('error', error.message);
+        console.error('Login error:', error);
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Email atau password salah');
+        } else {
+          setError(error.message);
+        }
         return;
       }
 
-      if (data.user) {
-        showToast('success', 'Login berhasil! Mengalihkan ke profil...');
-        router.push('/profile/');
+      if (data.user && data.session) {
+        showToast('success', 'Berhasil masuk!');
+
+        // Force a hard refresh to ensure auth state is properly synced
+        window.location.href = '/';
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat login';
@@ -103,7 +109,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ settings }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">

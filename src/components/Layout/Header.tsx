@@ -26,38 +26,61 @@ const Header: React.FC = () => {
   }, []);
 
   const initializeAuth = useCallback(async () => {
-    if (isInitialized) return;
-    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Always check current session, don't rely on isInitialized flag
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+      
       setUser(user);
       if (user) {
         await loadBookmarkCount(user.id);
+      } else {
+        setBookmarkCount(0);
       }
       setIsInitialized(true);
     } catch (error) {
       console.error('Error checking user:', error);
+      setUser(null);
+      setBookmarkCount(0);
       setIsInitialized(true);
     }
-  }, [loadBookmarkCount, isInitialized]);
+  }, [loadBookmarkCount]);
 
   useEffect(() => {
-    // Initialize auth state only once
+    // Initialize auth state
     initializeAuth();
     
     // Listen for auth changes (login/logout events)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
         await loadBookmarkCount(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setBookmarkCount(0);
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        // Handle token refresh
+        setUser(session.user);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [initializeAuth, loadBookmarkCount]);
+
+  // Re-check auth state on route changes
+  useEffect(() => {
+    const handleRouteChange = () => {
+      // Small delay to allow navigation to complete
+      setTimeout(initializeAuth, 100);
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events, initializeAuth]);
 
   const handleLogout = async () => {
     try {

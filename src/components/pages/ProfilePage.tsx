@@ -21,7 +21,7 @@ interface ProfilePageProps {
 const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
   const router = useRouter();
   const { showToast } = useToast();
-  
+
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,7 +81,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
   const checkUser = useCallback(async () => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-      
+
       if (error || !user) {
         router.push('/login/');
         return;
@@ -97,11 +97,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
 
   const loadBookmarkedJobs = useCallback(async () => {
     if (!user) return;
-    
+
     setLoadingBookmarks(true);
     try {
       const bookmarks = await userBookmarkService.getUserBookmarks(user.id);
-      
+
       if (bookmarks.length === 0) {
         setBookmarkedJobs([]);
         return;
@@ -111,10 +111,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
       const jobPromises = bookmarks.map(bookmark => 
         wpService.getJobById(bookmark.job_id)
       );
-      
+
       const jobs = await Promise.all(jobPromises);
       const validJobs = jobs.filter(job => job !== null) as Job[];
-      
+
       setBookmarkedJobs(validJobs);
     } catch (error) {
       console.error('Error loading bookmarked jobs:', error);
@@ -125,8 +125,39 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
   }, [user, showToast]);
 
   useEffect(() => {
-    checkUser();
-  }, [checkUser]);
+    checkAuthStatus();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        router.push('/login/');
+      } else if (event === 'SIGNED_IN' && session.user) {
+        setUser(session.user);
+        fetchProfile(session.user);
+        fetchBookmarkedJobs(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        router.push('/login/');
+        return;
+      }
+
+      setUser(user);
+      await loadProfile(user.id);
+    } catch (error) {
+      console.error('Error checking user:', error);
+      router.push('/login/');
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'bookmarks' && user) {
@@ -155,7 +186,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
 
       // Upload new image
       const result = await supabaseStorageService.uploadProfileImage(user.id, file);
-      
+
       if (!result.success) {
         showToast('error', result.error || 'Gagal mengupload foto');
         return;
@@ -246,7 +277,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mb-8">
@@ -283,7 +314,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">
                 {profile?.full_name || 'Nama Belum Diisi'}
@@ -476,7 +507,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">
                   Lowongan Tersimpan
                 </h3>
-                
+
                 {loadingBookmarks ? (
                   <div className="flex items-center justify-center py-16">
                     <div className="text-center">

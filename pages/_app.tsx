@@ -1,6 +1,8 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabase';
 import GoogleAnalytics from '@/components/Analytics/GoogleAnalytics';
 import GoogleTagManager, { GoogleTagManagerNoScript } from '@/components/Analytics/GoogleTagManager';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -8,6 +10,25 @@ import '../styles/globals.css';
 import PopupAd from '@/components/Advertisement/PopupAd';
 
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Set up auth state change listener for the entire app
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        // Clear any cached data and redirect to home
+        router.push('/');
+      } else if (event === 'SIGNED_IN') {
+        // Refresh current page to sync auth state
+        if (router.pathname === '/login' || router.pathname === '/login/') {
+          router.push('/');
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
   useEffect(() => {
     // Validate environment variables after React has initialized
     const validateAndInitialize = async () => {
