@@ -281,31 +281,22 @@ const HomePage: React.FC<HomePageProps> = ({ initialArticles, initialFilterData,
           {loading ? (
             <p>Loading jobs...</p>
           ) : (
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            {jobs.slice(0, 6).map((job) => (
-                      <JobCard 
-                        key={job.id} 
-                        job={job} 
-                        isBookmarked={userBookmarks.has(job.id)}
-                        onBookmarkChange={(jobId, isBookmarked) => {
-                          const newBookmarks = new Set(userBookmarks);
-                          if (isBookmarked) {
-                            newBookmarks.add(jobId);
-                          } else {
-                            newBookmarks.delete(jobId);
-                          }
-                          setUserBookmarks(newBookmarks);
-                        }}
-                      />
-                    ))}
+            jobs.slice(0, 6).map((job) => (
+              <JobCard 
+                key={job.id} 
+                job={job} 
+                isBookmarked={userBookmarks.has(job.id)}
+                onBookmarkChange={(jobId, isBookmarked) => {
+                  const newBookmarks = new Set(userBookmarks);
+                  if (isBookmarked) {
+                    newBookmarks.add(jobId);
+                  } else {
+                    newBookmarks.delete(jobId);
+                  }
+                  setUserBookmarks(newBookmarks);
+                }}
+              />
+            ))
           )}
         </div>
 
