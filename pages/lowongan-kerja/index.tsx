@@ -1,8 +1,10 @@
-import { GetStaticProps } from 'next';
+
+import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import { WordPressService, FilterData } from '@/services/wpService';
 import { SupabaseAdminService } from '@/services/supabaseAdminService';
 import { getCurrentDomain } from '@/lib/env';
+import { Job } from '@/types/job';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 import JobSearchPage from '@/components/pages/JobSearchPage';
@@ -10,87 +12,94 @@ import SchemaMarkup from '@/components/SEO/SchemaMarkup';
 import { generateJobListingSchema, generateBreadcrumbSchema } from '@/utils/schemaUtils';
 import { renderTemplate } from '@/utils/templateUtils';
 
-interface JobsPageProps {
+interface JobIndexPageProps {
+  initialJobs: Job[];
+  initialFilterData: FilterData;
   settings: any;
-  currentUrl: string;
+  totalJobs: number;
 }
 
-export default function Jobs({ settings, currentUrl }: JobsPageProps) {
-  const breadcrumbItems = [{ label: 'Lowongan Kerja' }];
+export default function JobIndexPage({ initialJobs, initialFilterData, settings, totalJobs }: JobIndexPageProps) {
+  const currentUrl = getCurrentDomain();
+  const pageTitle = renderTemplate(settings.job_listing_title || 'Lowongan Kerja Terbaru dan Terpercaya - Nexjob', {});
+  const pageDescription = renderTemplate(settings.job_listing_description || 'Temukan lowongan kerja terbaru dan terpercaya di Nexjob. Dengan lebih dari {total_jobs} lowongan tersedia, raih karir impianmu sekarang!', {
+    total_jobs: totalJobs.toLocaleString()
+  });
+  const canonicalUrl = `${currentUrl}/lowongan-kerja/`;
 
-  // Prepare template variables
-  const templateVars = {
-    site_title: settings?.site_title || 'Nexjob',
-    lokasi: '',
-    kategori: ''
-  };
-
-  // Get SEO settings with template rendering
-  const pageTitle = renderTemplate(settings?.jobs_title || 'Lowongan Kerja Terbaru - {{site_title}}', templateVars);
-  const pageDescription = renderTemplate(settings?.jobs_description || 'Temukan lowongan kerja terbaru dari berbagai perusahaan terpercaya. Dapatkan pekerjaan impian Anda dengan gaji terbaik.', templateVars);
+  const breadcrumbItems = [
+    { label: 'Lowongan Kerja', href: '/lowongan-kerja/' }
+  ];
 
   return (
     <>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
+        <meta name="robots" content="index, follow" />
+        <meta name="keywords" content="lowongan kerja, loker, karir, pekerjaan, jobs, Indonesia" />
+        
+        {/* Open Graph */}
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={`${currentUrl}/lowongan-kerja/`} />
-        <meta property="og:image" content={settings.jobs_og_image || `${currentUrl}/og-jobs.jpg`} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={settings.default_job_listing_og_image || `${currentUrl}/og-job-listing.jpg`} />
+        
+        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content={settings.jobs_og_image || `${currentUrl}/og-jobs.jpg`} />
-        <link rel="canonical" href={`${currentUrl}/lowongan-kerja/`} />
+        <meta name="twitter:image" content={settings.default_job_listing_og_image || `${currentUrl}/og-job-listing.jpg`} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={canonicalUrl} />
       </Head>
 
+      <SchemaMarkup schema={generateJobListingSchema(initialJobs)} />
       <SchemaMarkup schema={generateBreadcrumbSchema(breadcrumbItems)} />
 
       <Header />
-      <main className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <nav className="mb-8">
-              <ol className="flex items-center justify-center space-x-2 text-sm text-primary-100">
-                <li className="flex items-center">
-                  <span className="text-white">Home</span>
-                  <span className="mx-2">/</span>
-                  <span className="text-white">Lowongan Kerja</span>
-                </li>
-              </ol>
-            </nav>
-
-            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                {pageTitle.replace(` - ${templateVars.site_title}`, '') || 'Lowongan Kerja Terbaru'}
-              </h1>
-              <p className="text-xl text-primary-100 max-w-3xl mx-auto leading-relaxed">
-                {pageDescription}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Job Search Content */}
-        <JobSearchPage settings={settings} />
+      <main>
+        <JobSearchPage 
+          initialJobs={initialJobs}
+          initialFilterData={initialFilterData}
+          settings={settings}
+          totalJobs={totalJobs}
+        />
       </main>
       <Footer />
     </>
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
-  const settings = await SupabaseAdminService.getSettingsServerSide();
-  const currentUrl = getCurrentDomain();
+export const getServerSideProps: GetServerSideProps = async ({ query }) => {
+  try {
+    const [settings, filterData] = await Promise.all([
+      SupabaseAdminService.getSettingsServerSide(),
+      WordPressService.getFiltersData()
+    ]);
 
-  return {
-    props: {
-      settings,
-      currentUrl
-    },
-    revalidate: 300, // Revalidate every 5 minutes
-  };
+    // Get initial jobs
+    const initialJobsResponse = await WordPressService.getJobs({}, 1, 12);
+    
+    return {
+      props: {
+        initialJobs: initialJobsResponse.jobs,
+        initialFilterData: filterData,
+        settings,
+        totalJobs: initialJobsResponse.total
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching job listing data:', error);
+    return {
+      props: {
+        initialJobs: [],
+        initialFilterData: null,
+        settings: await SupabaseAdminService.getSettingsServerSide(),
+        totalJobs: 0
+      }
+    };
+  }
 };
