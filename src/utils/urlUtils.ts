@@ -20,3 +20,8 @@ export const removeTrailingSlash = (url: string): string => {
 export const normalizeUrl = (url: string): string => {
   return ensureTrailingSlash(url);
 };
+
+export const wpCategoryMappings: Record<string, string> = {
+  // Add your category mappings here
+  // Example: 'teknologi-informasi': 'IT & Technology'
+};

@@ -81,7 +81,7 @@ const BookmarkLoginModal: React.FC<BookmarkLoginModalProps> = ({
               <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">
                 {template?.title || 'Daftar/Login untuk Menyimpan'}
               </h3>
-              
+
               <p className="text-gray-600 mb-6 text-center leading-relaxed">
                 {template?.content || 'Untuk menyimpan lowongan kerja favorit Anda, silakan daftar atau login terlebih dahulu.'}
               </p>
@@ -95,7 +95,7 @@ const BookmarkLoginModal: React.FC<BookmarkLoginModalProps> = ({
                   <User className="h-5 w-5 mr-2" />
                   Daftar Akun Gratis
                 </button>
-                
+
                 <button
                   onClick={onLogin}
                   className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center justify-center"
@@ -105,26 +105,7 @@ const BookmarkLoginModal: React.FC<BookmarkLoginModalProps> = ({
                 </button>
               </div>
 
-              {/* Benefits */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-sm text-gray-500 text-center mb-3">
-                  Keuntungan memiliki akun Nexjob:
-                </p>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full mr-3"></div>
-                    Simpan lowongan favorit
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full mr-3"></div>
-                    Akses dari berbagai perangkat
-                  </li>
-                  <li className="flex items-center">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full mr-3"></div>
-                    Notifikasi lowongan terbaru
-                  </li>
-                </ul>
-              </div>
+
             </>
           )}
         </div>

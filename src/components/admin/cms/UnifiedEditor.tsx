@@ -77,7 +77,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     }
   };
 
-  const getService = () => {
+  const getService = useCallback(() => {
     switch (contentType) {
       case 'articles':
         return cmsArticleService;
@@ -89,7 +89,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
       default:
         return cmsArticleService;
     }
-  };
+  }, [contentType]);
 
   const getPreviewUrl = () => {
     if (!formData.slug || formData.status !== 'published') return null;
