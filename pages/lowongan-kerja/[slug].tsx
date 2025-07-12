@@ -1,7 +1,7 @@
 
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
-import { WordPressService } from '@/services/wpService';
+import { wpService } from '@/services/wpService';
 import { SupabaseAdminService } from '@/services/supabaseAdminService';
 import { getCurrentDomain } from '@/lib/env';
 import Header from '@/components/Layout/Header';
@@ -19,7 +19,27 @@ interface JobPageProps {
 }
 
 export default function JobPage({ job, slug, settings, currentUrl }: JobPageProps) {
-  // Job is guaranteed to exist since we return notFound: true for missing jobs
+  // Add null check for job
+  if (!job) {
+    return (
+      <>
+        <Head>
+          <title>Job Not Found - Nexjob</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Head>
+        <Header />
+        <main>
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Job Not Found</h1>
+              <p className="text-gray-600">The job you're looking for doesn't exist.</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   const pageTitle = job.seo_title || `${job.title} - ${job.company_name} | Nexjob`;
   const pageDescription = job.seo_description || `Lowongan ${job.title} di ${job.company_name}, ${job.lokasi_kota}. Gaji: ${job.gaji}. Lamar sekarang!`;
@@ -83,7 +103,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   
   try {
     const [job, settings] = await Promise.all([
-      WordPressService.getJobBySlug(slug),
+      wpService.getJobBySlug(slug),
       SupabaseAdminService.getSettingsServerSide()
     ]);
 
@@ -115,7 +135,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
     // Get some popular jobs for initial static generation
-    const jobs = await WordPressService.getJobs(1, 50); // Get first 50 jobs
+    const jobs = await wpService.getJobs(1, 50); // Get first 50 jobs
     const paths = jobs.map(job => ({
       params: { slug: job.slug }
     }));
