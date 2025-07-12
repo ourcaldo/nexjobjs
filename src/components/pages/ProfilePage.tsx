@@ -228,10 +228,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
     }
   };
 
-  const handleJobClick = (job: Job) => {
-    window.open(`/lowongan-kerja/${job.slug}/`, '_blank');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -492,7 +488,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {bookmarkedJobs.map((job, index) => (
                       <div key={job.id} style={{ animationDelay: `${index * 0.1}s` }}>
-                        <JobCard job={job} onClick={handleJobClick} />
+                        <JobCard job={job} />
                       </div>
                     ))}
                   </div>
