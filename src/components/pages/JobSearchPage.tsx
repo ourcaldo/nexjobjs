@@ -558,9 +558,9 @@ const JobSearchPage: React.FC<JobSearchPageProps> = ({
             {/* Results Header */}
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                <p className="text-2xl font-bold text-gray-900 mb-2">
                   {searching ? 'Mencari...' : `${totalJobs.toLocaleString()} Lowongan Ditemukan`}
-                </h1>
+                </p>
                 {initialCategory && (
                   <p className="text-gray-600">
                     Kategori: <span className="font-medium">{initialCategory}</span>
