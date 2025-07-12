@@ -91,6 +91,13 @@ export interface AdminSettings {
   signup_page_description?: string;
   profile_page_title?: string;
   profile_page_description?: string;
+  // Advertisement Settings
+  popup_ad_code?: string;
+  sidebar_archive_ad_code?: string;
+  sidebar_single_ad_code?: string;
+  single_top_ad_code?: string;
+  single_bottom_ad_code?: string;
+  single_middle_ad_code?: string;
   // SEO Images
   home_og_image?: string;
   jobs_og_image?: string;

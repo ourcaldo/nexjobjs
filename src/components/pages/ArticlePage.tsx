@@ -6,6 +6,7 @@ import { wpService } from '@/services/wpService';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import SchemaMarkup from '@/components/SEO/SchemaMarkup';
 import { generateArticleListingSchema, generateBreadcrumbSchema } from '@/utils/schemaUtils';
+import ArticleSidebar from '@/components/ArticleSidebar';
 
 interface ArticlePageProps {
   settings: any;
@@ -23,7 +24,7 @@ const ArticlePage: React.FC<ArticlePageProps> = ({ settings }) => {
   const loadArticles = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const articlesData = await wpService.getArticles();
       setArticles(articlesData);

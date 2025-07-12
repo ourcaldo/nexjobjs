@@ -85,6 +85,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
       ]
     },
     { name: 'SEO Settings', href: '/backend/admin/seo', icon: FileText, current: currentPage === 'seo' },
+    { name: 'Advertisement', href: '/backend/admin/advertisement', icon: Globe, current: currentPage === 'advertisement' },
     { name: 'Sitemap Management', href: '/backend/admin/sitemap', icon: BarChart3, current: currentPage === 'sitemap' },
     { name: 'Integration', href: '/backend/admin/integration', icon: Link2, current: currentPage === 'integration' },
     { name: 'User Management', href: '/backend/admin/users', icon: Users, current: currentPage === 'users' },

@@ -63,7 +63,14 @@ Allow: /lowongan-kerja/
 Allow: /artikel/
 
 # Sitemaps
-Sitemap: ${env.SITE_URL}/sitemap.xml`
+Sitemap: ${env.SITE_URL}/sitemap.xml`,
+    // Advertisement Settings
+    popup_ad_code: '',
+    sidebar_archive_ad_code: '',
+    sidebar_single_ad_code: '',
+    single_top_ad_code: '',
+    single_bottom_ad_code: '',
+    single_middle_ad_code: ''
   };
 
   // Cache for settings to avoid unnecessary DB calls
@@ -86,14 +93,14 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
       });
 
       const authPromise = supabase.auth.getUser();
-      
+
       const { data: { user } } = await Promise.race([authPromise, timeoutPromise]);
-      
+
       if (this.authTimeout) {
         clearTimeout(this.authTimeout);
         this.authTimeout = null;
       }
-      
+
       if (!user) return null;
 
       const { data, error } = await supabase
@@ -115,19 +122,19 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
         clearTimeout(this.authTimeout);
         this.authTimeout = null;
       }
-      
+
       console.error('Error getting current profile:', error);
-      
+
       // Implement retry logic for production issues
       if (this.authRetryCount < this.MAX_AUTH_RETRIES) {
         this.authRetryCount++;
         console.log(`Retrying authentication (attempt ${this.authRetryCount}/${this.MAX_AUTH_RETRIES})`);
-        
+
         // Wait before retry with exponential backoff
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, this.authRetryCount) * 1000));
         return this.getCurrentProfile();
       }
-      
+
       return null;
     }
   }
@@ -154,7 +161,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
     try {
       // For admin panel, always force refresh to avoid stale data issues
       const isAdminContext = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
-      
+
       // Use cache if valid and not in admin context and not forcing refresh
       if (!forceRefresh && !isAdminContext && this.isCacheValid() && this.settingsCache) {
         console.log('Using cached settings');
@@ -162,7 +169,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
       }
 
       console.log('Fetching fresh settings from database');
-      
+
       // Add timeout for production issues
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
@@ -180,21 +187,21 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
       const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
       let settings: AdminSettings;
-      
+
       if (error) {
         console.warn('Error fetching admin settings:', error.message);
-        
+
         // For specific errors, try with different approaches
         if (error.code === 'PGRST116' || error.message.includes('406') || error.message.includes('timeout')) {
           console.log('Trying alternative approach for admin settings...');
-          
+
           try {
             // Try with a simpler query
             const { data: simpleData, error: simpleError } = await supabase
               .from('admin_settings')
               .select('*')
               .limit(1);
-            
+
             if (simpleError) {
               console.warn('Simple query also failed:', simpleError.message);
               settings = this.defaultSettings as AdminSettings;
@@ -228,13 +235,13 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
       return settings;
     } catch (error) {
       console.error('Error fetching admin settings:', error);
-      
+
       // Return cached data if available, otherwise defaults
       if (this.settingsCache) {
         console.log('Returning cached settings due to error');
         return this.settingsCache.data;
       }
-      
+
       console.log('Returning default settings due to error');
       return this.defaultSettings as AdminSettings;
     }
@@ -258,7 +265,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
 
       const adminCheckPromise = this.isSuperAdmin();
       const isSuperAdmin = await Promise.race([adminCheckPromise, timeoutPromise]);
-      
+
       if (!isSuperAdmin) {
         return { success: false, error: 'Unauthorized: Super admin access required' };
       }
@@ -333,7 +340,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
       return { success: true };
     } catch (error) {
       console.error('Error saving admin settings:', error);
-      
+
       // Provide more specific error messages for production debugging
       let errorMessage = 'Unknown error occurred';
       if (error instanceof Error) {
@@ -345,7 +352,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
           errorMessage = error.message;
         }
       }
-      
+
       return { success: false, error: errorMessage };
     }
   }
@@ -371,7 +378,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
             updated_at: new Date().toISOString()
           })
           .eq('id', existingSettings.id);
-        
+
         // Clear cache after update
         this.clearSettingsCache();
       }
@@ -410,7 +417,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
       return { success: true };
     } catch (error) {
       console.error('Sign in error:', error);
-      
+
       let errorMessage = 'Sign in failed';
       if (error instanceof Error) {
         if (error.message.includes('timeout')) {
@@ -419,7 +426,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
           errorMessage = error.message;
         }
       }
-      
+
       return { success: false, error: errorMessage };
     }
   }
@@ -475,7 +482,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
 
       const authPromise = supabase.auth.getUser();
       const { data: { user } } = await Promise.race([authPromise, timeoutPromise]);
-      
+
       return !!user;
     } catch (error) {
       console.error('Error checking authentication:', error);
@@ -487,7 +494,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
   static async getSettingsServerSide(): Promise<AdminSettings> {
     try {
       const supabaseServer = createServerSupabaseClient();
-      
+
       const { data, error } = await supabaseServer
         .from('admin_settings')
         .select('*')
@@ -497,7 +504,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
 
       if (error) {
         console.warn('Error fetching admin settings server-side:', error.message);
-        
+
         // Try with public/anon access if auth fails
         try {
           const { createClient } = await import('@supabase/supabase-js');
@@ -505,19 +512,19 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
           );
-          
+
           const { data: publicData, error: publicError } = await publicClient
             .from('admin_settings')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
-          
+
           if (publicError || !publicData) {
             console.warn('Public access also failed, using defaults');
             return SupabaseAdminService.getDefaultSettings();
           }
-          
+
           return publicData;
         } catch (publicErr) {
           console.error('Public retry failed:', publicErr);
@@ -600,7 +607,14 @@ Allow: /lowongan-kerja/
 Allow: /artikel/
 
 # Sitemaps
-Sitemap: ${env.SITE_URL}/sitemap.xml`
+Sitemap: ${env.SITE_URL}/sitemap.xml`,
+    // Advertisement Settings
+    popup_ad_code: '',
+    sidebar_archive_ad_code: '',
+    sidebar_single_ad_code: '',
+    single_top_ad_code: '',
+    single_bottom_ad_code: '',
+    single_middle_ad_code: ''
     } as AdminSettings;
   }
 
