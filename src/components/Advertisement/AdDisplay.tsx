@@ -76,7 +76,16 @@ const AdDisplay: React.FC<AdDisplayProps> = ({ position, className = '' }) => {
   return (
     <div className={`advertisement-${position} ${className}`}>
       <h3 className="text-lg font-bold text-gray-900 mb-4">Advertisement</h3>
-      <div dangerouslySetInnerHTML={{ __html: adCode }} />
+      <div 
+        className="ad-content-container max-w-full overflow-hidden"
+        style={{
+          maxWidth: '100%',
+          width: '100%',
+          display: 'block',
+          overflow: 'hidden'
+        }}
+        dangerouslySetInnerHTML={{ __html: adCode }} 
+      />
     </div>
   );
 };

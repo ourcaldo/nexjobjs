@@ -262,12 +262,67 @@
   .cms-content h1, .cms-content h1.tiptap-heading {
     font-size: 1.875rem !important;
   }
-  
+
   .cms-content h2, .cms-content h2.tiptap-heading {
     font-size: 1.5rem !important;
   }
-  
+
   .cms-content h3, .cms-content h3.tiptap-heading {
     font-size: 1.25rem !important;
   }
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Advertisement containment styles */
+.ad-content-container {
+  max-width: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.ad-content-container * {
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+}
+
+.ad-content-container iframe,
+.ad-content-container img,
+.ad-content-container video,
+.ad-content-container object,
+.ad-content-container embed {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* Sidebar advertisement specific styles */
+.advertisement-sidebar_archive_ad_code .ad-content-container,
+.advertisement-sidebar_single_ad_code .ad-content-container {
+  max-width: 300px !important;
+  width: 100% !important;
+}
+
+.advertisement-sidebar_archive_ad_code .ad-content-container *,
+.advertisement-sidebar_single_ad_code .ad-content-container * {
+  max-width: 300px !important;
 }
