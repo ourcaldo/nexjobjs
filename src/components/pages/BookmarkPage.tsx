@@ -40,9 +40,7 @@ const BookmarkPage: React.FC = () => {
     }
   };
 
-  const handleJobClick = (job: Job) => {
-    window.open(`/lowongan-kerja/${job.slug}/`, '_blank');
-  };
+  
 
   const breadcrumbItems = [
     { label: 'Lowongan Tersimpan' }
@@ -98,8 +96,7 @@ const BookmarkPage: React.FC = () => {
             {bookmarkedJobs.map((job, index) => (
               <div key={job.id} style={{ animationDelay: `${index * 0.1}s` }}>
                 <JobCard 
-                  job={job} 
-                  onClick={handleJobClick}
+                  job={job}
                 />
               </div>
             ))}
