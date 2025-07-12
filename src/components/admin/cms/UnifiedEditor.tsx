@@ -179,7 +179,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({ contentType, itemId }) =>
     } finally {
       setLoading(false);
     }
-  }, [itemId, contentType]);
+  }, [itemId, contentType, currentUser, categories.length, tags.length]);
 
   useEffect(() => {
     loadInitialData();

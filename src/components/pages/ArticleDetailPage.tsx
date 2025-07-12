@@ -1,7 +1,4 @@
-The code has been modified to include advertisement settings, display logic, and a sidebar in the article detail page.
-```
 
-```replit_final_file
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -36,6 +33,7 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ slug, settings })
   const [relatedArticles, setRelatedArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [processedContent, setProcessedContent] = useState('');
 
   // Dynamic page metadata
   const getPageTitle = () => {
@@ -128,6 +126,30 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ slug, settings })
     }
   }, [slug, loadArticle]);
 
+  // Process content with middle ads
+  const processContentWithAds = async (content: string) => {
+    try {
+      const middleAdCode = await advertisementService.getAdCode('single_middle_ad_code');
+      if (middleAdCode) {
+        return advertisementService.insertMiddleAd(content, middleAdCode);
+      }
+      return content;
+    } catch (error) {
+      console.error('Error processing content with ads:', error);
+      return content;
+    }
+  };
+
+  useEffect(() => {
+    const processContent = async () => {
+      if (article?.content) {
+        const processed = await processContentWithAds(article.content);
+        setProcessedContent(processed);
+      }
+    };
+    processContent();
+  }, [article?.content]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('id-ID', {
@@ -155,34 +177,6 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ slug, settings })
     { label: 'Tips Karir', href: '/artikel/' },
     { label: loading ? 'Memuat...' : (article?.title.rendered || 'Artikel') }
   ];
-
-    // Process content with middle ads
-    const processContentWithAds = async (content: string) => {
-      try {
-        const middleAdCode = await advertisementService.getAdCode('single_middle_ad_code');
-        if (middleAdCode) {
-          return advertisementService.insertMiddleAd(content, middleAdCode);
-        }
-        return content;
-      } catch (error) {
-        console.error('Error processing content with ads:', error);
-        return content;
-      }
-    };
-  
-    const [processedContent, setProcessedContent] = React.useState('');
-  
-    React.useEffect(() => {
-      const processContent = async () => {
-          if(article?.content){
-              const processed = await processContentWithAds(article?.content);
-              setProcessedContent(processed);
-          }
-
-      };
-      processContent();
-    }, [article?.content]);
-  
 
   return (
     <>

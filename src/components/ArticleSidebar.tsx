@@ -46,9 +46,11 @@ const ArticleSidebar: React.FC<ArticleSidebarProps> = ({
                   <div className="flex space-x-3">
                     {article.featured_image && (
                       <div className="flex-shrink-0">
-                        <img
+                        <Image
                           src={article.featured_image}
                           alt={article.title}
+                          width={64}
+                          height={64}
                           className="w-16 h-16 object-cover rounded-md"
                         />
                       </div>

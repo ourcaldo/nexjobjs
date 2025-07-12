@@ -60,7 +60,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
     if (isOpen) {
       loadMediaItems();
     }
-  }, [isOpen, userId]);
+  }, [isOpen, userId, loadMediaItems]);
 
   // Handle file upload
   const handleFileUpload = async (file: File) => {
