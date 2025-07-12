@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -36,6 +35,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
   // State
   const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Load related jobs and setup analytics
   useEffect(() => {
@@ -85,6 +85,11 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [job.id]);
+
+    // set hydrated to true
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const handleBookmarkToggle = () => {
     const newBookmarkState = bookmarkService.toggleBookmark(job.id);
@@ -214,13 +219,13 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
                 <button
                   onClick={handleBookmarkToggle}
                   className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
-                    isBookmarked 
-                      ? 'bg-primary-100 text-primary-700 hover:bg-primary-200' 
+                    isHydrated && isBookmarked
+                      ? 'bg-primary-100 text-primary-700 hover:bg-primary-200'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <Bookmark className={`h-4 w-4 mr-2 ${isBookmarked ? 'fill-current' : ''}`} />
-                  {isBookmarked ? 'Tersimpan' : 'Simpan'}
+                  <Bookmark className={`h-4 w-4 mr-2 ${isHydrated && isBookmarked ? 'fill-current' : ''}`} />
+                  {isHydrated && isBookmarked ? 'Tersimpan' : 'Simpan'}
                 </button>
                 <button
                   onClick={handleApplyClick}
