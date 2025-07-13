@@ -111,7 +111,7 @@ const PopupAd: React.FC = () => {
       return;
     }
 
-    console.log('[DEBUG] PopupAd: Setting up click listener for page:', getPageKey());
+    console.log('[DEBUG] PopupAd: Setting up click listener for page:', router.asPath);
 
     const handleClick = (event: MouseEvent) => {
       // Check execution limit using sessionStorage
