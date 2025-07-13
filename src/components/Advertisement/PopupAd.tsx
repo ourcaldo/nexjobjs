@@ -59,7 +59,7 @@ const PopupAd: React.FC = () => {
    * Generate a page-unique key for session tracking.
    */
   const getPageKey = (): string => {
-    return router.asPath; // Full path including query params
+    return router.pathname; // Just the pathname, no query params
   };
 
   /**
@@ -149,31 +149,22 @@ const PopupAd: React.FC = () => {
   const handleUserEventTrigger = (): void => {
     console.log('[DEBUG] PopupAd: User event triggered');
     
-    // First check if we already have a session and tab opened
+    // Check if tab already opened for this page
     if (hasTabBeenOpened()) {
       console.log('[DEBUG] PopupAd: Tab already opened in this session - IGNORING CLICK');
       return;
     }
     
-    // Initialize session if needed
-    initSession();
-    
     // Attempt to open tab
     openTabOnce();
   };
 
-  // Clear session storage when component unmounts (user leaves page)
+  // Initialize session when component mounts
   useEffect(() => {
-    return () => {
-      if (typeof window !== 'undefined') {
-        const sessionKey = 'sessionID_' + getPageKey();
-        const tabKey = 'tabOpened_' + getPageKey();
-        sessionStorage.removeItem(sessionKey);
-        sessionStorage.removeItem(tabKey);
-        console.log('[DEBUG] PopupAd: Cleared session storage on page leave:', { sessionKey, tabKey });
-      }
-    };
-  }, [router.asPath]);
+    if (typeof window !== 'undefined') {
+      initSession();
+    }
+  }, [router.pathname]);
 
   // Load popup configuration
   useEffect(() => {
@@ -228,7 +219,7 @@ const PopupAd: React.FC = () => {
       console.log('[DEBUG] PopupAd: Removing click listener');
       document.removeEventListener('click', handleClick);
     };
-  }, [isConfigLoaded, popupConfig, router.asPath]);
+  }, [isConfigLoaded, popupConfig, router.pathname]);
 
   // Component renders nothing (invisible)
   return null;
