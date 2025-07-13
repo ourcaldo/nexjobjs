@@ -86,8 +86,46 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
   private readonly MAX_AUTH_RETRIES = 3;
   private authTimeout: NodeJS.Timeout | null = null;
 
-  // Get current user profile with retry logic for production
+  // Get current user profile using API layer
   async getCurrentProfile(): Promise<Profile | null> {
+    try {
+      // Check if we're on server side
+      if (typeof window === 'undefined') {
+        // Server-side: use direct database access (for API routes)
+        return await this.getCurrentProfileServerSide();
+      }
+
+      // Client-side: use API layer
+      const { userProfileApiService } = await import('./userProfileApiService');
+      const result = await userProfileApiService.getCurrentUserProfile();
+      
+      if (!result.success) {
+        console.error('Error getting current profile via API:', result.error);
+        return null;
+      }
+
+      // Reset retry count on success
+      this.authRetryCount = 0;
+      return result.data || null;
+    } catch (error) {
+      console.error('Error getting current profile:', error);
+
+      // Implement retry logic for production issues
+      if (this.authRetryCount < this.MAX_AUTH_RETRIES) {
+        this.authRetryCount++;
+        console.log(`Retrying authentication (attempt ${this.authRetryCount}/${this.MAX_AUTH_RETRIES})`);
+
+        // Wait before retry with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, this.authRetryCount) * 1000));
+        return this.getCurrentProfile();
+      }
+
+      return null;
+    }
+  }
+
+  // Server-side method for direct database access (used in API routes)
+  private async getCurrentProfileServerSide(): Promise<Profile | null> {
     try {
       // Add timeout for production issues
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -114,12 +152,10 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Error fetching profile server-side:', error);
         return null;
       }
 
-      // Reset retry count on success
-      this.authRetryCount = 0;
       return data;
     } catch (error) {
       if (this.authTimeout) {
@@ -127,27 +163,31 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
         this.authTimeout = null;
       }
 
-      console.error('Error getting current profile:', error);
-
-      // Implement retry logic for production issues
-      if (this.authRetryCount < this.MAX_AUTH_RETRIES) {
-        this.authRetryCount++;
-        console.log(`Retrying authentication (attempt ${this.authRetryCount}/${this.MAX_AUTH_RETRIES})`);
-
-        // Wait before retry with exponential backoff
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, this.authRetryCount) * 1000));
-        return this.getCurrentProfile();
-      }
-
+      console.error('Error getting current profile server-side:', error);
       return null;
     }
   }
 
-  // Check if current user is super admin with better error handling
+  // Check if current user is super admin using API layer
   async isSuperAdmin(): Promise<boolean> {
     try {
-      const profile = await this.getCurrentProfile();
-      return profile?.role === 'super_admin';
+      // Check if we're on server side
+      if (typeof window === 'undefined') {
+        // Server-side: use direct database access
+        const profile = await this.getCurrentProfileServerSide();
+        return profile?.role === 'super_admin';
+      }
+
+      // Client-side: use API layer
+      const { userProfileApiService } = await import('./userProfileApiService');
+      const result = await userProfileApiService.getCurrentUserRole();
+      
+      if (!result.success) {
+        console.error('Error checking super admin status via API:', result.error);
+        return false;
+      }
+
+      return result.data?.is_super_admin || false;
     } catch (error) {
       console.error('Error checking super admin status:', error);
       return false;
