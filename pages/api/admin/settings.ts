@@ -3,13 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase';
 import type { AdminSettings } from '@/lib/supabase';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Check for API token authentication
-  const apiToken = req.headers.authorization?.replace('Bearer ', '') || req.headers['x-api-token'];
-  const validToken = process.env.NEXT_PUBLIC_API_TOKEN;
-
-  if (!apiToken || !validToken || apiToken !== validToken) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API token' });
-  }
+  const supabase = createServerSupabaseClient();
 
   try {
     switch (req.method) {

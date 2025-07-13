@@ -1,23 +1,45 @@
-
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase';
+
+const PUBLIC_FIELDS = [
+  'site_title',
+  'site_tagline', 
+  'site_description',
+  'site_url',
+  'location_page_title_template',
+  'location_page_description_template',
+  'category_page_title_template',
+  'category_page_description_template',
+  'jobs_title',
+  'jobs_description',
+  'articles_title',
+  'articles_description',
+  'login_page_title',
+  'login_page_description',
+  'signup_page_title',
+  'signup_page_description',
+  'profile_page_title',
+  'profile_page_description',
+  'home_og_image',
+  'jobs_og_image',
+  'articles_og_image',
+  'default_job_og_image',
+  'default_article_og_image',
+  'robots_txt',
+  'auto_generate_sitemap'
+];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Only allow GET requests for public data
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Use public/anon client for public data access
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = createServerSupabaseClient();
 
     const { data, error } = await supabase
       .from('admin_settings')
-      .select('*')
+      .select(PUBLIC_FIELDS.join(','))
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -27,46 +49,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Failed to fetch settings' });
     }
 
-    // If no settings found, return null (client will use defaults)
+    // If no settings found, return empty object
     if (!data || error?.code === 'PGRST116') {
-      return res.status(200).json({ data: null });
+      return res.status(200).json({ data: {} });
     }
 
-    // Only return public-safe fields as specified by user requirements
-    const publicSettings = {
-      site_title: data.site_title,
-      site_tagline: data.site_tagline,
-      site_description: data.site_description,
-      site_url: data.site_url,
-      // SEO Templates
-      location_page_title_template: data.location_page_title_template,
-      location_page_description_template: data.location_page_description_template,
-      category_page_title_template: data.category_page_title_template,
-      category_page_description_template: data.category_page_description_template,
-      // Archive Page SEO
-      jobs_title: data.jobs_title,
-      jobs_description: data.jobs_description,
-      articles_title: data.articles_title,
-      articles_description: data.articles_description,
-      // Auth Pages SEO
-      login_page_title: data.login_page_title,
-      login_page_description: data.login_page_description,
-      signup_page_title: data.signup_page_title,
-      signup_page_description: data.signup_page_description,
-      profile_page_title: data.profile_page_title,
-      profile_page_description: data.profile_page_description,
-      // SEO Images
-      home_og_image: data.home_og_image,
-      jobs_og_image: data.jobs_og_image,
-      articles_og_image: data.articles_og_image,
-      default_job_og_image: data.default_job_og_image,
-      default_article_og_image: data.default_article_og_image,
-      // Public sitemap settings only
-      robots_txt: data.robots_txt,
-      auto_generate_sitemap: data.auto_generate_sitemap
-    };
-
-    return res.status(200).json({ data: publicSettings });
+    return res.status(200).json({ data });
   } catch (error) {
     console.error('Public settings API error:', error);
     return res.status(500).json({ error: 'Internal server error' });
