@@ -137,7 +137,7 @@ const JobCard: React.FC<JobCardProps> = ({
     }
 
     try {
-      const result = await userBookmarkService.toggleBookmark(currentUser.id, job.id);
+      const result = await userBookmarkService.toggleBookmark(job.id);
 
       if (result.success) {
         setIsBookmarked(result.isBookmarked);
