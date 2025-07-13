@@ -14,12 +14,15 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     let mounted = true;
+    let authInitialized = false;
     
     // Initialize auth state with proper waiting
     const initializeAuth = async () => {
       try {
-        // Wait for Supabase to initialize
-        await new Promise(resolve => setTimeout(resolve, 100));
+        if (!mounted || authInitialized) return;
+        
+        // Wait for Supabase to initialize (shorter wait)
+        await new Promise(resolve => setTimeout(resolve, 50));
         
         if (!mounted) return;
         
@@ -29,6 +32,7 @@ export default function App({ Component, pageProps }: AppProps) {
           console.error('Error getting session:', error);
         } else {
           console.log('Session restored:', session?.user?.id || 'No session');
+          authInitialized = true;
           
           // Dispatch a custom event to notify components
           if (typeof window !== 'undefined') {
@@ -50,6 +54,10 @@ export default function App({ Component, pageProps }: AppProps) {
       
       console.log('Global auth state change:', event, session?.user?.id);
       
+      // Clear auth cache on state changes
+      const { clearAuthCache } = await import('@/lib/supabase');
+      clearAuthCache();
+      
       // Dispatch auth state change event
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('authStateChanged', { 
@@ -66,8 +74,8 @@ export default function App({ Component, pageProps }: AppProps) {
           router.push('/');
         }
       } else if (event === 'TOKEN_REFRESHED') {
-        // Force a re-render to update auth state
-        router.replace(router.asPath);
+        // Don't force a full page reload, just update state
+        console.log('Token refreshed, updating auth state');
       }
     });
 

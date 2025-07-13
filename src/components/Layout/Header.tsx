@@ -70,15 +70,19 @@ const Header: React.FC = () => {
 
   const initializeAuth = useCallback(async (forceRefresh = false) => {
     try {
-      setIsLoading(true);
-      
-      // Wait a bit for Supabase to be ready if this is initial load
-      if (!isInitialized && !forceRefresh) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+      // Don't show loading if we already have a user and this isn't a forced refresh
+      if (!forceRefresh && user && isInitialized) {
+        return;
       }
       
-      // Get current session
-      const { data: { session }, error } = await supabase.auth.getSession();
+      // Only set loading for initial load or forced refresh
+      if (!isInitialized || forceRefresh) {
+        setIsLoading(true);
+      }
+      
+      // Use cached auth state for better performance
+      const { getCachedAuthState } = await import('@/lib/supabase');
+      const { session, error } = await getCachedAuthState();
       
       if (error) {
         console.error('Error getting session:', error);
@@ -87,7 +91,10 @@ const Header: React.FC = () => {
       } else if (session?.user) {
         console.log('Setting user from session:', session.user.id);
         setUser(session.user);
-        await loadBookmarkCount(session.user.id);
+        // Only load bookmark count if we don't already have it or user changed
+        if (!user || user.id !== session.user.id) {
+          await loadBookmarkCount(session.user.id);
+        }
       } else {
         console.log('No session found, clearing user state');
         setUser(null);
@@ -102,9 +109,12 @@ const Header: React.FC = () => {
       setUser(null);
       setBookmarkCount(0);
     } finally {
-      setIsLoading(false);
+      // Only set loading false if we were actually loading
+      if (!isInitialized || forceRefresh) {
+        setIsLoading(false);
+      }
     }
-  }, [loadBookmarkCount, isInitialized]);
+  }, [loadBookmarkCount, isInitialized, user]);
 
   useEffect(() => {
     let mounted = true;
@@ -173,23 +183,26 @@ const Header: React.FC = () => {
     };
   }, [initializeAuth, loadBookmarkCount]);
 
-  // Re-check auth state on route changes
+  // Re-check auth state on route changes (but only when necessary)
   useEffect(() => {
     const handleRouteChangeStart = () => {
-      // Don't set loading immediately to avoid flashing
       console.log('Route change started');
+      // Don't set loading or clear user state on route changes
     };
 
     const handleRouteChangeComplete = () => {
-      // Re-check auth state after route change
-      console.log('Route change completed, re-checking auth');
-      setTimeout(() => {
-        initializeAuth(true);
-      }, 50);
+      console.log('Route change completed');
+      // Only re-check auth if we don't have a user or if going to profile page
+      if (!user || router.pathname.includes('/profile')) {
+        setTimeout(() => {
+          initializeAuth(false); // Don't force refresh unless necessary
+        }, 100);
+      }
     };
 
     const handleRouteChangeError = () => {
-      setIsLoading(false);
+      console.log('Route change error');
+      // Don't change loading state on route errors
     };
 
     router.events.on('routeChangeStart', handleRouteChangeStart);
@@ -201,7 +214,7 @@ const Header: React.FC = () => {
       router.events.off('routeChangeComplete', handleRouteChangeComplete);
       router.events.off('routeChangeError', handleRouteChangeError);
     };
-  }, [router.events, initializeAuth]);
+  }, [router.events, initializeAuth, user, router.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -215,16 +228,16 @@ const Header: React.FC = () => {
   };
 
   const handleBookmarkClick = async () => {
-    // If still loading, wait for auth state to be determined
-    if (isLoading) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    
-    // Use current user state if available, otherwise check session
+    // Use current user state if available, otherwise check cached session
     let currentUser = user;
-    if (!currentUser) {
-      const { data: { session } } = await supabase.auth.getSession();
-      currentUser = session?.user;
+    if (!currentUser && !isLoading) {
+      try {
+        const { getCachedAuthState } = await import('@/lib/supabase');
+        const { session } = await getCachedAuthState();
+        currentUser = session?.user;
+      } catch (error) {
+        console.error('Error checking auth state:', error);
+      }
     }
 
     if (currentUser) {
@@ -350,8 +363,8 @@ const Header: React.FC = () => {
                 )}
               </button>
 
-              {isLoading ? (
-                /* Loading state */
+              {(isLoading && !user) ? (
+                /* Loading state - only show when actually loading and no user */
                 <div className="flex items-center space-x-2 p-2">
                   <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
                   <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -524,7 +537,7 @@ const Header: React.FC = () => {
 
             {/* User Section */}
             <div className="p-4 border-t border-gray-200">
-              {isLoading ? (
+              {(isLoading && !user) ? (
                 <div className="space-y-2">
                   <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg">
                     <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>

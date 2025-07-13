@@ -32,13 +32,13 @@ export const waitForAuthInitialization = () => {
   return new Promise<void>((resolve) => {
     let resolved = false;
     
-    // Set a timeout to resolve after 1 second max
+    // Set a timeout to resolve after 500ms max (shorter timeout)
     const timeout = setTimeout(() => {
       if (!resolved) {
         resolved = true;
         resolve();
       }
-    }, 1000);
+    }, 500);
     
     // Try to get session immediately
     supabase.auth.getSession().then(() => {
@@ -55,6 +55,35 @@ export const waitForAuthInitialization = () => {
       }
     });
   });
+};
+
+// Auth state cache to prevent unnecessary re-checks
+let authStateCache: { session: any; timestamp: number } | null = null;
+const CACHE_DURATION = 5000; // 5 seconds
+
+export const getCachedAuthState = async () => {
+  const now = Date.now();
+  
+  // Return cached state if it's still fresh
+  if (authStateCache && (now - authStateCache.timestamp) < CACHE_DURATION) {
+    return { session: authStateCache.session, error: null };
+  }
+  
+  // Get fresh auth state
+  const { session, error } = await getAuthState();
+  
+  // Cache the result
+  authStateCache = {
+    session,
+    timestamp: now
+  };
+  
+  return { session, error };
+};
+
+// Clear auth cache when needed
+export const clearAuthCache = () => {
+  authStateCache = null;
 };
 
 // Server-side client with service role key
