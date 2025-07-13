@@ -20,7 +20,7 @@ module.exports = {
       restart_delay: 4000,
       
       // Memory and CPU settings
-      max_memory_restart: '1G',
+      max_memory_restart: '10G',
       
       // Logging
       log_file: '/var/log/pm2/nexjob-frontend.log',
