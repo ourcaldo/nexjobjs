@@ -317,12 +317,6 @@ export interface AdminSettings {
   popup_ad_load_settings?: string[];
   popup_ad_max_executions?: number;
   popup_ad_device?: string;
-  // Advertisement Code Settings
-  sidebar_archive_ad_code?: string;
-  sidebar_single_ad_code?: string;
-  single_top_ad_code?: string;
-  single_bottom_ad_code?: string;
-  single_middle_ad_code?: string;
   // Advertisement Settings
   popup_ad_code?: string;
   sidebar_archive_ad_code?: string;
