@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { advertisementService } from '@/services/advertisementService';
@@ -23,16 +22,16 @@ const PopupAd: React.FC = () => {
   // Check if current page should trigger popup
   const shouldTriggerOnPage = (loadSettings: string[]): boolean => {
     const currentPath = router.asPath;
-    
+
     if (loadSettings.includes('all_pages')) {
       return true;
     }
-    
+
     if (loadSettings.includes('single_articles')) {
       // Check if current page is a single article page
       return currentPath.startsWith('/artikel/') && !currentPath.endsWith('/artikel/');
     }
-    
+
     return false;
   };
 
@@ -59,106 +58,44 @@ const PopupAd: React.FC = () => {
    * Generate a page-unique key for session tracking.
    */
   const getPageKey = (): string => {
-    return router.pathname; // Just the pathname, no query params
-  };
-
-  /**
-   * Initialize session ID, once per page session.
-   */
-  const initSession = (): void => {
-    if (typeof window === 'undefined') return;
-    
-    const sessionKey = 'sessionID_' + getPageKey();
-    if (!sessionStorage.getItem(sessionKey)) {
-      const sessionId = generateSessionId();
-      sessionStorage.setItem(sessionKey, sessionId);
-      console.log('[DEBUG] PopupAd: Initialized session:', { sessionKey, sessionId });
-    }
-  };
-
-  /**
-   * Check if tab has already been opened for this page session.
-   */
-  const hasTabBeenOpened = (): boolean => {
-    if (typeof window === 'undefined') return false;
-    
-    const tabKey = 'tabOpened_' + getPageKey();
-    const tabValue = sessionStorage.getItem(tabKey);
-    
-    console.log('[DEBUG] PopupAd: Checking if tab already opened:', { 
-      tabKey, 
-      tabValue,
-      hasOpened: tabValue === 'true'
-    });
-    
-    return tabValue === 'true';
-  };
-
-  /**
-   * Mark tab as opened for this page session.
-   */
-  const markTabAsOpened = (): void => {
-    if (typeof window === 'undefined') return;
-    
-    const tabKey = 'tabOpened_' + getPageKey();
-    sessionStorage.setItem(tabKey, 'true');
-    console.log('[DEBUG] PopupAd: Marked tab as opened:', tabKey);
+    return router.pathname;
   };
 
   /**
    * Open the target URL in a new tab, only once per page session.
    */
   const openTabOnce = (): void => {
-    console.log('[DEBUG] PopupAd: openTabOnce called');
-    
-    if (hasTabBeenOpened()) {
-      console.log('[DEBUG] PopupAd: Tab already opened for this page session - BLOCKING');
-      return;
+    const tabKey = 'tabOpened_' + getPageKey();
+    if (!sessionStorage.getItem(tabKey)) {
+      console.log('[DEBUG] PopupAd: Opening new tab - no previous session found');
+      window.open(popupConfig.url, '_blank');
+      sessionStorage.setItem(tabKey, 'true');
+      console.log('[DEBUG] PopupAd: Tab opened and marked in sessionStorage:', tabKey);
+    } else {
+      console.log('[DEBUG] PopupAd: Tab already opened in this session - BLOCKED');
     }
+  };
 
-    console.log('[DEBUG] PopupAd: No previous tab found - OPENING NEW TAB');
-    
-    try {
-      const newWindow = window.open(popupConfig.url, '_blank', 'noopener,noreferrer');
-      if (newWindow) {
-        markTabAsOpened();
-        console.log('[DEBUG] PopupAd: New tab opened successfully');
-        console.log('[DEBUG] PopupAd: Current sessionStorage state:', {
-          sessionKey: 'sessionID_' + getPageKey(),
-          sessionValue: sessionStorage.getItem('sessionID_' + getPageKey()),
-          tabKey: 'tabOpened_' + getPageKey(),
-          tabValue: sessionStorage.getItem('tabOpened_' + getPageKey())
-        });
-      } else {
-        console.log('[DEBUG] PopupAd: Failed to open new tab (popup blocker?)');
-      }
-    } catch (error) {
-      console.error('[DEBUG] PopupAd: Error opening new tab:', error);
+  /**
+   * Initialize session ID, once per page session.
+   */
+  const initSession = (): void => {
+    const sessionKey = 'sessionID_' + getPageKey();
+    if (!sessionStorage.getItem(sessionKey)) {
+      sessionStorage.setItem(sessionKey, generateSessionId());
+      console.log('[DEBUG] PopupAd: Session initialized:', sessionKey);
     }
   };
 
   /**
    * Main handler to be triggered by user interaction.
+   * EXACTLY like reference - init session and open tab ONLY on user click
    */
   const handleUserEventTrigger = (): void => {
-    console.log('[DEBUG] PopupAd: User event triggered');
-    
-    // CEK DULU SESSIONSTORAGE - kalau ada berarti udah pernah buka tab
-    if (hasTabBeenOpened()) {
-      console.log('[DEBUG] PopupAd: SessionStorage sudah ada - TAB SUDAH PERNAH DIBUKA - IGNORING');
-      return;
-    }
-    
-    console.log('[DEBUG] PopupAd: SessionStorage belum ada - BOLEH BUKA TAB');
+    console.log('[DEBUG] PopupAd: User click detected');
+    initSession();
     openTabOnce();
   };
-
-  // Initialize session when component mounts
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      initSession();
-    }
-  }, [router.pathname]);
 
   // Load popup configuration
   useEffect(() => {
@@ -178,7 +115,7 @@ const PopupAd: React.FC = () => {
     loadConfig();
   }, []);
 
-  // Set up click event listener
+  // Set up click event listener - NO SESSION INITIALIZATION HERE
   useEffect(() => {
     if (!isConfigLoaded || !popupConfig.enabled || !popupConfig.url) {
       console.log('[DEBUG] PopupAd: Popup disabled or no URL configured');
@@ -201,7 +138,6 @@ const PopupAd: React.FC = () => {
     console.log('[DEBUG] PopupAd: Setting up click listener for page:', getPageKey());
 
     const handleClick = (event: MouseEvent) => {
-      console.log('[DEBUG] PopupAd: Click detected');
       handleUserEventTrigger();
     };
 
