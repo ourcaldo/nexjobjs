@@ -62,6 +62,33 @@ const PopupAd: React.FC = () => {
   };
 
   /**
+   * Clear sessionStorage from other pages to ensure only current page has session
+   */
+  const clearOtherPagesSessions = (): void => {
+    const currentPageKey = getPageKey();
+    const allKeys = Object.keys(sessionStorage);
+    
+    // Find all sessionID_ and tabOpened_ keys that are NOT for current page
+    const keysToRemove = allKeys.filter(key => {
+      if (key.startsWith('sessionID_') || key.startsWith('tabOpened_')) {
+        const pageFromKey = key.replace('sessionID_', '').replace('tabOpened_', '');
+        return pageFromKey !== currentPageKey;
+      }
+      return false;
+    });
+
+    // Remove cookies from other pages
+    keysToRemove.forEach(key => {
+      sessionStorage.removeItem(key);
+      console.log('[DEBUG] PopupAd: Removed sessionStorage from other page:', key);
+    });
+
+    if (keysToRemove.length > 0) {
+      console.log('[DEBUG] PopupAd: Cleared', keysToRemove.length, 'sessionStorage entries from other pages');
+    }
+  };
+
+  /**
    * Open the target URL in a new tab, only once per page session.
    */
   const openTabOnce = (): void => {
@@ -136,6 +163,9 @@ const PopupAd: React.FC = () => {
     }
 
     console.log('[DEBUG] PopupAd: Setting up click listener for page:', getPageKey());
+
+    // CLEAR sessionStorage dari page lain saat mount component
+    clearOtherPagesSessions();
 
     const handleClick = (event: MouseEvent) => {
       handleUserEventTrigger();
