@@ -10,13 +10,25 @@ export class AdminSettingsApiService {
 
   private async getAuthToken(): Promise<string | null> {
     try {
-      // Try to get Supabase session token first
+      // For admin panel access, try Supabase session token first (for authenticated super admin)
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
-        return session.access_token;
+        // Verify this is a super admin session
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (profile?.role === 'super_admin') {
+            return session.access_token;
+          }
+        }
       }
 
-      // Fallback to API token from environment for admin panel access
+      // Fallback to API token from environment for external API access
       const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
       if (apiToken) {
         return apiToken;
@@ -25,7 +37,8 @@ export class AdminSettingsApiService {
       return null;
     } catch (error) {
       console.error('Error getting auth token:', error);
-      return null;
+      // Fallback to API token if session check fails
+      return process.env.NEXT_PUBLIC_API_TOKEN || null;
     }
   }
 
@@ -92,9 +105,6 @@ export class AdminSettingsApiService {
       const result = await this.makeRequest<{ success: boolean; error?: string }>(this.baseUrl, {
         method: 'PUT',
         body: JSON.stringify(settings),
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
-        },
       });
 
       if (result.success) {

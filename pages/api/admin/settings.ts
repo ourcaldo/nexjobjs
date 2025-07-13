@@ -5,6 +5,12 @@ import type { AdminSettings } from '@/lib/supabase';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createServerSupabaseClient();
 
+  // Authentication check
+  const authResult = await checkAuthentication(req, supabase);
+  if (!authResult.success) {
+    return res.status(401).json({ error: authResult.error });
+  }
+
   try {
     switch (req.method) {
       case 'GET':
@@ -98,4 +104,47 @@ async function handleUpdate(supabase: any, req: NextApiRequest, res: NextApiResp
     console.error('Error in handleUpdate:', error);
     return res.status(500).json({ error: 'Failed to update settings' });
   }
+}
+
+// Authentication check function
+async function checkAuthentication(req: NextApiRequest, supabase: any): Promise<{ success: boolean; error?: string }> {
+  // Method 1: Check for API token in headers
+  const apiToken = req.headers.authorization?.replace('Bearer ', '') || req.headers['x-api-token'];
+  const validToken = process.env.NEXT_PUBLIC_API_TOKEN;
+
+  if (apiToken && validToken && apiToken === validToken) {
+    return { success: true };
+  }
+
+  // Method 2: Check for Supabase session token and verify super admin role
+  const sessionToken = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (sessionToken && sessionToken !== validToken) {
+    try {
+      // Verify the session token with Supabase
+      const { data: { user }, error: authError } = await supabase.auth.getUser(sessionToken);
+      
+      if (authError || !user) {
+        return { success: false, error: 'Invalid session token' };
+      }
+
+      // Check if user is super admin
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile || profile.role !== 'super_admin') {
+        return { success: false, error: 'Unauthorized: Super admin access required' };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Session validation error:', error);
+      return { success: false, error: 'Session validation failed' };
+    }
+  }
+
+  return { success: false, error: 'Unauthorized: Valid API token or super admin session required' };
 }
