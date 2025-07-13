@@ -1,8 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Bookmark, User, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { Search, User, Bookmark, Menu, X, LogOut, Settings } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/ToastProvider';
+
+// Debug utility for development
+const debugAuth = async () => {
+  if (process.env.NODE_ENV !== 'development') return;
+
+  console.group('🔐 Header Auth Debug');
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    console.log('Session:', session ? 'Active' : 'None');
+    console.log('User ID:', session?.user?.id || 'None');
+    if (error) console.error('Error:', error);
+  } catch (error) {
+    console.error('Debug error:', error);
+  }
+  console.groupEnd();
+};
+
 import { userBookmarkService } from '@/services/userBookmarkService';
 import BookmarkLoginModal from '@/components/ui/BookmarkLoginModal';
 
@@ -34,7 +52,7 @@ const Header: React.FC = () => {
 
     // Listen for custom bookmark events
     window.addEventListener('bookmarkUpdated', handleBookmarkUpdate);
-    
+
     // Listen for storage changes (cross-tab updates)
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'nexjob_bookmarks' && user) {

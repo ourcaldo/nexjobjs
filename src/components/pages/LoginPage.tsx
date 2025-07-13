@@ -57,12 +57,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ settings }) => {
       }
 
       if (data.user && data.session) {
+        console.log('Login successful, session created:', data.session.access_token.substring(0, 20) + '...');
         showToast('success', 'Berhasil masuk!');
 
-        // Wait a bit for auth state to propagate, then navigate
+        // Ensure session is properly set before navigation
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token
+        });
+
+        // Wait a bit longer for auth state to propagate, then navigate
         setTimeout(() => {
           router.push('/');
-        }, 500);
+        }, 800);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat login';

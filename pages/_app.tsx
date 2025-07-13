@@ -13,6 +13,23 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   useEffect(() => {
+    // Initialize auth state immediately on app load
+    const initializeAuth = async () => {
+      try {
+        // Get current session to ensure auth state is restored
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        } else {
+          console.log('Session restored:', session?.user?.id || 'No session');
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      }
+    };
+
+    initializeAuth();
+
     // Set up auth state change listener for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Global auth state change:', event, session?.user?.id);
