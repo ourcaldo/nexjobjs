@@ -21,7 +21,7 @@ class AdvertisementService {
   private cacheTimestamp = 0;
 
   private isCacheValid(): boolean {
-    return this.configLoaded && this.adConfig && (Date.now() - this.cacheTimestamp < this.CACHE_TTL);
+    return this.configLoaded && this.adConfig !== null && (Date.now() - this.cacheTimestamp < this.CACHE_TTL);
   }
 
   async loadAdConfig(): Promise<AdvertisementConfig> {
