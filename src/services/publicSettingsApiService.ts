@@ -67,7 +67,7 @@ class PublicSettingsApiService {
 
       console.log('Fetching fresh public settings from API');
 
-      const response = await fetch(`${this.baseUrl}/settings`, {
+      const response = await fetch(`${this.baseUrl}/settings/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

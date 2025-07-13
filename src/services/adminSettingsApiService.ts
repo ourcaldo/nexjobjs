@@ -1,10 +1,9 @@
-
 import { supabase } from '@/lib/supabase';
 import type { AdminSettings } from '@/lib/supabase';
 
 export class AdminSettingsApiService {
-  private baseUrl = '/api/admin/settings';
-  
+  private baseUrl = '/api/admin/settings/';
+
   // Cache for settings to avoid unnecessary API calls
   private settingsCache: { data: AdminSettings | null; timestamp: number } | null = null;
   private readonly CACHE_TTL = 2 * 60 * 1000; // 2 minutes cache
@@ -21,7 +20,7 @@ export class AdminSettingsApiService {
 
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = await this.getAuthToken();
-    
+
     if (!token) {
       throw new Error('No authentication token available');
     }
@@ -57,44 +56,41 @@ export class AdminSettingsApiService {
       }
 
       console.log('Fetching admin settings from API');
-      
-      const response = await this.makeRequest<{ data: AdminSettings | null }>(`${this.baseUrl}`);
-      
+
+      const result = await this.makeRequest<{ data: AdminSettings }>(this.baseUrl);
+
       // Update cache
       this.settingsCache = {
-        data: response.data,
+        data: result.data,
         timestamp: Date.now()
       };
 
-      return response.data;
+      return result.data;
     } catch (error) {
       console.error('Error fetching admin settings:', error);
-      
-      // Return cached data if available
-      if (this.settingsCache) {
-        console.log('Returning cached settings due to API error');
-        return this.settingsCache.data;
-      }
-      
       return null;
     }
   }
 
   async saveSettings(settings: Partial<AdminSettings>): Promise<{ success: boolean; error?: string }> {
     try {
-      await this.makeRequest<{ data: AdminSettings; success: boolean }>(`${this.baseUrl}`, {
-        method: 'POST',
+      const result = await this.makeRequest<{ success: boolean; error?: string }>(this.baseUrl, {
+        method: 'PUT',
         body: JSON.stringify(settings),
       });
 
-      // Clear cache after successful save
-      this.clearCache();
+      if (result.success) {
+        // Clear cache after successful save
+        this.clearCache();
+      }
 
-      return { success: true };
+      return result;
     } catch (error) {
       console.error('Error saving admin settings:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save settings';
-      return { success: false, error: errorMessage };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
     }
   }
 
