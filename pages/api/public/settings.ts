@@ -44,13 +44,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .limit(1)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No settings found, return empty object
+        return res.status(200).json({ data: {} });
+      }
       console.error('Error fetching public settings:', error);
       return res.status(500).json({ error: 'Failed to fetch settings' });
     }
 
-    // If no settings found, return empty object
-    if (!data || error?.code === 'PGRST116') {
+    // If no data found, return empty object
+    if (!data) {
       return res.status(200).json({ data: {} });
     }
 
