@@ -83,21 +83,15 @@ const PopupAd: React.FC = () => {
     if (typeof window === 'undefined') return false;
     
     const tabKey = 'tabOpened_' + getPageKey();
-    const sessionKey = 'sessionID_' + getPageKey();
+    const tabValue = sessionStorage.getItem(tabKey);
     
-    const hasOpened = sessionStorage.getItem(tabKey) === 'true';
-    const sessionExists = sessionStorage.getItem(sessionKey) !== null;
-    
-    console.log('[DEBUG] PopupAd: Checking tab status:', { 
+    console.log('[DEBUG] PopupAd: Checking if tab already opened:', { 
       tabKey, 
-      sessionKey,
-      hasOpened, 
-      sessionExists,
-      tabValue: sessionStorage.getItem(tabKey),
-      sessionValue: sessionStorage.getItem(sessionKey)
+      tabValue,
+      hasOpened: tabValue === 'true'
     });
     
-    return hasOpened && sessionExists;
+    return tabValue === 'true';
   };
 
   /**
@@ -149,13 +143,13 @@ const PopupAd: React.FC = () => {
   const handleUserEventTrigger = (): void => {
     console.log('[DEBUG] PopupAd: User event triggered');
     
-    // Check if tab already opened for this page
+    // CEK DULU SESSIONSTORAGE - kalau ada berarti udah pernah buka tab
     if (hasTabBeenOpened()) {
-      console.log('[DEBUG] PopupAd: Tab already opened in this session - IGNORING CLICK');
+      console.log('[DEBUG] PopupAd: SessionStorage sudah ada - TAB SUDAH PERNAH DIBUKA - IGNORING');
       return;
     }
     
-    // Attempt to open tab
+    console.log('[DEBUG] PopupAd: SessionStorage belum ada - BOLEH BUKA TAB');
     openTabOnce();
   };
 
