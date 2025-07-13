@@ -19,9 +19,12 @@ import {
 import { Job } from '@/types/job';
 import { wpService } from '@/services/wpService';
 import { bookmarkService } from '@/services/bookmarkService';
+import { userBookmarkService } from '@/services/userBookmarkService';
+import { supabase } from '@/lib/supabase';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import JobCard from '@/components/JobCard';
+import BookmarkLoginModal from '@/components/ui/BookmarkLoginModal';
 
 interface JobDetailPageProps {
   job: Job;
@@ -36,6 +39,8 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
   const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
 
   // Load related jobs and setup analytics
   useEffect(() => {
@@ -165,6 +170,16 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
 
     // Tags are already decoded in wpService, so just split them
     return tagString.split(', ').map(tag => tag.trim()).filter(tag => tag.length > 0);
+  };
+
+  const handleBookmarkModalLogin = () => {
+    setShowBookmarkModal(false);
+    window.open('/login/', '_blank');
+  };
+
+  const handleBookmarkModalSignup = () => {
+    setShowBookmarkModal(false);
+    window.open('/signup/', '_blank');
   };
 
   const breadcrumbItems = [
@@ -473,6 +488,14 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
           </div>
         </div>
       </div>
+
+      {/* Bookmark Login Modal */}
+      <BookmarkLoginModal
+        isOpen={showBookmarkModal}
+        onClose={() => setShowBookmarkModal(false)}
+        onLogin={handleBookmarkModalLogin}
+        onSignup={handleBookmarkModalSignup}
+      />
     </div>
   );
 };

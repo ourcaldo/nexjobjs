@@ -83,6 +83,7 @@ class UserBookmarkService {
           return { success: false, error: errorData.error || 'Failed to add bookmark' };
         }
 
+        this.notifyBookmarkChange();
         return { success: true };
       }
 
@@ -133,6 +134,7 @@ class UserBookmarkService {
           return { success: false, error: errorData.error || 'Failed to remove bookmark' };
         }
 
+        this.notifyBookmarkChange();
         return { success: true };
       }
 
@@ -214,6 +216,9 @@ class UserBookmarkService {
 
       if (isCurrentlyBookmarked) {
         const result = await this.removeBookmark(userId, jobId);
+        if (result.success) {
+          this.notifyBookmarkChange();
+        }
         return {
           success: result.success,
           isBookmarked: false,
@@ -221,6 +226,9 @@ class UserBookmarkService {
         };
       } else {
         const result = await this.addBookmark(userId, jobId);
+        if (result.success) {
+          this.notifyBookmarkChange();
+        }
         return {
           success: result.success,
           isBookmarked: true,
@@ -234,6 +242,17 @@ class UserBookmarkService {
         isBookmarked: false,
         error: error instanceof Error ? error.message : 'Failed to toggle bookmark'
       };
+    }
+  }
+
+  // Notify other components about bookmark changes
+  private notifyBookmarkChange(): void {
+    if (typeof window !== 'undefined') {
+      // Dispatch custom event for bookmark changes
+      const event = new CustomEvent('bookmarkUpdated', {
+        detail: { timestamp: Date.now() }
+      });
+      window.dispatchEvent(event);
     }
   }
 

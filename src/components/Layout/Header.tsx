@@ -24,6 +24,31 @@ const Header: React.FC = () => {
     }
   }, []);
 
+  // Listen for bookmark changes from other components
+  useEffect(() => {
+    const handleBookmarkUpdate = async () => {
+      if (user) {
+        await loadBookmarkCount(user.id);
+      }
+    };
+
+    // Listen for custom bookmark events
+    window.addEventListener('bookmarkUpdated', handleBookmarkUpdate);
+    
+    // Listen for storage changes (cross-tab updates)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'nexjob_bookmarks' && user) {
+        loadBookmarkCount(user.id);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('bookmarkUpdated', handleBookmarkUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [user, loadBookmarkCount]);
+
   const initializeAuth = useCallback(async () => {
     try {
       // Only use session to avoid direct profile queries
