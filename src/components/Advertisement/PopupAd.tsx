@@ -83,9 +83,21 @@ const PopupAd: React.FC = () => {
     if (typeof window === 'undefined') return false;
     
     const tabKey = 'tabOpened_' + getPageKey();
+    const sessionKey = 'sessionID_' + getPageKey();
+    
     const hasOpened = sessionStorage.getItem(tabKey) === 'true';
-    console.log('[DEBUG] PopupAd: Checking tab status:', { tabKey, hasOpened });
-    return hasOpened;
+    const sessionExists = sessionStorage.getItem(sessionKey) !== null;
+    
+    console.log('[DEBUG] PopupAd: Checking tab status:', { 
+      tabKey, 
+      sessionKey,
+      hasOpened, 
+      sessionExists,
+      tabValue: sessionStorage.getItem(tabKey),
+      sessionValue: sessionStorage.getItem(sessionKey)
+    });
+    
+    return hasOpened && sessionExists;
   };
 
   /**
@@ -103,11 +115,15 @@ const PopupAd: React.FC = () => {
    * Open the target URL in a new tab, only once per page session.
    */
   const openTabOnce = (): void => {
+    console.log('[DEBUG] PopupAd: openTabOnce called');
+    
     if (hasTabBeenOpened()) {
-      console.log('[DEBUG] PopupAd: Tab already opened for this page session');
+      console.log('[DEBUG] PopupAd: Tab already opened for this page session - BLOCKING');
       return;
     }
 
+    console.log('[DEBUG] PopupAd: No previous tab found - OPENING NEW TAB');
+    
     try {
       const newWindow = window.open(popupConfig.url, '_blank', 'noopener,noreferrer');
       if (newWindow) {
@@ -131,7 +147,18 @@ const PopupAd: React.FC = () => {
    * Main handler to be triggered by user interaction.
    */
   const handleUserEventTrigger = (): void => {
+    console.log('[DEBUG] PopupAd: User event triggered');
+    
+    // First check if we already have a session and tab opened
+    if (hasTabBeenOpened()) {
+      console.log('[DEBUG] PopupAd: Tab already opened in this session - IGNORING CLICK');
+      return;
+    }
+    
+    // Initialize session if needed
     initSession();
+    
+    // Attempt to open tab
     openTabOnce();
   };
 
