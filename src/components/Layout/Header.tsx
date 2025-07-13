@@ -26,23 +26,20 @@ const Header: React.FC = () => {
 
   const initializeAuth = useCallback(async () => {
     try {
-      // First try to get session (includes token validation)
+      // Only use session to avoid direct profile queries
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
         setUser(session.user);
         await loadBookmarkCount(session.user.id);
       } else {
-        // Fallback to getUser if no session
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
-        if (user) {
-          await loadBookmarkCount(user.id);
-        }
+        setUser(null);
+        setBookmarkCount(0);
       }
     } catch (error) {
       console.error('Error initializing auth:', error);
       setUser(null);
+      setBookmarkCount(0);
     }
   }, [loadBookmarkCount]);
 

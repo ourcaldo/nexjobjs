@@ -1,4 +1,3 @@
-
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@/lib/supabase';
 
@@ -8,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Get user from Authorization header
     const token = req.headers.authorization?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({ success: false, error: 'No authorization token provided' });
     }

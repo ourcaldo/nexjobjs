@@ -62,6 +62,31 @@ class UserBookmarkService {
   // Add bookmark
   async addBookmark(userId: string, jobId: string): Promise<{ success: boolean; error?: string }> {
     try {
+      // Check if we're on client side
+      if (typeof window !== 'undefined') {
+        const token = await this.getAuthToken();
+        if (!token) {
+          return { success: false, error: 'No authentication token available' };
+        }
+
+        const response = await fetch('/api/user/bookmarks/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ jobId }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          return { success: false, error: errorData.error || 'Failed to add bookmark' };
+        }
+
+        return { success: true };
+      }
+
+      // Server-side fallback (for SSR)
       const { error } = await supabase
         .from('user_bookmarks')
         .insert({
@@ -87,6 +112,31 @@ class UserBookmarkService {
   // Remove bookmark
   async removeBookmark(userId: string, jobId: string): Promise<{ success: boolean; error?: string }> {
     try {
+      // Check if we're on client side
+      if (typeof window !== 'undefined') {
+        const token = await this.getAuthToken();
+        if (!token) {
+          return { success: false, error: 'No authentication token available' };
+        }
+
+        const response = await fetch('/api/user/bookmarks/', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ jobId }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          return { success: false, error: errorData.error || 'Failed to remove bookmark' };
+        }
+
+        return { success: true };
+      }
+
+      // Server-side fallback (for SSR)
       const { error } = await supabase
         .from('user_bookmarks')
         .delete()
@@ -111,6 +161,33 @@ class UserBookmarkService {
   // Check if job is bookmarked
   async isBookmarked(userId: string, jobId: string): Promise<boolean> {
     try {
+      // Check if we're on client side
+      if (typeof window !== 'undefined') {
+        const token = await this.getAuthToken();
+        if (!token) {
+          return false;
+        }
+
+        const response = await fetch('/api/user/bookmarks/', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          return false;
+        }
+
+        const data = await response.json();
+        if (data.success && data.data) {
+          return data.data.some((bookmark: any) => bookmark.job_id === jobId);
+        }
+        return false;
+      }
+
+      // Server-side fallback (for SSR)
       const { data, error } = await supabase
         .from('user_bookmarks')
         .select('id')
@@ -163,6 +240,32 @@ class UserBookmarkService {
   // Get bookmark count for user
   async getBookmarkCount(userId: string): Promise<number> {
     try {
+      // Check if we're on client side
+      if (typeof window !== 'undefined') {
+        const token = await this.getAuthToken();
+        if (!token) {
+          console.error('No auth token available for bookmark count');
+          return 0;
+        }
+
+        const response = await fetch('/api/user/bookmarks/', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          console.error('Error fetching bookmark count via API:', response.status);
+          return 0;
+        }
+
+        const data = await response.json();
+        return data.success ? (data.data?.length || 0) : 0;
+      }
+
+      // Server-side fallback (for SSR)
       const { count, error } = await supabase
         .from('user_bookmarks')
         .select('*', { count: 'exact', head: true })

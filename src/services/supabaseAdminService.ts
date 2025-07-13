@@ -177,10 +177,10 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
         return await this.isSuperAdminServerSide();
       }
 
-      // Client-side: use API layer
+      // Client-side: ALWAYS use API layer
       const token = await this.getAuthToken();
       if (!token) {
-        console.log('No auth token available for super admin check');
+        // Don't log this as it's normal for unauthenticated users
         return false;
       }
 
@@ -194,16 +194,13 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
 
       if (!response.ok) {
         // Don't log error for 401 (unauthorized) - this is expected for non-admin users
-        if (response.status !== 401) {
-          console.error('Error checking super admin status via API:', 'HTTP ' + response.status);
-        }
         return false;
       }
 
       const data = await response.json();
       return data.success && data.data?.role === 'super_admin';
     } catch (error) {
-      console.error('Error checking super admin status via API:', error instanceof Error ? error.message : 'Unknown error');
+      // Silently fail for client-side role checks to avoid spam
       return false;
     }
   }
