@@ -36,21 +36,21 @@ const PopupAd: React.FC = () => {
     return false;
   };
 
-  // Generate a page-unique key for session tracking
-  const getPageKey = (): string => {
-    return router.asPath;
-  };
-
-  // Session storage management for tracking executions per page
+  // Generate a unique session key for current page
   const getSessionKey = (): string => {
-    return `nexjob_popup_${getPageKey()}`;
+    // Use current path and create a safe key
+    const currentPath = router.asPath.split('?')[0]; // Remove query params
+    const safeKey = currentPath.replace(/[^a-zA-Z0-9-_]/g, '_');
+    return `nexjob_popup_${safeKey}`;
   };
 
   const getExecutionCount = (): number => {
     if (typeof window === 'undefined') return 0;
     const sessionKey = getSessionKey();
     const storedValue = sessionStorage.getItem(sessionKey);
-    return storedValue ? parseInt(storedValue) || 0 : 0;
+    const count = storedValue ? parseInt(storedValue) || 0 : 0;
+    console.log('[DEBUG] PopupAd: Getting execution count:', { sessionKey, storedValue, count });
+    return count;
   };
 
   const incrementExecutionCount = (): void => {
@@ -59,6 +59,7 @@ const PopupAd: React.FC = () => {
     const currentCount = getExecutionCount();
     const newCount = currentCount + 1;
     sessionStorage.setItem(sessionKey, newCount.toString());
+    console.log('[DEBUG] PopupAd: Incremented execution count:', { sessionKey, oldCount: currentCount, newCount });
   };
 
   // Clear session storage when component unmounts (user leaves page)
@@ -115,18 +116,27 @@ const PopupAd: React.FC = () => {
     const handleClick = (event: MouseEvent) => {
       // Check execution limit using sessionStorage
       const currentExecutions = getExecutionCount();
+      const sessionKey = getSessionKey();
+      
+      console.log('[DEBUG] PopupAd: Click detected, checking limits:', {
+        sessionKey,
+        currentExecutions,
+        maxExecutions: popupConfig.maxExecutions,
+        sessionStorageValue: sessionStorage.getItem(sessionKey),
+        allSessionKeys: Object.keys(sessionStorage).filter(key => key.startsWith('nexjob_popup_'))
+      });
+      
       if (currentExecutions >= popupConfig.maxExecutions) {
         console.log('[DEBUG] PopupAd: Maximum executions reached for this page session:', currentExecutions);
         return;
       }
 
-      console.log('[DEBUG] PopupAd: Click detected, opening popup:', {
+      console.log('[DEBUG] PopupAd: Opening popup:', {
         url: popupConfig.url,
         executions: currentExecutions + 1,
         maxExecutions: popupConfig.maxExecutions,
         device: currentDevice,
-        page: getPageKey(),
-        sessionKey: getSessionKey()
+        sessionKey
       });
 
       // Open new tab
@@ -135,7 +145,13 @@ const PopupAd: React.FC = () => {
         if (newWindow) {
           console.log('[DEBUG] PopupAd: New tab opened successfully');
           incrementExecutionCount();
-          console.log('[DEBUG] PopupAd: Session storage updated, execution count:', getExecutionCount());
+          const finalCount = getExecutionCount();
+          console.log('[DEBUG] PopupAd: Session storage updated, execution count:', finalCount);
+          console.log('[DEBUG] PopupAd: Current sessionStorage state:', {
+            sessionKey: getSessionKey(),
+            value: sessionStorage.getItem(getSessionKey()),
+            allPopupKeys: Object.keys(sessionStorage).filter(key => key.startsWith('nexjob_popup_'))
+          });
         } else {
           console.log('[DEBUG] PopupAd: Failed to open new tab (popup blocker?)');
         }
