@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { advertisementService } from '@/services/advertisementService';
 
@@ -25,165 +26,187 @@ const PopupAd: React.FC = () => {
     loadPopupAd();
   }, [hasLoaded]);
 
-  // Execute the ad code in head (like WordPress header.php or WP Code)
+  // Execute the ad code directly in head (like WordPress header.php)
   useEffect(() => {
     if (adCode && hasLoaded) {
-      console.log('[DEBUG] PopupAd: Processing ad code for head injection...');
+      console.log('[DEBUG] PopupAd: Starting script execution process...');
 
       try {
-        // Create global variables that external scripts might expect
+        // Create global environment that scripts might expect
         window.adCode = adCode;
         window.nexjobAd = {
           code: adCode,
           loaded: true,
-          debug: true
+          debug: true,
+          timestamp: Date.now()
         };
 
-        // Create a temporary container to parse the HTML
+        // Add comprehensive event listeners for debugging
+        const events = ['click', 'mouseover', 'mouseout', 'mousemove', 'scroll', 'keydown', 'touchstart', 'resize', 'load', 'DOMContentLoaded'];
+        events.forEach(evt => {
+          const listener = (e: Event) => {
+            console.log(`[DEBUG] PopupAd: User triggered event: ${evt} at ${new Date().toISOString()}`);
+            // Make event available globally for external scripts
+            window.lastTriggeredEvent = { type: evt, timestamp: Date.now(), target: e.target };
+          };
+          window.addEventListener(evt, listener, { passive: true });
+        });
+
+        // Parse and execute the ad code
         const tempContainer = document.createElement('div');
         tempContainer.innerHTML = adCode;
 
-        // Handle external script tags with src attribute
+        // Handle external scripts first
         const externalScripts = tempContainer.querySelectorAll('script[src]');
-        externalScripts.forEach((script, index) => {
-          const src = script.getAttribute('src');
+        let externalScriptsLoaded = 0;
+        const totalExternalScripts = externalScripts.length;
 
-          if (src) {
-            console.log(`[DEBUG] PopupAd: Loading external script ${index + 1}:`, src);
-
-            // Check if script already exists to avoid duplicates
-            const existingScript = document.head.querySelector(`script[src="${src}"]`);
-            if (existingScript) {
-              console.log(`[DEBUG] PopupAd: Script already exists, skipping:`, src);
-              return;
-            }
-
-            const newScript = document.createElement('script');
-            newScript.src = src;
-
-            // Copy other attributes
-            Array.from(script.attributes).forEach(attr => {
-              if (attr.name !== 'src') {
-                newScript.setAttribute(attr.name, attr.value);
-              }
-            });
-
-            // Add load and error handlers
-            newScript.onload = () => {
-              console.log(`[DEBUG] PopupAd: External script loaded successfully:`, src);
-              console.log(`[DEBUG] PopupAd: Window object keys after script load:`, Object.keys(window).filter(key => key.includes('ad') || key.includes('Ad')));
+        const executeInlineScripts = () => {
+          console.log('[DEBUG] PopupAd: All external scripts loaded, executing inline scripts...');
+          
+          // Handle inline scripts
+          const inlineScripts = tempContainer.querySelectorAll('script:not([src])');
+          inlineScripts.forEach((script, index) => {
+            if (script.innerHTML.trim()) {
+              console.log(`[DEBUG] PopupAd: Executing inline script ${index + 1}:`, script.innerHTML);
               
-              // Trigger a custom event to let external scripts know the environment is ready
-              window.dispatchEvent(new CustomEvent('nexjobAdReady', { 
-                detail: { 
-                  adCode: adCode,
-                  timestamp: Date.now()
-                }
-              }));
-            };
-
-            newScript.onerror = () => {
-              console.error(`[DEBUG] PopupAd: Failed to load external script:`, src);
-            };
-
-            // Append to document head to execute (like WordPress header.php)
-            document.head.appendChild(newScript);
-          }
-        });
-
-        // Handle inline script tags
-        const inlineScripts = tempContainer.querySelectorAll('script:not([src])');
-        inlineScripts.forEach((script, index) => {
-          if (script.innerHTML.trim()) {
-            console.log(`[DEBUG] PopupAd: Executing inline script ${index + 1}:`, script.innerHTML.substring(0, 100) + '...');
-
-            try {
-              // Wrap the script content to provide context
-              const wrappedScript = `
-                (function() {
-                  console.log('[DEBUG] PopupAd: Inline script ${index + 1} starting execution');
-                  var adCode = window.adCode || '';
-                  var nexjobAd = window.nexjobAd || {};
-                  
+              try {
+                // Execute in global scope with proper context
+                const scriptContent = script.innerHTML;
+                const scriptElement = document.createElement('script');
+                scriptElement.textContent = `
+                  console.log('[DEBUG] PopupAd: Inline script ${index + 1} execution started');
                   try {
-                    ${script.innerHTML}
-                    console.log('[DEBUG] PopupAd: Inline script ${index + 1} executed without errors');
+                    ${scriptContent}
+                    console.log('[DEBUG] PopupAd: Inline script ${index + 1} executed successfully');
                   } catch (error) {
                     console.error('[DEBUG] PopupAd: Error in inline script ${index + 1}:', error);
                   }
-                })();
-              `;
-
-              // Create new script element for inline scripts
-              const newScript = document.createElement('script');
-              newScript.textContent = wrappedScript;
-
-              // Copy attributes
-              Array.from(script.attributes).forEach(attr => {
-                newScript.setAttribute(attr.name, attr.value);
-              });
-
-              // Append to head to execute (like WP Code)
-              document.head.appendChild(newScript);
-              console.log(`[DEBUG] PopupAd: Inline script ${index + 1} injected successfully`);
-
-            } catch (error) {
-              console.error(`[DEBUG] PopupAd: Error executing inline script ${index + 1}:`, error);
+                `;
+                
+                // Copy attributes
+                Array.from(script.attributes).forEach(attr => {
+                  scriptElement.setAttribute(attr.name, attr.value);
+                });
+                
+                // Append to head for execution
+                document.head.appendChild(scriptElement);
+                console.log(`[DEBUG] PopupAd: Inline script ${index + 1} injected to head`);
+                
+              } catch (error) {
+                console.error(`[DEBUG] PopupAd: Failed to execute inline script ${index + 1}:`, error);
+              }
             }
-          }
-        });
+          });
 
-        // Handle any non-script HTML content (just log it, don't display)
-        const nonScriptElements = Array.from(tempContainer.children).filter(
-          el => el.tagName.toLowerCase() !== 'script'
-        );
-
-        if (nonScriptElements.length > 0) {
-          console.log(`[DEBUG] PopupAd: Found ${nonScriptElements.length} non-script HTML elements (will be ignored for popup ads)`);
-        }
-
-        console.log('[DEBUG] PopupAd: Ad code processing completed');
-
-        // Add comprehensive debug listeners for all common events
-        const events = ['click', 'mousemove', 'scroll', 'keydown', 'touchstart', 'resize', 'load'];
-        events.forEach(evt => {
-          const listener = () => {
-            console.log(`[DEBUG] PopupAd: User triggered event: ${evt} at ${new Date().toISOString()}`);
-          };
-          
-          window.addEventListener(evt, listener, { once: true }); // Only log once per event type to avoid spam
-        });
-
-        // Also add a general DOM ready check
-        if (document.readyState === 'complete') {
-          console.log('[DEBUG] PopupAd: DOM is already complete, triggering nexjobAdReady event');
+          // Trigger custom events to notify external scripts
+          console.log('[DEBUG] PopupAd: Triggering nexjobAdReady event');
           window.dispatchEvent(new CustomEvent('nexjobAdReady', { 
             detail: { 
               adCode: adCode,
               timestamp: Date.now(),
-              domReady: true
+              allScriptsLoaded: true
             }
           }));
+
+          // Also trigger DOMContentLoaded if needed
+          setTimeout(() => {
+            console.log('[DEBUG] PopupAd: Triggering secondary events for script compatibility');
+            window.dispatchEvent(new Event('load'));
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+          }, 100);
+        };
+
+        if (totalExternalScripts === 0) {
+          console.log('[DEBUG] PopupAd: No external scripts found, executing inline scripts immediately');
+          executeInlineScripts();
         } else {
-          document.addEventListener('DOMContentLoaded', () => {
-            console.log('[DEBUG] PopupAd: DOM loaded, triggering nexjobAdReady event');
-            window.dispatchEvent(new CustomEvent('nexjobAdReady', { 
-              detail: { 
-                adCode: adCode,
-                timestamp: Date.now(),
-                domReady: true
+          // Load external scripts
+          externalScripts.forEach((script, index) => {
+            const src = script.getAttribute('src');
+            if (src) {
+              console.log(`[DEBUG] PopupAd: Loading external script ${index + 1}:`, src);
+
+              // Check if script already exists
+              const existingScript = document.head.querySelector(`script[src="${src}"]`);
+              if (existingScript) {
+                console.log(`[DEBUG] PopupAd: Script already exists, considering it loaded:`, src);
+                externalScriptsLoaded++;
+                if (externalScriptsLoaded === totalExternalScripts) {
+                  executeInlineScripts();
+                }
+                return;
               }
-            }));
+
+              const newScript = document.createElement('script');
+              newScript.src = src;
+              
+              // Copy attributes
+              Array.from(script.attributes).forEach(attr => {
+                if (attr.name !== 'src') {
+                  newScript.setAttribute(attr.name, attr.value);
+                }
+              });
+
+              newScript.onload = () => {
+                console.log(`[DEBUG] PopupAd: External script ${index + 1} loaded successfully:`, src);
+                console.log(`[DEBUG] PopupAd: Available window functions:`, Object.keys(window).filter(key => 
+                  typeof window[key] === 'function' && (key.includes('ad') || key.includes('Ad') || key.includes('popup') || key.includes('analytics'))
+                ));
+                
+                externalScriptsLoaded++;
+                if (externalScriptsLoaded === totalExternalScripts) {
+                  // Wait a bit for script to initialize
+                  setTimeout(executeInlineScripts, 200);
+                }
+              };
+
+              newScript.onerror = () => {
+                console.error(`[DEBUG] PopupAd: Failed to load external script ${index + 1}:`, src);
+                externalScriptsLoaded++;
+                if (externalScriptsLoaded === totalExternalScripts) {
+                  executeInlineScripts();
+                }
+              };
+
+              // Append to head
+              document.head.appendChild(newScript);
+            }
           });
         }
 
+        // Force execution after a timeout as fallback
+        setTimeout(() => {
+          console.log('[DEBUG] PopupAd: Fallback execution after 5 seconds');
+          if (window.nexjobAd && !window.nexjobAd.executed) {
+            console.log('[DEBUG] PopupAd: Scripts may not have executed properly, trying direct execution');
+            window.nexjobAd.executed = true;
+            
+            // Try to execute any remaining inline scripts directly
+            const remainingScripts = tempContainer.querySelectorAll('script:not([src])');
+            remainingScripts.forEach((script, index) => {
+              if (script.innerHTML.trim()) {
+                try {
+                  console.log(`[DEBUG] PopupAd: Fallback execution of script ${index + 1}`);
+                  // Direct evaluation
+                  eval(script.innerHTML);
+                } catch (error) {
+                  console.error(`[DEBUG] PopupAd: Fallback execution failed for script ${index + 1}:`, error);
+                }
+              }
+            });
+          }
+        }, 5000);
+
+        console.log('[DEBUG] PopupAd: Script setup completed, waiting for execution...');
+
       } catch (error) {
-        console.error('[DEBUG] PopupAd: Error processing ad code:', error);
+        console.error('[DEBUG] PopupAd: Error setting up ad scripts:', error);
       }
     }
   }, [adCode, hasLoaded]);
 
-  // This component doesn't render anything in the React tree (like WordPress header.php)
+  // Component doesn't render anything (like WordPress header.php injection)
   return null;
 };
 
