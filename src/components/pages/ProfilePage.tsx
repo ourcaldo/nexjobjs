@@ -13,7 +13,6 @@ import Footer from '@/components/Layout/Footer';
 import JobCard from '@/components/JobCard';
 import { wpService } from '@/services/wpService';
 import { Job } from '@/types/job';
-import { userProfileApiService } from '@/services/userProfileApiService';
 
 interface ProfilePageProps {
   settings: any;
