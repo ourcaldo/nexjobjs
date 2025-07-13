@@ -105,15 +105,15 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
           return {
             id: session.user.id,
             email: session.user.email || '',
-            full_name: session.user.user_metadata?.full_name || null,
+            full_name: session.user.user_metadata?.full_name || undefined,
             role: 'user', // Default role, don't query database
             created_at: session.user.created_at || new Date().toISOString(),
-            phone: null,
-            birth_date: null,
-            gender: null,
-            location: null,
-            photo_url: null,
-            bio: null
+            phone: undefined,
+            birth_date: undefined,
+            gender: undefined,
+            location: undefined,
+            photo_url: undefined,
+            bio: undefined
           } as Profile;
         }
         return null;
