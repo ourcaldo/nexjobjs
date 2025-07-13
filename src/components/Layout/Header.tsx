@@ -32,6 +32,7 @@ const Header: React.FC = () => {
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadBookmarkCount = useCallback(async (userId: string) => {
     try {
@@ -67,58 +68,138 @@ const Header: React.FC = () => {
     };
   }, [user, loadBookmarkCount]);
 
-  const initializeAuth = useCallback(async () => {
+  const initializeAuth = useCallback(async (forceRefresh = false) => {
     try {
-      // Only use session to avoid direct profile queries
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session?.user) {
+      setIsLoading(true);
+      
+      // Wait a bit for Supabase to be ready if this is initial load
+      if (!isInitialized && !forceRefresh) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      // Get current session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
+        setUser(null);
+        setBookmarkCount(0);
+      } else if (session?.user) {
+        console.log('Setting user from session:', session.user.id);
         setUser(session.user);
         await loadBookmarkCount(session.user.id);
       } else {
+        console.log('No session found, clearing user state');
         setUser(null);
         setBookmarkCount(0);
+      }
+      
+      if (!isInitialized) {
+        setIsInitialized(true);
       }
     } catch (error) {
       console.error('Error initializing auth:', error);
       setUser(null);
       setBookmarkCount(0);
+    } finally {
+      setIsLoading(false);
     }
-  }, [loadBookmarkCount]);
+  }, [loadBookmarkCount, isInitialized]);
 
   useEffect(() => {
+    let mounted = true;
+    
     // Initialize auth state
     initializeAuth();
 
-    // Listen for auth changes (login/logout events)
+    // Listen for custom auth events from _app.tsx
+    const handleAuthInitialized = (event: CustomEvent) => {
+      if (!mounted) return;
+      console.log('Auth initialized event received');
+      initializeAuth(true);
+    };
+
+    const handleAuthStateChanged = async (event: CustomEvent) => {
+      if (!mounted) return;
+      const { event: authEvent, session } = event.detail;
+      console.log('Auth state changed event received:', authEvent, session?.user?.id);
+
+      if (authEvent === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        await loadBookmarkCount(session.user.id);
+        setIsLoading(false);
+      } else if (authEvent === 'SIGNED_OUT') {
+        setUser(null);
+        setBookmarkCount(0);
+        setIsLoading(false);
+      } else if (authEvent === 'TOKEN_REFRESHED' && session?.user) {
+        setUser(session.user);
+        setIsLoading(false);
+      }
+    };
+
+    // Listen for auth changes (backup)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
+      if (!mounted) return;
+      console.log('Direct auth state changed:', event, session?.user?.id);
 
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
         await loadBookmarkCount(session.user.id);
+        setIsLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setBookmarkCount(0);
+        setIsLoading(false);
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        // Handle token refresh
         setUser(session.user);
+        setIsLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Add event listeners
+    if (typeof window !== 'undefined') {
+      window.addEventListener('authInitialized', handleAuthInitialized as EventListener);
+      window.addEventListener('authStateChanged', handleAuthStateChanged as EventListener);
+    }
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('authInitialized', handleAuthInitialized as EventListener);
+        window.removeEventListener('authStateChanged', handleAuthStateChanged as EventListener);
+      }
+    };
   }, [initializeAuth, loadBookmarkCount]);
 
   // Re-check auth state on route changes
   useEffect(() => {
-    const handleRouteChange = () => {
-      // Small delay to allow navigation to complete
-      setTimeout(initializeAuth, 100);
+    const handleRouteChangeStart = () => {
+      // Don't set loading immediately to avoid flashing
+      console.log('Route change started');
     };
 
-    router.events.on('routeChangeComplete', handleRouteChange);
+    const handleRouteChangeComplete = () => {
+      // Re-check auth state after route change
+      console.log('Route change completed, re-checking auth');
+      setTimeout(() => {
+        initializeAuth(true);
+      }, 50);
+    };
+
+    const handleRouteChangeError = () => {
+      setIsLoading(false);
+    };
+
+    router.events.on('routeChangeStart', handleRouteChangeStart);
+    router.events.on('routeChangeComplete', handleRouteChangeComplete);
+    router.events.on('routeChangeError', handleRouteChangeError);
+    
     return () => {
-      router.events.off('routeChangeComplete', handleRouteChange);
+      router.events.off('routeChangeStart', handleRouteChangeStart);
+      router.events.off('routeChangeComplete', handleRouteChangeComplete);
+      router.events.off('routeChangeError', handleRouteChangeError);
     };
   }, [router.events, initializeAuth]);
 
@@ -134,9 +215,17 @@ const Header: React.FC = () => {
   };
 
   const handleBookmarkClick = async () => {
-    // Check if user is authenticated by checking session directly
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUser = session?.user;
+    // If still loading, wait for auth state to be determined
+    if (isLoading) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    // Use current user state if available, otherwise check session
+    let currentUser = user;
+    if (!currentUser) {
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUser = session?.user;
+    }
 
     if (currentUser) {
       router.push('/profile/');
@@ -261,7 +350,13 @@ const Header: React.FC = () => {
                 )}
               </button>
 
-              {user ? (
+              {isLoading ? (
+                /* Loading state */
+                <div className="flex items-center space-x-2 p-2">
+                  <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                  <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ) : user ? (
                 /* Desktop User Menu */
                 <div className="relative">
                   <button
@@ -429,7 +524,17 @@ const Header: React.FC = () => {
 
             {/* User Section */}
             <div className="p-4 border-t border-gray-200">
-              {user ? (
+              {isLoading ? (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="w-32 h-3 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              ) : user ? (
                 <div className="space-y-2">
                   <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-lg">
                     <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">

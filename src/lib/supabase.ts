@@ -12,9 +12,50 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
+    flowType: 'pkce',
+    storageKey: 'sb-uzlzyosmbxgghhmafidk-auth-token'
   }
 });
+
+// Auth state utilities
+export const getAuthState = async () => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    return { session, error };
+  } catch (error) {
+    console.error('Error getting auth state:', error);
+    return { session: null, error };
+  }
+};
+
+export const waitForAuthInitialization = () => {
+  return new Promise<void>((resolve) => {
+    let resolved = false;
+    
+    // Set a timeout to resolve after 1 second max
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve();
+      }
+    }, 1000);
+    
+    // Try to get session immediately
+    supabase.auth.getSession().then(() => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve();
+      }
+    }).catch(() => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve();
+      }
+    });
+  });
+};
 
 // Server-side client with service role key
 export const createServerSupabaseClient = () => {

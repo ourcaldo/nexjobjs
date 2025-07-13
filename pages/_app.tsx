@@ -13,15 +13,29 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   useEffect(() => {
-    // Initialize auth state immediately on app load
+    let mounted = true;
+    
+    // Initialize auth state with proper waiting
     const initializeAuth = async () => {
       try {
+        // Wait for Supabase to initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        if (!mounted) return;
+        
         // Get current session to ensure auth state is restored
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error getting session:', error);
         } else {
           console.log('Session restored:', session?.user?.id || 'No session');
+          
+          // Dispatch a custom event to notify components
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('authInitialized', { 
+              detail: { session } 
+            }));
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -32,7 +46,16 @@ export default function App({ Component, pageProps }: AppProps) {
 
     // Set up auth state change listener for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      
       console.log('Global auth state change:', event, session?.user?.id);
+      
+      // Dispatch auth state change event
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('authStateChanged', { 
+          detail: { event, session } 
+        }));
+      }
       
       if (event === 'SIGNED_OUT') {
         // Clear any cached data and redirect to home
@@ -48,7 +71,10 @@ export default function App({ Component, pageProps }: AppProps) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   useEffect(() => {
