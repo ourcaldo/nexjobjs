@@ -36,31 +36,41 @@ const PopupAd: React.FC = () => {
     return false;
   };
 
-  // Cookie management for tracking executions per page
-  const getCookieName = (): string => {
-    const currentPath = router.asPath;
-    return `nexjob_popup_${btoa(currentPath).replace(/[^a-zA-Z0-9]/g, '').substring(0, 20)}`;
+  // Generate a page-unique key for session tracking
+  const getPageKey = (): string => {
+    return router.asPath;
+  };
+
+  // Session storage management for tracking executions per page
+  const getSessionKey = (): string => {
+    return `nexjob_popup_${getPageKey()}`;
   };
 
   const getExecutionCount = (): number => {
-    if (typeof document === 'undefined') return 0;
-    const cookieName = getCookieName();
-    const cookieValue = document.cookie
-      .split('; ')
-      .find(row => row.startsWith(cookieName + '='));
-    return cookieValue ? parseInt(cookieValue.split('=')[1]) || 0 : 0;
+    if (typeof window === 'undefined') return 0;
+    const sessionKey = getSessionKey();
+    const storedValue = sessionStorage.getItem(sessionKey);
+    return storedValue ? parseInt(storedValue) || 0 : 0;
   };
 
   const incrementExecutionCount = (): void => {
-    if (typeof document === 'undefined') return;
-    const cookieName = getCookieName();
+    if (typeof window === 'undefined') return;
+    const sessionKey = getSessionKey();
     const currentCount = getExecutionCount();
     const newCount = currentCount + 1;
-    // Set cookie to expire in 24 hours
-    const expires = new Date();
-    expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000));
-    document.cookie = `${cookieName}=${newCount}; expires=${expires.toUTCString()}; path=/`;
+    sessionStorage.setItem(sessionKey, newCount.toString());
   };
+
+  // Clear session storage when component unmounts (user leaves page)
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined') {
+        const sessionKey = getSessionKey();
+        sessionStorage.removeItem(sessionKey);
+        console.log('[DEBUG] PopupAd: Cleared session storage on page leave:', sessionKey);
+      }
+    };
+  }, [router.asPath]);
 
   // Load popup configuration
   useEffect(() => {
@@ -100,13 +110,13 @@ const PopupAd: React.FC = () => {
       return;
     }
 
-    console.log('[DEBUG] PopupAd: Setting up click listener...');
+    console.log('[DEBUG] PopupAd: Setting up click listener for page:', getPageKey());
 
     const handleClick = (event: MouseEvent) => {
-      // Check execution limit
+      // Check execution limit using sessionStorage
       const currentExecutions = getExecutionCount();
       if (currentExecutions >= popupConfig.maxExecutions) {
-        console.log('[DEBUG] PopupAd: Maximum executions reached for this page:', currentExecutions);
+        console.log('[DEBUG] PopupAd: Maximum executions reached for this page session:', currentExecutions);
         return;
       }
 
@@ -115,7 +125,8 @@ const PopupAd: React.FC = () => {
         executions: currentExecutions + 1,
         maxExecutions: popupConfig.maxExecutions,
         device: currentDevice,
-        page: router.asPath
+        page: getPageKey(),
+        sessionKey: getSessionKey()
       });
 
       // Open new tab
@@ -124,6 +135,7 @@ const PopupAd: React.FC = () => {
         if (newWindow) {
           console.log('[DEBUG] PopupAd: New tab opened successfully');
           incrementExecutionCount();
+          console.log('[DEBUG] PopupAd: Session storage updated, execution count:', getExecutionCount());
         } else {
           console.log('[DEBUG] PopupAd: Failed to open new tab (popup blocker?)');
         }
