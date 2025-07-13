@@ -98,7 +98,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
       // Client-side: use API layer
       const { userProfileApiService } = await import('./userProfileApiService');
       const result = await userProfileApiService.getCurrentUserProfile();
-      
+
       if (!result.success) {
         console.error('Error getting current profile via API:', result.error);
         return null;
@@ -171,26 +171,34 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
   // Check if current user is super admin using API layer
   async isSuperAdmin(): Promise<boolean> {
     try {
-      // Check if we're on server side
-      if (typeof window === 'undefined') {
-        // Server-side: use direct database access
-        const profile = await this.getCurrentProfileServerSide();
-        return profile?.role === 'super_admin';
-      }
+      const response = await fetch('/api/user/role/', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await this.getAuthToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // Client-side: use API layer
-      const { userProfileApiService } = await import('./userProfileApiService');
-      const result = await userProfileApiService.getCurrentUserRole();
-      
-      if (!result.success) {
-        console.error('Error checking super admin status via API:', result.error);
+      if (!response.ok) {
+        console.error('Error checking super admin status via API:', 'HTTP ' + response.status);
         return false;
       }
 
-      return result.data?.is_super_admin || false;
+      const data = await response.json();
+      return data.success && data.data?.role === 'super_admin';
     } catch (error) {
-      console.error('Error checking super admin status:', error);
+      console.error('Error checking super admin status via API:', error instanceof Error ? error.message : 'Unknown error');
       return false;
+    }
+  }
+
+  private async getAuthToken(): Promise<string | null> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return null;
     }
   }
 
@@ -211,12 +219,12 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
 
       // Client-side: Check if user is super admin
       const isAdmin = await this.isSuperAdmin();
-      
+
       if (isAdmin) {
         // For super admin: use admin API (full settings with sensitive data)
         const { adminSettingsApiService } = await import('./adminSettingsApiService');
         const settings = await adminSettingsApiService.getSettings(forceRefresh);
-        
+
         if (settings) {
           return settings;
         }
@@ -224,7 +232,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
         // For public/regular users: use public API (safe settings only)
         const { publicSettingsApiService } = await import('./publicSettingsApiService');
         const publicSettings = await publicSettingsApiService.getSettings(forceRefresh);
-        
+
         if (publicSettings) {
           // Merge public settings with defaults for any missing fields
           return {
@@ -233,7 +241,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
           } as AdminSettings;
         }
       }
-      
+
       // Fallback to defaults if no settings found
       return this.defaultSettings as AdminSettings;
     } catch (error) {
@@ -257,7 +265,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
       console.log('Fetching fresh settings from database');
 
       const supabaseServer = createServerSupabaseClient();
-      
+
       const { data, error } = await supabaseServer
         .from('admin_settings')
         .select('*')
@@ -316,11 +324,11 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
       // Client-side: use API layer
       const { adminSettingsApiService } = await import('./adminSettingsApiService');
       const result = await adminSettingsApiService.saveSettings(settings);
-      
+
       if (result.success) {
         // Clear both admin and public caches after successful save
         this.clearSettingsCache();
-        
+
         // Also clear public cache
         try {
           const { publicSettingsApiService } = await import('./publicSettingsApiService');
@@ -329,7 +337,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
           console.log('Could not clear public cache:', error);
         }
       }
-      
+
       return result;
     } catch (error) {
       console.error('Error saving admin settings:', error);
