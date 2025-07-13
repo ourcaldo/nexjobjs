@@ -106,10 +106,15 @@ class UserProfileApiService {
   // Update current user profile
   async updateUserProfile(updateData: Partial<any>): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
+      const token = await this.getAuthToken();
+      if (!token) {
+        return { success: false, error: 'No authentication token available' };
+      }
+
       const response = await fetch('/api/user/profile/', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${await this.getAuthToken()}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updateData),

@@ -95,7 +95,31 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
         return await this.getCurrentProfileServerSide();
       }
 
-      // Client-side: use API layer
+      // Client-side: Only allow profile fetching in specific contexts to prevent spam
+      const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+      if (!pathname.includes('/profile') && !pathname.includes('/admin') && !pathname.includes('/backend')) {
+        // For other pages, return minimal session data to avoid direct profile queries
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // Return a minimal profile object from session data
+          return {
+            id: session.user.id,
+            email: session.user.email || '',
+            full_name: session.user.user_metadata?.full_name || null,
+            role: 'user', // Default role, don't query database
+            created_at: session.user.created_at || new Date().toISOString(),
+            phone: null,
+            birth_date: null,
+            gender: null,
+            location: null,
+            photo_url: null,
+            bio: null
+          } as Profile;
+        }
+        return null;
+      }
+
+      // Only for profile/admin pages: use API layer to get full profile
       const { userProfileApiService } = await import('./userProfileApiService');
       const result = await userProfileApiService.getCurrentUserProfile();
 
@@ -177,10 +201,17 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
         return await this.isSuperAdminServerSide();
       }
 
-      // Client-side: ALWAYS use API layer
+      // Client-side: NEVER do role checks for regular users to avoid direct queries
+      // Only check if explicitly needed in admin contexts
+      const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+      if (!pathname.includes('/admin') && !pathname.includes('/backend')) {
+        // For non-admin pages, always return false to avoid unnecessary API calls
+        return false;
+      }
+
+      // For admin pages only, use API layer
       const token = await this.getAuthToken();
       if (!token) {
-        // Don't log this as it's normal for unauthenticated users
         return false;
       }
 
@@ -193,14 +224,12 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
       });
 
       if (!response.ok) {
-        // Don't log error for 401 (unauthorized) - this is expected for non-admin users
         return false;
       }
 
       const data = await response.json();
       return data.success && data.data?.role === 'super_admin';
     } catch (error) {
-      // Silently fail for client-side role checks to avoid spam
       return false;
     }
   }
