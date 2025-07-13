@@ -123,15 +123,16 @@ const Header: React.FC = () => {
     initializeAuth();
 
     // Listen for custom auth events from _app.tsx
-    const handleAuthInitialized = (event: CustomEvent) => {
+    const handleAuthInitialized = (event: Event) => {
       if (!mounted) return;
       console.log('Auth initialized event received');
       initializeAuth(true);
     };
 
-    const handleAuthStateChanged = async (event: CustomEvent) => {
+    const handleAuthStateChanged = async (event: Event) => {
       if (!mounted) return;
-      const { event: authEvent, session } = event.detail;
+      const customEvent = event as CustomEvent;
+      const { event: authEvent, session } = customEvent.detail;
       console.log('Auth state changed event received:', authEvent, session?.user?.id);
 
       if (authEvent === 'SIGNED_IN' && session?.user) {
@@ -169,16 +170,16 @@ const Header: React.FC = () => {
 
     // Add event listeners
     if (typeof window !== 'undefined') {
-      window.addEventListener('authInitialized', handleAuthInitialized as EventListener);
-      window.addEventListener('authStateChanged', handleAuthStateChanged as EventListener);
+      window.addEventListener('authInitialized', handleAuthInitialized);
+      window.addEventListener('authStateChanged', handleAuthStateChanged);
     }
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
       if (typeof window !== 'undefined') {
-        window.removeEventListener('authInitialized', handleAuthInitialized as EventListener);
-        window.removeEventListener('authStateChanged', handleAuthStateChanged as EventListener);
+        window.removeEventListener('authInitialized', handleAuthInitialized);
+        window.removeEventListener('authStateChanged', handleAuthStateChanged);
       }
     };
   }, [initializeAuth, loadBookmarkCount]);
