@@ -234,6 +234,18 @@ export interface AdminSettings {
   login_page_description: string;
   signup_page_title: string;
   signup_page_description: string;
+  // Popup Advertisement Settings
+  popup_ad_enabled?: boolean;
+  popup_ad_url?: string;
+  popup_ad_load_settings?: string[];
+  popup_ad_max_executions?: number;
+  popup_ad_device?: string;
+  // Advertisement Code Settings
+  sidebar_archive_ad_code?: string;
+  sidebar_single_ad_code?: string;
+  single_top_ad_code?: string;
+  single_bottom_ad_code?: string;
+  single_middle_ad_code?: string;
   // Advertisement Settings
   popup_ad_code?: string;
   sidebar_archive_ad_code?: string;

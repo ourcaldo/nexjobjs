@@ -133,15 +133,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
         router.push('/login/');
       } else if (event === 'SIGNED_IN' && session.user) {
         setUser(session.user);
-        fetchProfile(session.user);
-        fetchBookmarkedJobs(session.user.id);
+        loadProfile(session.user.id);
+        loadBookmarkedJobs();
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkAuthStatus, router, loadProfile, loadBookmarkedJobs]);
 
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
@@ -157,7 +157,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
       console.error('Error checking user:', error);
       router.push('/login/');
     }
-  };
+  }, [router, loadProfile]);
 
   useEffect(() => {
     if (activeTab === 'bookmarks' && user) {

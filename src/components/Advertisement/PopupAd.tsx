@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { advertisementService } from '@/services/advertisementService';
 
@@ -67,7 +67,7 @@ const PopupAd: React.FC = () => {
   const clearOtherPagesSessions = (): void => {
     const currentPageKey = getPageKey();
     const allKeys = Object.keys(sessionStorage);
-    
+
     // Find all sessionID_ and tabOpened_ keys that are NOT for current page
     const keysToRemove = allKeys.filter(key => {
       if (key.startsWith('sessionID_') || key.startsWith('tabOpened_')) {
@@ -89,9 +89,20 @@ const PopupAd: React.FC = () => {
   };
 
   /**
+   * Initialize session ID, once per page session.
+   */
+  const initSession = useCallback((): void => {
+    const sessionKey = 'sessionID_' + getPageKey();
+    if (!sessionStorage.getItem(sessionKey)) {
+      sessionStorage.setItem(sessionKey, generateSessionId());
+      console.log('[DEBUG] PopupAd: Session initialized:', sessionKey);
+    }
+  }, [getPageKey]);
+
+  /**
    * Open the target URL in a new tab, only once per page session.
    */
-  const openTabOnce = (): void => {
+  const openTabOnce = useCallback((): void => {
     const tabKey = 'tabOpened_' + getPageKey();
     if (!sessionStorage.getItem(tabKey)) {
       console.log('[DEBUG] PopupAd: Opening new tab - no previous session found');
@@ -101,18 +112,7 @@ const PopupAd: React.FC = () => {
     } else {
       console.log('[DEBUG] PopupAd: Tab already opened in this session - BLOCKED');
     }
-  };
-
-  /**
-   * Initialize session ID, once per page session.
-   */
-  const initSession = (): void => {
-    const sessionKey = 'sessionID_' + getPageKey();
-    if (!sessionStorage.getItem(sessionKey)) {
-      sessionStorage.setItem(sessionKey, generateSessionId());
-      console.log('[DEBUG] PopupAd: Session initialized:', sessionKey);
-    }
-  };
+  }, [popupConfig.url, getPageKey]);
 
   /**
    * Main handler to be triggered by user interaction.
@@ -178,12 +178,12 @@ const PopupAd: React.FC = () => {
     return () => {
       console.log('[DEBUG] PopupAd: Removing click listener');
       document.removeEventListener('click', handleClick);
-      
+
       // HAPUS sessionStorage untuk halaman ini saat pindah halaman
       const currentPageKey = getPageKey();
       const sessionKey = 'sessionID_' + currentPageKey;
       const tabKey = 'tabOpened_' + currentPageKey;
-      
+
       if (sessionStorage.getItem(sessionKey) || sessionStorage.getItem(tabKey)) {
         sessionStorage.removeItem(sessionKey);
         sessionStorage.removeItem(tabKey);
