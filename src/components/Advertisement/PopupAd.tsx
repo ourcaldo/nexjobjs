@@ -57,14 +57,14 @@ const PopupAd: React.FC = () => {
   /**
    * Generate a page-unique key for session tracking.
    */
-  const getPageKey = (): string => {
+  const getPageKey = useCallback((): string => {
     return router.pathname;
-  };
+  }, [router.pathname]);
 
   /**
    * Clear sessionStorage from other pages to ensure only current page has session
    */
-  const clearOtherPagesSessions = (): void => {
+  const clearOtherPagesSessions = useCallback((): void => {
     const currentPageKey = getPageKey();
     const allKeys = Object.keys(sessionStorage);
 
@@ -86,7 +86,7 @@ const PopupAd: React.FC = () => {
     if (keysToRemove.length > 0) {
       console.log('[DEBUG] PopupAd: Cleared', keysToRemove.length, 'sessionStorage entries from other pages');
     }
-  };
+  }, [getPageKey]);
 
   /**
    * Initialize session ID, once per page session.
@@ -97,7 +97,7 @@ const PopupAd: React.FC = () => {
       sessionStorage.setItem(sessionKey, generateSessionId());
       console.log('[DEBUG] PopupAd: Session initialized:', sessionKey);
     }
-  }, [getPageKey]);
+  }, [getPageKey, generateSessionId]);
 
   /**
    * Open the target URL in a new tab, only once per page session.
@@ -118,11 +118,11 @@ const PopupAd: React.FC = () => {
    * Main handler to be triggered by user interaction.
    * EXACTLY like reference - init session and open tab ONLY on user click
    */
-  const handleUserEventTrigger = (): void => {
+  const handleUserEventTrigger = useCallback((): void => {
     console.log('[DEBUG] PopupAd: User click detected');
     initSession();
     openTabOnce();
-  };
+  }, [initSession, openTabOnce]);
 
   // Load popup configuration
   useEffect(() => {
@@ -193,7 +193,7 @@ const PopupAd: React.FC = () => {
         });
       }
     };
-  }, [isConfigLoaded, popupConfig, router.pathname]);
+  }, [isConfigLoaded, popupConfig, router.pathname, shouldTriggerOnPage, getPageKey, clearOtherPagesSessions, handleUserEventTrigger]);
 
   // Component renders nothing (invisible)
   return null;

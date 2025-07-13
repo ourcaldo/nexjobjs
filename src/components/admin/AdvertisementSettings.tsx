@@ -314,7 +314,7 @@ const AdvertisementSettings: React.FC = () => {
               </div>
 
               <textarea
-                value={settings[field.key as keyof AdvertisementSettingsState]}
+                value={String(settings[field.key as keyof AdvertisementSettingsState] || '')}
                 onChange={(e) => setSettings(prev => ({
                   ...prev,
                   [field.key]: e.target.value
@@ -330,7 +330,7 @@ const AdvertisementSettings: React.FC = () => {
                   <div 
                     className="bg-white p-3 border rounded"
                     dangerouslySetInnerHTML={{ 
-                      __html: settings[field.key as keyof AdvertisementSettingsState] 
+                      __html: String(settings[field.key as keyof AdvertisementSettingsState] || '') 
                     }}
                   />
                 </div>
