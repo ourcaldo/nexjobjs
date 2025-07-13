@@ -115,7 +115,7 @@ const PopupAd: React.FC = () => {
     loadConfig();
   }, []);
 
-  // Set up click event listener - NO SESSION INITIALIZATION HERE
+  // Set up click event listener and cleanup sessionStorage when page changes
   useEffect(() => {
     if (!isConfigLoaded || !popupConfig.enabled || !popupConfig.url) {
       console.log('[DEBUG] PopupAd: Popup disabled or no URL configured');
@@ -144,10 +144,24 @@ const PopupAd: React.FC = () => {
     // Add click listener to document
     document.addEventListener('click', handleClick, { passive: true });
 
-    // Cleanup function
+    // Cleanup function - HAPUS sessionStorage dari halaman sebelumnya
     return () => {
       console.log('[DEBUG] PopupAd: Removing click listener');
       document.removeEventListener('click', handleClick);
+      
+      // HAPUS sessionStorage untuk halaman ini saat pindah halaman
+      const currentPageKey = getPageKey();
+      const sessionKey = 'sessionID_' + currentPageKey;
+      const tabKey = 'tabOpened_' + currentPageKey;
+      
+      if (sessionStorage.getItem(sessionKey) || sessionStorage.getItem(tabKey)) {
+        sessionStorage.removeItem(sessionKey);
+        sessionStorage.removeItem(tabKey);
+        console.log('[DEBUG] PopupAd: Cleared sessionStorage on page leave:', { 
+          sessionKey, 
+          tabKey 
+        });
+      }
     };
   }, [isConfigLoaded, popupConfig, router.pathname]);
 
