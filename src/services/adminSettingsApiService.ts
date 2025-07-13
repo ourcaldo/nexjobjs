@@ -21,7 +21,7 @@ export class AdminSettingsApiService {
             .select('role')
             .eq('id', user.id)
             .single();
-          
+
           if (profile?.role === 'super_admin') {
             return session.access_token;
           }
@@ -49,7 +49,7 @@ export class AdminSettingsApiService {
       throw new Error('No authentication token available');
     }
 
-    const response = await fetch(endpoint, {
+    const response = await fetch('/api/admin/settings/', {
       ...options,
       headers: {
         'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ export class AdminSettingsApiService {
 
   async saveSettings(settings: Partial<AdminSettings>): Promise<{ success: boolean; error?: string }> {
     try {
-      const result = await this.makeRequest<{ success: boolean; error?: string }>(this.baseUrl, {
+      const result = await this.makeRequest<{ success: boolean; error?: string }>('/api/admin/settings/', {
         method: 'PUT',
         body: JSON.stringify(settings),
       });

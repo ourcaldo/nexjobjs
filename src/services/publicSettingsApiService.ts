@@ -1,4 +1,3 @@
-
 export interface PublicSettings {
   site_title?: string;
   site_tagline?: string;
