@@ -319,11 +319,6 @@ class UserBookmarkService {
 }
 
 export const userBookmarkService = new UserBookmarkService();
-```
-
-```text
-The code has been modified to use cached auth state in the getUserBookmarks and toggleBookmark methods for improved performance and stability.
-```
 
 ```replit_final_file
 import { supabase } from '@/lib/supabase';
