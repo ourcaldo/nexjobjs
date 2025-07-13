@@ -160,65 +160,63 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
     return Date.now() - this.settingsCache.timestamp < this.CACHE_TTL;
   }
 
-  // Get admin settings with enhanced error handling for production
+  // Get admin settings using API layer (for client-side) or direct DB (for server-side)
   async getSettings(forceRefresh: boolean = false): Promise<AdminSettings | undefined> {
+    try {
+      // Check if we're on the server side
+      if (typeof window === 'undefined') {
+        // Server-side: use direct database access
+        return await this.getSettingsServerSide();
+      }
+
+      // Client-side: use API layer
+      const { adminSettingsApiService } = await import('./adminSettingsApiService');
+      const settings = await adminSettingsApiService.getSettings(forceRefresh);
+      
+      if (settings) {
+        return settings;
+      }
+      
+      // Fallback to defaults if no settings found
+      return this.defaultSettings as AdminSettings;
+    } catch (error) {
+      console.error('Error fetching admin settings:', error);
+      return this.defaultSettings as AdminSettings;
+    }
+  }
+
+  // Server-side method for direct database access
+  private async getSettingsServerSide(): Promise<AdminSettings> {
     try {
       // For admin panel, always force refresh to avoid stale data issues
       const isAdminContext = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 
-      // Use cache if valid and not in admin context and not forcing refresh
-      if (!forceRefresh && !isAdminContext && this.isCacheValid() && this.settingsCache) {
+      // Use cache if valid and not in admin context
+      if (!isAdminContext && this.isCacheValid() && this.settingsCache) {
         console.log('Using cached settings');
         return this.settingsCache.data;
       }
 
       console.log('Fetching fresh settings from database');
 
-      // Add timeout for production issues
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Database query timeout'));
-        }, 15000); // 15 second timeout
-      });
-
-      const queryPromise = supabase
+      const supabaseServer = createServerSupabaseClient();
+      
+      const { data, error } = await supabaseServer
         .from('admin_settings')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
 
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
-
       let settings: AdminSettings;
 
       if (error) {
-        console.warn('Error fetching admin settings:', error.message);
-
-        // For specific errors, try with different approaches
-        if (error.code === 'PGRST116' || error.message.includes('406') || error.message.includes('timeout')) {
-          console.log('Trying alternative approach for admin settings...');
-
-          try {
-            // Try with a simpler query
-            const { data: simpleData, error: simpleError } = await supabase
-              .from('admin_settings')
-              .select('*')
-              .limit(1);
-
-            if (simpleError) {
-              console.warn('Simple query also failed:', simpleError.message);
-              settings = this.defaultSettings as AdminSettings;
-            } else if (simpleData && simpleData.length > 0) {
-              settings = simpleData[0];
-            } else {
-              settings = this.defaultSettings as AdminSettings;
-            }
-          } catch (simpleErr) {
-            console.error('Simple query retry failed:', simpleErr);
-            settings = this.defaultSettings as AdminSettings;
-          }
+        console.warn('Error fetching admin settings server-side:', error.message);
+        if (error.code === 'PGRST116') {
+          // No settings found, use defaults
+          settings = this.defaultSettings as AdminSettings;
         } else {
+          // Other error, try fallback approaches
           settings = this.defaultSettings as AdminSettings;
         }
       } else if (!data) {
@@ -238,15 +236,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
 
       return settings;
     } catch (error) {
-      console.error('Error fetching admin settings:', error);
-
-      // Return cached data if available, otherwise defaults
-      if (this.settingsCache) {
-        console.log('Returning cached settings due to error');
-        return this.settingsCache.data;
-      }
-
-      console.log('Returning default settings due to error');
+      console.error('Error fetching admin settings server-side:', error);
       return this.defaultSettings as AdminSettings;
     }
   }
@@ -257,57 +247,54 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
     console.log('Settings cache cleared');
   }
 
-  // Save admin settings with enhanced error handling and retry logic
+  // Save admin settings using API layer (for client-side) or direct DB (for server-side)
   async saveSettings(settings: Partial<AdminSettings>): Promise<{ success: boolean; error?: string }> {
     try {
-      // Check if user is super admin with timeout
-      const timeoutPromise = new Promise<boolean>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Super admin check timeout'));
-        }, 10000);
-      });
+      // Check if we're on the server side
+      if (typeof window === 'undefined') {
+        // Server-side: use direct database access
+        return await this.saveSettingsServerSide(settings);
+      }
 
-      const adminCheckPromise = this.isSuperAdmin();
-      const isSuperAdmin = await Promise.race([adminCheckPromise, timeoutPromise]);
+      // Client-side: use API layer
+      const { adminSettingsApiService } = await import('./adminSettingsApiService');
+      const result = await adminSettingsApiService.saveSettings(settings);
+      
+      if (result.success) {
+        // Clear cache after successful save
+        this.clearSettingsCache();
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error saving admin settings:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
 
+  // Server-side method for direct database access
+  private async saveSettingsServerSide(settings: Partial<AdminSettings>): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Check if user is super admin
+      const isSuperAdmin = await this.isSuperAdmin();
       if (!isSuperAdmin) {
         return { success: false, error: 'Unauthorized: Super admin access required' };
       }
 
-      // Get existing settings with timeout
-      const existingQueryPromise = supabase
+      const supabaseServer = createServerSupabaseClient();
+
+      // Get existing settings
+      const { data: existingSettings } = await supabaseServer
         .from('admin_settings')
         .select('id')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
 
-      const existingTimeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Existing settings query timeout'));
-        }, 10000);
-      });
-
-      let existingSettings;
-      try {
-        const { data } = await Promise.race([existingQueryPromise, existingTimeoutPromise]);
-        existingSettings = data;
-      } catch (error) {
-        console.warn('Error getting existing settings, will try to insert:', error);
-        existingSettings = null;
-      }
-
-      // Prepare the update/insert operation with timeout
       let result;
-      const operationTimeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Save operation timeout'));
-        }, 15000);
-      });
-
       if (existingSettings?.id) {
         // Update existing settings
-        const updatePromise = supabase
+        result = await supabaseServer
           .from('admin_settings')
           .update({
             ...settings,
@@ -316,48 +303,32 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
           .eq('id', existingSettings.id)
           .select()
           .single();
-
-        result = await Promise.race([updatePromise, operationTimeoutPromise]);
       } else {
         // Insert new settings
-        const insertPromise = supabase
+        result = await supabaseServer
           .from('admin_settings')
           .insert({
             ...this.defaultSettings,
-            ...settings
+            ...settings,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
           .select()
           .single();
-
-        result = await Promise.race([insertPromise, operationTimeoutPromise]);
       }
 
       if (result.error) {
-        console.error('Error saving admin settings:', result.error);
+        console.error('Error saving admin settings server-side:', result.error);
         return { success: false, error: result.error.message };
       }
 
       // Clear cache after successful save
       this.clearSettingsCache();
 
-      console.log('Settings saved successfully');
       return { success: true };
     } catch (error) {
-      console.error('Error saving admin settings:', error);
-
-      // Provide more specific error messages for production debugging
-      let errorMessage = 'Unknown error occurred';
-      if (error instanceof Error) {
-        if (error.message.includes('timeout')) {
-          errorMessage = 'Request timeout - please check your connection and try again';
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Network error - please check your internet connection';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-
-      return { success: false, error: errorMessage };
+      console.error('Error saving admin settings server-side:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
