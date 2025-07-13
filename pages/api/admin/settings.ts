@@ -110,7 +110,7 @@ async function handleUpdate(supabase: any, req: NextApiRequest, res: NextApiResp
 async function checkAuthentication(req: NextApiRequest, supabase: any): Promise<{ success: boolean; error?: string }> {
   // Method 1: Check for API token in headers
   const apiToken = req.headers.authorization?.replace('Bearer ', '') || req.headers['x-api-token'];
-  const validToken = process.env.NEXT_PUBLIC_API_TOKEN;
+  const validToken = process.env.API_TOKEN;
 
   if (apiToken && validToken && apiToken === validToken) {
     return { success: true };

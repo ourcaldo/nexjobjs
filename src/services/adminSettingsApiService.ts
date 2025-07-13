@@ -29,7 +29,7 @@ export class AdminSettingsApiService {
       }
 
       // Fallback to API token from environment for external API access
-      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      const apiToken = process.env.API_TOKEN;
       if (apiToken) {
         return apiToken;
       }
@@ -38,7 +38,7 @@ export class AdminSettingsApiService {
     } catch (error) {
       console.error('Error getting auth token:', error);
       // Fallback to API token if session check fails
-      return process.env.NEXT_PUBLIC_API_TOKEN || null;
+      return process.env.API_TOKEN || null;
     }
   }
 
@@ -81,11 +81,7 @@ export class AdminSettingsApiService {
 
       console.log('Fetching admin settings from API');
 
-      const result = await this.makeRequest<{ data: AdminSettings }>(this.baseUrl, {
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
-        },
-      });
+      const result = await this.makeRequest<{ data: AdminSettings }>(this.baseUrl);
 
       // Update cache
       this.settingsCache = {

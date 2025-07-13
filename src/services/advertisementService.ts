@@ -1,5 +1,3 @@
-import { supabaseAdminService } from './supabaseAdminService';
-
 export interface AdvertisementConfig {
   // Other ad types remain the same
   sidebar_archive_ad_code?: string;
@@ -19,14 +17,36 @@ export interface AdvertisementConfig {
 class AdvertisementService {
   private adConfig: AdvertisementConfig | null = null;
   private configLoaded = false;
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+  private cacheTimestamp = 0;
+
+  private isCacheValid(): boolean {
+    return this.configLoaded && this.adConfig && (Date.now() - this.cacheTimestamp < this.CACHE_TTL);
+  }
 
   async loadAdConfig(): Promise<AdvertisementConfig> {
-    if (this.configLoaded && this.adConfig) {
-      return this.adConfig;
+    if (this.isCacheValid()) {
+      return this.adConfig!;
     }
 
     try {
-      const settings = await supabaseAdminService.getSettings();
+      console.log('Fetching advertisement config from public API');
+      
+      const response = await fetch('/api/public/advertisements', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('Failed to fetch advertisement config:', response.status);
+        return {};
+      }
+
+      const result = await response.json();
+      const settings = result.data || {};
+
       this.adConfig = {
         sidebar_archive_ad_code: settings?.sidebar_archive_ad_code || '',
         sidebar_single_ad_code: settings?.sidebar_single_ad_code || '',
@@ -41,7 +61,9 @@ class AdvertisementService {
         popup_ad_max_executions: settings?.popup_ad_max_executions || 1,
         popup_ad_device: settings?.popup_ad_device || 'all'
       };
+      
       this.configLoaded = true;
+      this.cacheTimestamp = Date.now();
       return this.adConfig;
     } catch (error) {
       console.error('Error loading advertisement config:', error);
