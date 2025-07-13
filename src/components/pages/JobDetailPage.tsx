@@ -109,7 +109,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
     setIsBookmarkLoading(true);
 
     try {
-      const result = await userBookmarkService.toggleBookmark(currentUser.id, job.id);
+      const result = await userBookmarkService.toggleBookmark(job.id);
 
       if (result.success) {
         setIsBookmarked(result.isBookmarked);
