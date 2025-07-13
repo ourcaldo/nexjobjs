@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ data: null });
     }
 
-    // Only return public-safe fields (exclude sensitive data like API keys, tokens, storage keys)
+    // Only return public-safe fields as specified by user requirements
     const publicSettings = {
       site_title: data.site_title,
       site_tagline: data.site_tagline,
@@ -61,20 +61,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       articles_og_image: data.articles_og_image,
       default_job_og_image: data.default_job_og_image,
       default_article_og_image: data.default_article_og_image,
-      // Public sitemap settings
-      auto_generate_sitemap: data.auto_generate_sitemap,
+      // Public sitemap settings only
       robots_txt: data.robots_txt,
-      // Advertisement settings (public for display)
-      popup_ad_url: data.popup_ad_url,
-      popup_ad_enabled: data.popup_ad_enabled,
-      popup_ad_load_settings: data.popup_ad_load_settings,
-      popup_ad_max_executions: data.popup_ad_max_executions,
-      popup_ad_device: data.popup_ad_device,
-      sidebar_archive_ad_code: data.sidebar_archive_ad_code,
-      sidebar_single_ad_code: data.sidebar_single_ad_code,
-      single_top_ad_code: data.single_top_ad_code,
-      single_bottom_ad_code: data.single_bottom_ad_code,
-      single_middle_ad_code: data.single_middle_ad_code
+      auto_generate_sitemap: data.auto_generate_sitemap
     };
 
     return res.status(200).json({ data: publicSettings });

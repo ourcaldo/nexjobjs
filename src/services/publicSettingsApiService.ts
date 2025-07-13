@@ -4,8 +4,6 @@ export interface PublicSettings {
   site_tagline?: string;
   site_description?: string;
   site_url?: string;
-  ga_id?: string;
-  gtm_id?: string;
   // SEO Templates
   location_page_title_template?: string;
   location_page_description_template?: string;
@@ -29,22 +27,9 @@ export interface PublicSettings {
   articles_og_image?: string;
   default_job_og_image?: string;
   default_article_og_image?: string;
-  // Public sitemap settings
-  sitemap_update_interval?: number;
+  // Public sitemap settings only
   auto_generate_sitemap?: boolean;
-  last_sitemap_update?: string;
   robots_txt?: string;
-  // Advertisement settings
-  popup_ad_url?: string;
-  popup_ad_enabled?: boolean;
-  popup_ad_load_settings?: string[];
-  popup_ad_max_executions?: number;
-  popup_ad_device?: string;
-  sidebar_archive_ad_code?: string;
-  sidebar_single_ad_code?: string;
-  single_top_ad_code?: string;
-  single_bottom_ad_code?: string;
-  single_middle_ad_code?: string;
 }
 
 class PublicSettingsApiService {

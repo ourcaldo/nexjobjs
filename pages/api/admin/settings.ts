@@ -1,43 +1,17 @@
-
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@/lib/supabase';
 import type { AdminSettings } from '@/lib/supabase';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = createServerSupabaseClient();
+  // Check for API token authentication
+  const apiToken = req.headers.authorization?.replace('Bearer ', '') || req.headers['x-api-token'];
+  const validToken = process.env.NEXT_PUBLIC_API_TOKEN;
+
+  if (!apiToken || !validToken || apiToken !== validToken) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API token' });
+  }
 
   try {
-    // Check authentication
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header' });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Check if it's the API token from environment
-    if (token === process.env.NEXT_PUBLIC_API_TOKEN && process.env.NEXT_PUBLIC_API_TOKEN) {
-      // API token is valid, proceed without user check (for admin panel)
-    } else {
-      // Regular Supabase token authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      
-      if (authError || !user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      // Check if user is super admin
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError || profile?.role !== 'super_admin') {
-        return res.status(403).json({ error: 'Forbidden: Super admin access required' });
-      }
-    }
-
     switch (req.method) {
       case 'GET':
         return handleGet(supabase, res);

@@ -68,7 +68,11 @@ export class AdminSettingsApiService {
 
       console.log('Fetching admin settings from API');
 
-      const result = await this.makeRequest<{ data: AdminSettings }>(this.baseUrl);
+      const result = await this.makeRequest<{ data: AdminSettings }>(this.baseUrl, {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+        },
+      });
 
       // Update cache
       this.settingsCache = {
@@ -88,6 +92,9 @@ export class AdminSettingsApiService {
       const result = await this.makeRequest<{ success: boolean; error?: string }>(this.baseUrl, {
         method: 'PUT',
         body: JSON.stringify(settings),
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+        },
       });
 
       if (result.success) {
