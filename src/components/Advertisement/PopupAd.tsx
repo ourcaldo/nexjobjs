@@ -20,7 +20,7 @@ const PopupAd: React.FC = () => {
   };
 
   // Check if current page should trigger popup
-  const shouldTriggerOnPage = (loadSettings: string[]): boolean => {
+  const shouldTriggerOnPage = useCallback((loadSettings: string[]): boolean => {
     const currentPath = router.asPath;
 
     if (loadSettings.includes('all_pages')) {
@@ -33,26 +33,26 @@ const PopupAd: React.FC = () => {
     }
 
     return false;
-  };
+  }, [router.asPath]);
 
   /**
    * Generate a random alphanumeric string.
    */
-  const generateRandomString = (length: number): string => {
+  const generateRandomString = useCallback((length: number): string => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
     for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
-  };
+  }, []);
 
   /**
    * Generate a session ID with timestamp and random string.
    */
-  const generateSessionId = (): string => {
+  const generateSessionId = useCallback((): string => {
     return 'session_' + Date.now() + '_' + generateRandomString(8);
-  };
+  }, [generateRandomString]);
 
   /**
    * Generate a page-unique key for session tracking.

@@ -124,23 +124,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
     }
   }, [user, showToast]);
 
-  useEffect(() => {
-    checkAuthStatus();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        router.push('/login/');
-      } else if (event === 'SIGNED_IN' && session.user) {
-        setUser(session.user);
-        loadProfile(session.user.id);
-        loadBookmarkedJobs();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [checkAuthStatus, router, loadProfile, loadBookmarkedJobs]);
-
   const checkAuthStatus = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -158,6 +141,23 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
       router.push('/login/');
     }
   }, [router, loadProfile]);
+
+  useEffect(() => {
+    checkAuthStatus();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        router.push('/login/');
+      } else if (event === 'SIGNED_IN' && session.user) {
+        setUser(session.user);
+        loadProfile(session.user.id);
+        loadBookmarkedJobs();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [checkAuthStatus, router, loadProfile, loadBookmarkedJobs]);
 
   useEffect(() => {
     if (activeTab === 'bookmarks' && user) {
