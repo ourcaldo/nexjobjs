@@ -1,4 +1,3 @@
-
 import { Profile } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 
@@ -35,7 +34,7 @@ class UserProfileApiService {
         return { success: false, error: 'No authentication token available' };
       }
 
-      const response = await fetch('/api/user/profile', {
+      const response = await fetch('/api/user/profile/', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -72,7 +71,7 @@ class UserProfileApiService {
         return { success: false, error: 'No authentication token available' };
       }
 
-      const response = await fetch('/api/user/role', {
+      const response = await fetch('/api/user/role/', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -109,7 +108,7 @@ class UserProfileApiService {
         return { success: false, error: 'No authentication token available' };
       }
 
-      const response = await fetch('/api/user/profile', {
+      const response = await fetch('/api/user/profile/', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
