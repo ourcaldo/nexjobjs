@@ -17,6 +17,8 @@ export interface UserRoleResponse {
 }
 
 class UserProfileApiService {
+  private cache: any = null;
+
   private async getAuthToken(): Promise<string | null> {
     try {
       const { data: { session } } = await supabase.auth.getSession();

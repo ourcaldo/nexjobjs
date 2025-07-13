@@ -49,26 +49,29 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
 
   const loadProfile = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Use API layer instead of direct database access
+      const { userProfileApiService } = await import('@/services/userProfileApiService');
+      const result = await userProfileApiService.getCurrentUserProfile();
 
-      if (error) {
-        console.error('Error loading profile:', error);
+      if (!result.success) {
+        console.error('Error loading profile:', result.error);
         showToast('error', 'Gagal memuat profil');
         return;
       }
 
-      setProfile(data);
+      if (!result.data) {
+        showToast('error', 'Profil tidak ditemukan');
+        return;
+      }
+
+      setProfile(result.data);
       setFormData({
-        full_name: data.full_name || '',
-        phone: data.phone || '',
-        birth_date: data.birth_date || '',
-        gender: data.gender || '',
-        location: data.location || '',
-        bio: data.bio || ''
+        full_name: result.data.full_name || '',
+        phone: result.data.phone || '',
+        birth_date: result.data.birth_date || '',
+        gender: result.data.gender || '',
+        location: result.data.location || '',
+        bio: result.data.bio || ''
       });
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -112,6 +115,36 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
 
     return () => subscription.unsubscribe();
   }, [checkAuthStatus, router, loadProfile]);
+
+  const loadBookmarkedJobs = useCallback(async () => {
+    if (!user) return;
+    
+    setLoadingBookmarks(true);
+    try {
+      const bookmarks = await userBookmarkService.getUserBookmarks(user.id);
+      const jobIds = bookmarks.map(bookmark => bookmark.job_id);
+      
+      if (jobIds.length > 0) {
+        const jobs = await wpService.getJobsByIds(jobIds);
+        setBookmarkedJobs(jobs);
+      } else {
+        setBookmarkedJobs([]);
+      }
+    } catch (error) {
+      console.error('Error loading bookmarked jobs:', error);
+      showToast('error', 'Gagal memuat lowongan tersimpan');
+    } finally {
+      setLoadingBookmarks(false);
+    }
+  }, [user, showToast]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   useEffect(() => {
     if (activeTab === 'bookmarks' && user) {

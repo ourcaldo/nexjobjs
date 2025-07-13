@@ -25,7 +25,7 @@ class WordPressService {
   private baseUrl: string;
   private filtersApiUrl: string;
   private authToken: string;
-  
+
   // Cache for filter data with ISR-like behavior (1 hour cache)
   private filterDataCache: { data: FilterData; timestamp: number } | null = null;
   private readonly FILTER_CACHE_TTL = 60 * 60 * 1000; // 1 hour cache (as requested)
@@ -35,7 +35,7 @@ class WordPressService {
     this.baseUrl = env.WP_API_URL;
     this.filtersApiUrl = env.WP_FILTERS_API_URL;
     this.authToken = env.WP_AUTH_TOKEN;
-    
+
     // Try to get settings from admin service (browser only)
     if (typeof window !== 'undefined') {
       this.updateFromAdminSettings();
@@ -45,13 +45,13 @@ class WordPressService {
   private async updateFromAdminSettings() {
     try {
       const settings = await supabaseAdminService.getSettings();
-      
+
       // Check if settings is defined before accessing its properties
       if (!settings) {
         console.warn('Settings not available, using environment variables');
         return;
       }
-      
+
       this.baseUrl = settings.api_url || env.WP_API_URL;
       this.filtersApiUrl = settings.filters_api_url || env.WP_FILTERS_API_URL;
       this.authToken = settings.auth_token || env.WP_AUTH_TOKEN;
@@ -85,11 +85,11 @@ class WordPressService {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    
+
     if (this.authToken) {
       headers['Authorization'] = `Bearer ${this.authToken}`;
     }
-    
+
     return headers;
   }
 
@@ -103,7 +103,7 @@ class WordPressService {
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'");
     }
-    
+
     const textarea = document.createElement('textarea');
     textarea.innerHTML = text;
     return textarea.value;
@@ -114,7 +114,7 @@ class WordPressService {
       // Server-side fallback
       return html.replace(/<[^>]*>/g, '');
     }
-    
+
     const div = document.createElement('div');
     div.innerHTML = html;
     return div.textContent || div.innerText || '';
@@ -125,12 +125,12 @@ class WordPressService {
     if (rankMathDescription && rankMathDescription.trim() !== '') {
       return this.stripHtmlTags(this.decodeHtmlEntities(rankMathDescription));
     }
-    
+
     // Fall back to excerpt if available
     if (excerptRendered && excerptRendered.trim() !== '') {
       return this.stripHtmlTags(this.decodeHtmlEntities(excerptRendered));
     }
-    
+
     return '';
   }
 
@@ -161,11 +161,11 @@ class WordPressService {
           ...options.headers
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       return response;
     } catch (error) {
       console.warn(`Failed to fetch from ${url}:`, error);
@@ -175,7 +175,7 @@ class WordPressService {
 
   private buildJobsUrl(filters: any = {}, page: number = 1, perPage: number = 24): string {
     const params = new URLSearchParams();
-    
+
     // Basic parameters
     params.set('per_page', perPage.toString());
     params.set('page', page.toString());
@@ -289,7 +289,7 @@ class WordPressService {
       console.log('Fetching fresh filter data (cache expired or not found)');
       const response = await this.fetchWithFallback(this.filtersApiUrl);
       const data = await response.json();
-      
+
       // Decode HTML entities in filter data
       const decodedData: FilterData = {
         nexjob_lokasi_provinsi: {},
@@ -338,13 +338,13 @@ class WordPressService {
       return decodedData;
     } catch (error) {
       console.error('Error fetching filters data:', error);
-      
+
       // Return cached data if available, otherwise fallback
       if (this.filterDataCache) {
         console.log('Returning cached filter data due to error');
         return this.filterDataCache.data;
       }
-      
+
       // Return fallback data
       return this.getFallbackFiltersData();
     }
@@ -452,23 +452,91 @@ class WordPressService {
     }
   }
 
+  async getJobsByIds(jobIds: string[]): Promise<Job[]> {
+    if (jobIds.length === 0) return [];
+
+    try {
+      const settings = await supabaseAdminService.getSettings();
+      if (!settings) {
+        throw new Error('Settings not available');
+      }
+
+      const promises = jobIds.map(async (jobId) => {
+        const response = await fetch(`${settings.api_url}/lowongan-kerja/${jobId}?_embed`, {
+          headers: {
+            'Authorization': `Bearer ${settings.auth_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          console.warn(`Failed to fetch job ${jobId}: ${response.status}`);
+          return null;
+        }
+
+        const data = await response.json();
+        return this.transformJobData(data);
+      });
+
+      const results = await Promise.allSettled(promises);
+      return results
+        .filter((result): result is PromiseFulfilledResult<Job> => 
+          result.status === 'fulfilled' && result.value !== null
+        )
+        .map(result => result.value);
+    } catch (error) {
+      console.error('Error fetching jobs by IDs:', error);
+      return [];
+    }
+  }
+
+  private async transformJobData(wpJob: any): Promise<Job> {
+        const meta = wpJob.meta || {};
+
+        return {
+          id: wpJob.id.toString(),
+          slug: wpJob.slug,
+          title: this.decodeHtmlEntities(wpJob.title.rendered),
+          content: wpJob.content.rendered,
+          company_name: this.decodeHtmlEntities(meta.nexjob_nama_perusahaan || 'Perusahaan'),
+          kategori_pekerjaan: this.decodeHtmlEntities(meta.nexjob_kategori_pekerjaan || ''),
+          lokasi_provinsi: this.decodeHtmlEntities(meta.nexjob_lokasi_provinsi || ''),
+          lokasi_kota: this.decodeHtmlEntities(meta.nexjob_lokasi_kota || ''),
+          tipe_pekerjaan: this.decodeHtmlEntities(meta.nexjob_tipe_pekerjaan || 'Full Time'),
+          pendidikan: this.decodeHtmlEntities(meta.nexjob_pendidikan || ''),
+          industry: this.decodeHtmlEntities(meta.nexjob_industri || ''),
+          pengalaman: this.decodeHtmlEntities(meta.nexjob_pengalaman_kerja || ''),
+          tag: this.decodeHtmlEntities(meta.nexjob_tag_loker || ''),
+          gender: this.decodeHtmlEntities(meta.nexjob_gender || ''),
+          gaji: this.decodeHtmlEntities(meta.nexjob_gaji || 'Negosiasi'),
+          kebijakan_kerja: this.decodeHtmlEntities(meta.nexjob_kebijakan_kerja || ''),
+          link: meta.nexjob_link_loker || wpJob.link,
+          sumber_lowongan: this.decodeHtmlEntities(meta.nexjob_sumber_loker || 'Nexjob'),
+          created_at: wpJob.date,
+          seo_title: this.decodeHtmlEntities(meta.rank_math_title || wpJob.title.rendered),
+          seo_description: this.getPreferredDescription(wpJob.excerpt?.rendered || '', meta.rank_math_description || ''),
+          _id: { $oid: wpJob.id.toString() },
+          id_obj: { $numberInt: wpJob.id.toString() }
+        };
+  }
+
   async getJobs(filters?: any, page: number = 1, perPage: number = 24): Promise<JobsResponse> {
     try {
       const url = this.buildJobsUrl(filters, page, perPage);
       console.log('Fetching jobs from URL:', url); // Debug log
-      
+
       const response = await this.fetchWithFallback(url);
       const wpJobs = await response.json();
-      
+
       // Get total pages and total jobs from headers (these are now filtered totals)
       const totalPages = parseInt(response.headers.get('X-WP-TotalPages') || '1');
       const totalJobs = parseInt(response.headers.get('X-WP-Total') || '0');
-      
+
       // Transform WordPress data to our Job interface
       const jobs: Job[] = wpJobs.map((wpJob: any) => {
         // Extract meta fields with nexjob_ prefix
         const meta = wpJob.meta || {};
-        
+
         return {
           id: wpJob.id.toString(),
           slug: wpJob.slug,
@@ -533,7 +601,7 @@ class WordPressService {
       while (hasMore) {
         try {
           const response = await this.getJobs({}, page, 100);
-          
+
           if (response.jobs.length === 0) {
             hasMore = false;
           } else {
@@ -559,7 +627,7 @@ class WordPressService {
     try {
       const response = await this.fetchWithFallback(`${this.baseUrl}/lowongan-kerja?slug=${slug}&_embed`);
       const wpJobs = await response.json();
-      
+
       if (!wpJobs || wpJobs.length === 0) {
         return null;
       }
@@ -660,7 +728,7 @@ class WordPressService {
 
       const response = await this.fetchWithFallback(url);
       const articles = await response.json();
-      
+
       // Add featured image URL and author info if available
       return articles.map((article: any) => ({
         ...article,
@@ -703,7 +771,7 @@ class WordPressService {
           const url = `${this.baseUrl}/posts?_embed&per_page=100&page=${page}`;
           const response = await this.fetchWithFallback(url);
           const articles = await response.json();
-          
+
           if (!articles || articles.length === 0) {
             hasMore = false;
           } else {
@@ -730,9 +798,9 @@ class WordPressService {
               seo_title: this.decodeHtmlEntities(article.meta?.rank_math_title || article.title.rendered),
               seo_description: this.getPreferredDescription(article.excerpt?.rendered || '', article.meta?.rank_math_description || '')
             }));
-            
+
             allArticles.push(...processedArticles);
-            
+
             // Check if we got less than requested, which means we're at the end
             if (articles.length < 100) {
               hasMore = false;
@@ -758,7 +826,7 @@ class WordPressService {
     try {
       const response = await this.fetchWithFallback(`${this.baseUrl}/posts?slug=${slug}&_embed`);
       const articles = await response.json();
-      
+
       if (!articles || articles.length === 0) {
         return null;
       }
@@ -797,7 +865,7 @@ class WordPressService {
     try {
       const response = await this.fetchWithFallback(`${this.baseUrl}/posts/${id}?_embed`);
       const article = await response.json();
-      
+
       return {
         ...article,
         title: {

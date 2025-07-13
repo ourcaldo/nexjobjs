@@ -180,6 +180,7 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
       // Client-side: use API layer
       const token = await this.getAuthToken();
       if (!token) {
+        console.log('No auth token available for super admin check');
         return false;
       }
 
@@ -192,7 +193,10 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
       });
 
       if (!response.ok) {
-        console.error('Error checking super admin status via API:', 'HTTP ' + response.status);
+        // Don't log error for 401 (unauthorized) - this is expected for non-admin users
+        if (response.status !== 401) {
+          console.error('Error checking super admin status via API:', 'HTTP ' + response.status);
+        }
         return false;
       }
 

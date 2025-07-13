@@ -2,9 +2,45 @@ import { supabase } from '@/lib/supabase';
 import { UserBookmark } from '@/lib/supabase';
 
 class UserBookmarkService {
-  // Get user bookmarks
+  private async getAuthToken(): Promise<string | null> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return null;
+    }
+  }
+
+  // Get user bookmarks using API layer
   async getUserBookmarks(userId: string): Promise<UserBookmark[]> {
     try {
+      // Check if we're on client side
+      if (typeof window !== 'undefined') {
+        const token = await this.getAuthToken();
+        if (!token) {
+          console.error('No auth token available for bookmarks');
+          return [];
+        }
+
+        const response = await fetch('/api/user/bookmarks/', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          console.error('Error fetching bookmarks via API:', response.status);
+          return [];
+        }
+
+        const data = await response.json();
+        return data.success ? data.data : [];
+      }
+
+      // Server-side fallback (for SSR)
       const { data, error } = await supabase
         .from('user_bookmarks')
         .select('*')
