@@ -1,13 +1,19 @@
-
 import { supabaseAdminService } from './supabaseAdminService';
 
 export interface AdvertisementConfig {
-  popup_ad_code?: string;
+  // Other ad types remain the same
   sidebar_archive_ad_code?: string;
   sidebar_single_ad_code?: string;
   single_top_ad_code?: string;
   single_bottom_ad_code?: string;
   single_middle_ad_code?: string;
+
+  // New popup ad configuration
+  popup_ad_url?: string;
+  popup_ad_enabled?: boolean;
+  popup_ad_load_settings?: string[];
+  popup_ad_max_executions?: number;
+  popup_ad_device?: string;
 }
 
 class AdvertisementService {
@@ -22,12 +28,18 @@ class AdvertisementService {
     try {
       const settings = await supabaseAdminService.getSettings();
       this.adConfig = {
-        popup_ad_code: settings?.popup_ad_code || '',
         sidebar_archive_ad_code: settings?.sidebar_archive_ad_code || '',
         sidebar_single_ad_code: settings?.sidebar_single_ad_code || '',
         single_top_ad_code: settings?.single_top_ad_code || '',
         single_bottom_ad_code: settings?.single_bottom_ad_code || '',
-        single_middle_ad_code: settings?.single_middle_ad_code || ''
+        single_middle_ad_code: settings?.single_middle_ad_code || '',
+
+        // New popup ad settings
+        popup_ad_url: settings?.popup_ad_url || '',
+        popup_ad_enabled: settings?.popup_ad_enabled || false,
+        popup_ad_load_settings: settings?.popup_ad_load_settings || ['all_pages'],
+        popup_ad_max_executions: settings?.popup_ad_max_executions || 1,
+        popup_ad_device: settings?.popup_ad_device || 'all'
       };
       this.configLoaded = true;
       return this.adConfig;
@@ -37,9 +49,26 @@ class AdvertisementService {
     }
   }
 
-  async getAdCode(position: keyof AdvertisementConfig): Promise<string> {
+  async getAdCode(position: 'sidebar_archive_ad_code' | 'sidebar_single_ad_code' | 'single_top_ad_code' | 'single_bottom_ad_code' | 'single_middle_ad_code'): Promise<string> {
     const config = await this.loadAdConfig();
     return config[position] || '';
+  }
+
+  async getPopupAdConfig(): Promise<{
+    url: string;
+    enabled: boolean;
+    loadSettings: string[];
+    maxExecutions: number;
+    device: string;
+  }> {
+    const config = await this.loadAdConfig();
+    return {
+      url: config.popup_ad_url || '',
+      enabled: config.popup_ad_enabled || false,
+      loadSettings: config.popup_ad_load_settings || ['all_pages'],
+      maxExecutions: config.popup_ad_max_executions || 1,
+      device: config.popup_ad_device || 'all'
+    };
   }
 
   // Clear cache when settings are updated
@@ -61,24 +90,24 @@ class AdvertisementService {
     // Find H2 tags in content
     const h2Regex = /<h2[^>]*>/gi;
     const matches = [...content.matchAll(h2Regex)];
-    
+
     if (matches.length === 0) return content;
 
     // Insert ad before the middle H2 tag
     const middleIndex = Math.floor(matches.length / 2);
     const middleH2Match = matches[middleIndex];
-    
+
     if (middleH2Match && middleH2Match.index !== undefined) {
       const beforeMiddleH2 = content.substring(0, middleH2Match.index);
       const afterMiddleH2 = content.substring(middleH2Match.index);
-      
+
       const adHtml = `
         <div class="advertisement-middle my-6">
           <div class="text-xs text-gray-500 mb-2 text-center">Advertisement</div>
           ${adCode}
         </div>
       `;
-      
+
       return beforeMiddleH2 + adHtml + afterMiddleH2;
     }
 

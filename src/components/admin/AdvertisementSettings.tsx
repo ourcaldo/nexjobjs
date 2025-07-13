@@ -1,11 +1,14 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { supabaseAdminService } from '@/services/supabaseAdminService';
 import { useToast } from '@/components/ui/ToastProvider';
 import { Save, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 interface AdvertisementSettingsState {
-  popup_ad_code: string;
+  popup_ad_enabled: boolean;
+  popup_ad_url: string;
+  popup_ad_load_settings: string[];
+  popup_ad_max_executions: number;
+  popup_ad_device: string;
   sidebar_archive_ad_code: string;
   sidebar_single_ad_code: string;
   single_top_ad_code: string;
@@ -16,7 +19,11 @@ interface AdvertisementSettingsState {
 const AdvertisementSettings: React.FC = () => {
   const { showToast } = useToast();
   const [settings, setSettings] = useState<AdvertisementSettingsState>({
-    popup_ad_code: '',
+    popup_ad_enabled: false,
+    popup_ad_url: '',
+    popup_ad_load_settings: [],
+    popup_ad_max_executions: 1,
+    popup_ad_device: 'all',
     sidebar_archive_ad_code: '',
     sidebar_single_ad_code: '',
     single_top_ad_code: '',
@@ -33,7 +40,11 @@ const AdvertisementSettings: React.FC = () => {
       const adminSettings = await supabaseAdminService.getSettings();
       if (adminSettings) {
         setSettings({
-          popup_ad_code: adminSettings.popup_ad_code || '',
+          popup_ad_enabled: adminSettings.popup_ad_enabled || false,
+          popup_ad_url: adminSettings.popup_ad_url || '',
+          popup_ad_load_settings: adminSettings.popup_ad_load_settings || [],
+          popup_ad_max_executions: adminSettings.popup_ad_max_executions || 1,
+          popup_ad_device: adminSettings.popup_ad_device || 'all',
           sidebar_archive_ad_code: adminSettings.sidebar_archive_ad_code || '',
           sidebar_single_ad_code: adminSettings.sidebar_single_ad_code || '',
           single_top_ad_code: adminSettings.single_top_ad_code || '',
@@ -57,7 +68,7 @@ const AdvertisementSettings: React.FC = () => {
     try {
       setSaving(true);
       const result = await supabaseAdminService.saveSettings(settings);
-      
+
       if (result.success) {
         showToast('success', 'Advertisement settings saved successfully');
       } else {
@@ -78,12 +89,7 @@ const AdvertisementSettings: React.FC = () => {
     }));
   };
 
-  const adFields = [
-    {
-      key: 'popup_ad_code',
-      label: 'Popup Advertisement (All Pages)',
-      description: 'JavaScript/HTML code for popup advertisements that appear on all pages'
-    },
+  const regularAdFields = [
     {
       key: 'sidebar_archive_ad_code',
       label: 'Sidebar Archive Articles',
@@ -154,8 +160,132 @@ const AdvertisementSettings: React.FC = () => {
           </div>
         </div>
 
-        <div className="space-y-8">
-          {adFields.map((field) => (
+        {/* Popup Advertisement Settings */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Popup Advertisement Settings</h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Configure popup advertisements that open links in new tabs when users click anywhere on the page
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Enable/Disable */}
+            <div>
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={settings.popup_ad_enabled}
+                  onChange={(e) => setSettings(prev => ({ ...prev, popup_ad_enabled: e.target.checked }))}
+                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Enable Popup Ads</span>
+              </label>
+            </div>
+
+            {/* URL */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Popup URL
+              </label>
+              <input
+                type="url"
+                value={settings.popup_ad_url}
+                onChange={(e) => setSettings(prev => ({ ...prev, popup_ad_url: e.target.value }))}
+                placeholder="https://example.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">URL that will open in a new tab when users click</p>
+            </div>
+
+            {/* Load Settings */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Load Settings
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={settings.popup_ad_load_settings.includes('all_pages')}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSettings(prev => ({ 
+                          ...prev, 
+                          popup_ad_load_settings: [...prev.popup_ad_load_settings.filter(s => s !== 'all_pages'), 'all_pages']
+                        }));
+                      } else {
+                        setSettings(prev => ({ 
+                          ...prev, 
+                          popup_ad_load_settings: prev.popup_ad_load_settings.filter(s => s !== 'all_pages')
+                        }));
+                      }
+                    }}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">All Pages</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={settings.popup_ad_load_settings.includes('single_articles')}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSettings(prev => ({ 
+                          ...prev, 
+                          popup_ad_load_settings: [...prev.popup_ad_load_settings.filter(s => s !== 'single_articles'), 'single_articles']
+                        }));
+                      } else {
+                        setSettings(prev => ({ 
+                          ...prev, 
+                          popup_ad_load_settings: prev.popup_ad_load_settings.filter(s => s !== 'single_articles')
+                        }));
+                      }
+                    }}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">Single Articles Only</span>
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Choose which pages should trigger the popup</p>
+            </div>
+
+            {/* Max Executions */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Max Executions per Page
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={settings.popup_ad_max_executions}
+                onChange={(e) => setSettings(prev => ({ ...prev, popup_ad_max_executions: parseInt(e.target.value) || 1 }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Maximum number of popups per page visit</p>
+            </div>
+
+            {/* Device */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Target Device
+              </label>
+              <select
+                value={settings.popup_ad_device}
+                onChange={(e) => setSettings(prev => ({ ...prev, popup_ad_device: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="all">All Devices</option>
+                <option value="mobile">Mobile Only</option>
+                <option value="desktop">Desktop Only</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Which devices should show the popup</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Regular Advertisement Settings */}
+        <div className="space-y-6">
+          {regularAdFields.map((field) => (
             <div key={field.key} className="border-b border-gray-200 pb-8 last:border-b-0">
               <div className="flex items-center justify-between mb-3">
                 <div>

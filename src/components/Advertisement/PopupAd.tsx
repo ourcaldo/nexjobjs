@@ -1,150 +1,148 @@
+
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { advertisementService } from '@/services/advertisementService';
 
 const PopupAd: React.FC = () => {
-  const [adCode, setAdCode] = useState<string>('');
-  const [hasLoaded, setHasLoaded] = useState(false);
+  const router = useRouter();
+  const [popupConfig, setPopupConfig] = useState({
+    url: '',
+    enabled: false,
+    loadSettings: ['all_pages'],
+    maxExecutions: 1,
+    device: 'all'
+  });
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
 
+  // Device detection
+  const getDeviceType = (): 'mobile' | 'desktop' => {
+    if (typeof window === 'undefined') return 'desktop';
+    return window.innerWidth <= 768 ? 'mobile' : 'desktop';
+  };
+
+  // Check if current page should trigger popup
+  const shouldTriggerOnPage = (loadSettings: string[]): boolean => {
+    const currentPath = router.asPath;
+    
+    if (loadSettings.includes('all_pages')) {
+      return true;
+    }
+    
+    if (loadSettings.includes('single_articles')) {
+      // Check if current page is a single article page
+      return currentPath.startsWith('/artikel/') && !currentPath.endsWith('/artikel/');
+    }
+    
+    return false;
+  };
+
+  // Cookie management for tracking executions per page
+  const getCookieName = (): string => {
+    const currentPath = router.asPath;
+    return `nexjob_popup_${btoa(currentPath).replace(/[^a-zA-Z0-9]/g, '').substring(0, 20)}`;
+  };
+
+  const getExecutionCount = (): number => {
+    if (typeof document === 'undefined') return 0;
+    const cookieName = getCookieName();
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith(cookieName + '='));
+    return cookieValue ? parseInt(cookieValue.split('=')[1]) || 0 : 0;
+  };
+
+  const incrementExecutionCount = (): void => {
+    if (typeof document === 'undefined') return;
+    const cookieName = getCookieName();
+    const currentCount = getExecutionCount();
+    const newCount = currentCount + 1;
+    // Set cookie to expire in 24 hours
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000));
+    document.cookie = `${cookieName}=${newCount}; expires=${expires.toUTCString()}; path=/`;
+  };
+
+  // Load popup configuration
   useEffect(() => {
-    const loadPopupAd = async () => {
+    const loadConfig = async () => {
       try {
-        console.log('[DEBUG] PopupAd: Loading popup ad code...');
-        const code = await advertisementService.getAdCode('popup_ad_code');
-        if (code && !hasLoaded) {
-          console.log('[DEBUG] PopupAd: Ad code received:', code);
-          setAdCode(code);
-          setHasLoaded(true);
-        } else if (!code) {
-          console.log('[DEBUG] PopupAd: No ad code found');
-        }
+        console.log('[DEBUG] PopupAd: Loading popup configuration...');
+        const config = await advertisementService.getPopupAdConfig();
+        setPopupConfig(config);
+        setIsConfigLoaded(true);
+        console.log('[DEBUG] PopupAd: Configuration loaded:', config);
       } catch (error) {
-        console.error('[DEBUG] PopupAd: Error loading popup ad:', error);
+        console.error('[DEBUG] PopupAd: Error loading popup config:', error);
+        setIsConfigLoaded(true);
       }
     };
 
-    loadPopupAd();
-  }, [hasLoaded]);
+    loadConfig();
+  }, []);
 
-  // Execute the ad code directly - like WordPress header.php injection
+  // Set up click event listener
   useEffect(() => {
-    if (adCode && hasLoaded) {
-      console.log('[DEBUG] PopupAd: Starting script execution...');
-
-      try {
-        // Create a temporary container to parse the HTML
-        const tempContainer = document.createElement('div');
-        tempContainer.innerHTML = adCode;
-
-        // Add debug event listeners first
-        const events = ['click', 'mouseover', 'mouseout', 'mousemove', 'scroll', 'keydown', 'touchstart', 'resize'];
-        events.forEach(evt => {
-          const listener = (e: Event) => {
-            console.log(`[DEBUG] PopupAd: User triggered event: ${evt} at ${new Date().toISOString()}`);
-          };
-          window.addEventListener(evt, listener, { passive: true });
-        });
-
-        // Handle external scripts (with src attribute)
-        const externalScripts = tempContainer.querySelectorAll('script[src]');
-        const inlineScripts = tempContainer.querySelectorAll('script:not([src])');
-
-        let scriptsLoaded = 0;
-        const totalScripts = externalScripts.length;
-
-        const executeInlineScripts = () => {
-          console.log('[DEBUG] PopupAd: Executing inline scripts...');
-          inlineScripts.forEach((script, index) => {
-            if (script.innerHTML.trim()) {
-              console.log(`[DEBUG] PopupAd: Executing inline script ${index + 1}:`, script.innerHTML);
-              try {
-                // Execute inline script in global scope
-                eval(script.innerHTML);
-                console.log(`[DEBUG] PopupAd: Inline script ${index + 1} executed successfully`);
-              } catch (error) {
-                console.error(`[DEBUG] PopupAd: Error executing inline script ${index + 1}:`, error);
-              }
-            }
-          });
-        };
-
-        if (totalScripts === 0) {
-          // No external scripts, just execute inline scripts
-          console.log('[DEBUG] PopupAd: No external scripts, executing inline scripts');
-          executeInlineScripts();
-        } else {
-          // Load external scripts first
-          externalScripts.forEach((script, index) => {
-            const src = script.getAttribute('src');
-            if (src) {
-              console.log(`[DEBUG] PopupAd: Loading external script ${index + 1}:`, src);
-
-              // Check if script already loaded
-              const existingScript = document.head.querySelector(`script[src*="${src}"]`);
-              if (existingScript) {
-                console.log(`[DEBUG] PopupAd: Script already loaded:`, src);
-                scriptsLoaded++;
-                if (scriptsLoaded === totalScripts) {
-                  setTimeout(executeInlineScripts, 100);
-                }
-                return;
-              }
-
-              // Create new script element
-              const newScript = document.createElement('script');
-              newScript.src = src;
-              newScript.type = 'text/javascript';
-
-              // Copy attributes from original script
-              Array.from(script.attributes).forEach(attr => {
-                if (attr.name !== 'src') {
-                  newScript.setAttribute(attr.name, attr.value);
-                }
-              });
-
-              newScript.onload = () => {
-                console.log(`[DEBUG] PopupAd: External script ${index + 1} loaded and executed:`, src);
-                console.log(`[DEBUG] PopupAd: Window functions after load:`, Object.keys(window).filter(key => 
-                  typeof window[key] === 'function' && key.toLowerCase().includes('analytics')
-                ));
-
-                scriptsLoaded++;
-                if (scriptsLoaded === totalScripts) {
-                  // Wait a bit for the external script to initialize
-                  setTimeout(executeInlineScripts, 200);
-                }
-              };
-
-              newScript.onerror = (error) => {
-                console.error(`[DEBUG] PopupAd: Failed to load external script ${index + 1}:`, src, error);
-                scriptsLoaded++;
-                if (scriptsLoaded === totalScripts) {
-                  setTimeout(executeInlineScripts, 100);
-                }
-              };
-
-              // Append to head to execute
-              document.head.appendChild(newScript);
-              console.log(`[DEBUG] PopupAd: External script ${index + 1} injected to head`);
-            }
-          });
-        }
-
-        // Set global variables for compatibility
-        window.nexjobAd = {
-          loaded: true,
-          timestamp: Date.now(),
-          debug: true
-        };
-
-        console.log('[DEBUG] PopupAd: Script setup completed');
-
-      } catch (error) {
-        console.error('[DEBUG] PopupAd: Error setting up scripts:', error);
-      }
+    if (!isConfigLoaded || !popupConfig.enabled || !popupConfig.url) {
+      console.log('[DEBUG] PopupAd: Popup disabled or no URL configured');
+      return;
     }
-  }, [adCode, hasLoaded]);
 
-  // Component renders nothing (like WordPress header.php)
+    // Check if should trigger on this page
+    if (!shouldTriggerOnPage(popupConfig.loadSettings)) {
+      console.log('[DEBUG] PopupAd: Page not eligible for popup based on load settings');
+      return;
+    }
+
+    // Check device compatibility
+    const currentDevice = getDeviceType();
+    if (popupConfig.device !== 'all' && popupConfig.device !== currentDevice) {
+      console.log('[DEBUG] PopupAd: Device not compatible:', { current: currentDevice, required: popupConfig.device });
+      return;
+    }
+
+    console.log('[DEBUG] PopupAd: Setting up click listener...');
+
+    const handleClick = (event: MouseEvent) => {
+      // Check execution limit
+      const currentExecutions = getExecutionCount();
+      if (currentExecutions >= popupConfig.maxExecutions) {
+        console.log('[DEBUG] PopupAd: Maximum executions reached for this page:', currentExecutions);
+        return;
+      }
+
+      console.log('[DEBUG] PopupAd: Click detected, opening popup:', {
+        url: popupConfig.url,
+        executions: currentExecutions + 1,
+        maxExecutions: popupConfig.maxExecutions,
+        device: currentDevice,
+        page: router.asPath
+      });
+
+      // Open new tab
+      try {
+        const newWindow = window.open(popupConfig.url, '_blank', 'noopener,noreferrer');
+        if (newWindow) {
+          console.log('[DEBUG] PopupAd: New tab opened successfully');
+          incrementExecutionCount();
+        } else {
+          console.log('[DEBUG] PopupAd: Failed to open new tab (popup blocker?)');
+        }
+      } catch (error) {
+        console.error('[DEBUG] PopupAd: Error opening new tab:', error);
+      }
+    };
+
+    // Add click listener to document
+    document.addEventListener('click', handleClick, { passive: true });
+
+    // Cleanup function
+    return () => {
+      console.log('[DEBUG] PopupAd: Removing click listener');
+      document.removeEventListener('click', handleClick);
+    };
+  }, [isConfigLoaded, popupConfig, router.asPath]);
+
+  // Component renders nothing (invisible)
   return null;
 };
 

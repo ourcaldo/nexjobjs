@@ -65,7 +65,11 @@ Allow: /artikel/
 # Sitemaps
 Sitemap: ${env.SITE_URL}/sitemap.xml`,
     // Advertisement Settings
-    popup_ad_code: '',
+    popup_ad_url: '',
+    popup_ad_enabled: false,
+    popup_ad_load_settings: [],
+    popup_ad_max_executions: 0,
+    popup_ad_device: 'All',
     sidebar_archive_ad_code: '',
     sidebar_single_ad_code: '',
     single_top_ad_code: '',
@@ -609,7 +613,11 @@ Allow: /artikel/
 # Sitemaps
 Sitemap: ${env.SITE_URL}/sitemap.xml`,
     // Advertisement Settings
-    popup_ad_code: '',
+    popup_ad_url: '',
+    popup_ad_enabled: false,
+    popup_ad_load_settings: [],
+    popup_ad_max_executions: 0,
+    popup_ad_device: 'All',
     sidebar_archive_ad_code: '',
     sidebar_single_ad_code: '',
     single_top_ad_code: '',
@@ -621,18 +629,18 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
   static async getCurrentProfileServerSide(context: any): Promise<Profile | null> {
     try {
       const supabaseServer = createServerSupabaseClient();
-      
+
       // Get user from request cookies/headers
       const { req } = context;
       const token = req.cookies['sb-access-token'] || req.headers.authorization?.replace('Bearer ', '');
-      
+
       if (!token) {
         return null;
       }
 
       // Get user from token
       const { data: { user }, error: authError } = await supabaseServer.auth.getUser(token);
-      
+
       if (authError || !user) {
         console.warn('Auth error in server-side profile check:', authError);
         return null;
