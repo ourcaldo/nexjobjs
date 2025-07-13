@@ -36,39 +36,114 @@ const PopupAd: React.FC = () => {
     return false;
   };
 
-  // Generate a unique session key for current page
-  const getSessionKey = (): string => {
-    // Use current path and create a safe key
-    const currentPath = router.asPath.split('?')[0]; // Remove query params
-    const safeKey = currentPath.replace(/[^a-zA-Z0-9-_]/g, '_');
-    return `nexjob_popup_${safeKey}`;
+  /**
+   * Generate a random alphanumeric string.
+   */
+  const generateRandomString = (length: number): string => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   };
 
-  const getExecutionCount = (): number => {
-    if (typeof window === 'undefined') return 0;
-    const sessionKey = getSessionKey();
-    const storedValue = sessionStorage.getItem(sessionKey);
-    const count = storedValue ? parseInt(storedValue) || 0 : 0;
-    console.log('[DEBUG] PopupAd: Getting execution count:', { sessionKey, storedValue, count });
-    return count;
+  /**
+   * Generate a session ID with timestamp and random string.
+   */
+  const generateSessionId = (): string => {
+    return 'session_' + Date.now() + '_' + generateRandomString(8);
   };
 
-  const incrementExecutionCount = (): void => {
+  /**
+   * Generate a page-unique key for session tracking.
+   */
+  const getPageKey = (): string => {
+    return router.asPath; // Full path including query params
+  };
+
+  /**
+   * Initialize session ID, once per page session.
+   */
+  const initSession = (): void => {
     if (typeof window === 'undefined') return;
-    const sessionKey = getSessionKey();
-    const currentCount = getExecutionCount();
-    const newCount = currentCount + 1;
-    sessionStorage.setItem(sessionKey, newCount.toString());
-    console.log('[DEBUG] PopupAd: Incremented execution count:', { sessionKey, oldCount: currentCount, newCount });
+    
+    const sessionKey = 'sessionID_' + getPageKey();
+    if (!sessionStorage.getItem(sessionKey)) {
+      const sessionId = generateSessionId();
+      sessionStorage.setItem(sessionKey, sessionId);
+      console.log('[DEBUG] PopupAd: Initialized session:', { sessionKey, sessionId });
+    }
+  };
+
+  /**
+   * Check if tab has already been opened for this page session.
+   */
+  const hasTabBeenOpened = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    
+    const tabKey = 'tabOpened_' + getPageKey();
+    const hasOpened = sessionStorage.getItem(tabKey) === 'true';
+    console.log('[DEBUG] PopupAd: Checking tab status:', { tabKey, hasOpened });
+    return hasOpened;
+  };
+
+  /**
+   * Mark tab as opened for this page session.
+   */
+  const markTabAsOpened = (): void => {
+    if (typeof window === 'undefined') return;
+    
+    const tabKey = 'tabOpened_' + getPageKey();
+    sessionStorage.setItem(tabKey, 'true');
+    console.log('[DEBUG] PopupAd: Marked tab as opened:', tabKey);
+  };
+
+  /**
+   * Open the target URL in a new tab, only once per page session.
+   */
+  const openTabOnce = (): void => {
+    if (hasTabBeenOpened()) {
+      console.log('[DEBUG] PopupAd: Tab already opened for this page session');
+      return;
+    }
+
+    try {
+      const newWindow = window.open(popupConfig.url, '_blank', 'noopener,noreferrer');
+      if (newWindow) {
+        markTabAsOpened();
+        console.log('[DEBUG] PopupAd: New tab opened successfully');
+        console.log('[DEBUG] PopupAd: Current sessionStorage state:', {
+          sessionKey: 'sessionID_' + getPageKey(),
+          sessionValue: sessionStorage.getItem('sessionID_' + getPageKey()),
+          tabKey: 'tabOpened_' + getPageKey(),
+          tabValue: sessionStorage.getItem('tabOpened_' + getPageKey())
+        });
+      } else {
+        console.log('[DEBUG] PopupAd: Failed to open new tab (popup blocker?)');
+      }
+    } catch (error) {
+      console.error('[DEBUG] PopupAd: Error opening new tab:', error);
+    }
+  };
+
+  /**
+   * Main handler to be triggered by user interaction.
+   */
+  const handleUserEventTrigger = (): void => {
+    initSession();
+    openTabOnce();
   };
 
   // Clear session storage when component unmounts (user leaves page)
   useEffect(() => {
     return () => {
       if (typeof window !== 'undefined') {
-        const sessionKey = getSessionKey();
+        const sessionKey = 'sessionID_' + getPageKey();
+        const tabKey = 'tabOpened_' + getPageKey();
         sessionStorage.removeItem(sessionKey);
-        console.log('[DEBUG] PopupAd: Cleared session storage on page leave:', sessionKey);
+        sessionStorage.removeItem(tabKey);
+        console.log('[DEBUG] PopupAd: Cleared session storage on page leave:', { sessionKey, tabKey });
       }
     };
   }, [router.asPath]);
@@ -111,53 +186,11 @@ const PopupAd: React.FC = () => {
       return;
     }
 
-    console.log('[DEBUG] PopupAd: Setting up click listener for page:', router.asPath);
+    console.log('[DEBUG] PopupAd: Setting up click listener for page:', getPageKey());
 
     const handleClick = (event: MouseEvent) => {
-      // Check execution limit using sessionStorage
-      const currentExecutions = getExecutionCount();
-      const sessionKey = getSessionKey();
-      
-      console.log('[DEBUG] PopupAd: Click detected, checking limits:', {
-        sessionKey,
-        currentExecutions,
-        maxExecutions: popupConfig.maxExecutions,
-        sessionStorageValue: sessionStorage.getItem(sessionKey),
-        allSessionKeys: Object.keys(sessionStorage).filter(key => key.startsWith('nexjob_popup_'))
-      });
-      
-      if (currentExecutions >= popupConfig.maxExecutions) {
-        console.log('[DEBUG] PopupAd: Maximum executions reached for this page session:', currentExecutions);
-        return;
-      }
-
-      console.log('[DEBUG] PopupAd: Opening popup:', {
-        url: popupConfig.url,
-        executions: currentExecutions + 1,
-        maxExecutions: popupConfig.maxExecutions,
-        device: currentDevice,
-        sessionKey
-      });
-
-      // Open new tab
-      try {
-        const newWindow = window.open(popupConfig.url, '_blank', 'noopener,noreferrer');
-        if (newWindow) {
-          console.log('[DEBUG] PopupAd: New tab opened successfully');
-          incrementExecutionCount();
-          const finalCount = getExecutionCount();
-          console.log('[DEBUG] PopupAd: Session storage updated, execution count:', finalCount);
-          console.log('[DEBUG] PopupAd: Current sessionStorage state:', {
-            sessionKey: getSessionKey(),
-            value: sessionStorage.getItem(getSessionKey()),
-            allPopupKeys: Object.keys(sessionStorage).filter(key => key.startsWith('nexjob_popup_'))
-          });
-        } else {
-          console.log('[DEBUG] PopupAd: Failed to open new tab (popup blocker?)');
-        }
-      } catch (error) {
-        console.error('[DEBUG] PopupAd: Error opening new tab:', error);
-      }
+      console.log('[DEBUG] PopupAd: Click detected');
+      handleUserEventTrigger();
     };
 
     // Add click listener to document
