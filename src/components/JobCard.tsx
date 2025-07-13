@@ -127,13 +127,17 @@ const JobCard: React.FC<JobCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    if (!user) {
+    // Check if user is authenticated by checking session directly
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = session?.user;
+
+    if (!currentUser) {
       setShowLoginModal(true);
       return;
     }
 
     try {
-      const result = await userBookmarkService.toggleBookmark(user.id, job.id);
+      const result = await userBookmarkService.toggleBookmark(currentUser.id, job.id);
 
       if (result.success) {
         setIsBookmarked(result.isBookmarked);

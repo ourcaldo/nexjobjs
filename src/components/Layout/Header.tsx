@@ -90,8 +90,12 @@ const Header: React.FC = () => {
     }
   };
 
-  const handleBookmarkClick = () => {
-    if (user) {
+  const handleBookmarkClick = async () => {
+    // Check if user is authenticated by checking session directly
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = session?.user;
+
+    if (currentUser) {
       router.push('/profile/');
     } else {
       setShowBookmarkModal(true);

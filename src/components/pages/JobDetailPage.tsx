@@ -91,12 +91,31 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ job, slug, settings }) =>
     setIsHydrated(true);
   }, []);
 
-  const handleBookmarkToggle = () => {
-    const newBookmarkState = bookmarkService.toggleBookmark(job.id);
-    setIsBookmarked(newBookmarkState);
+  const handleBookmarkToggle = async () => {
+    // Check if user is authenticated by checking session directly
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = session?.user;
 
-    // Track bookmark action
-    trackBookmark(newBookmarkState ? 'add' : 'remove', job.title, job.id);
+    if (!currentUser) {
+      setShowBookmarkModal(true);
+      return;
+    }
+
+    setIsBookmarkLoading(true);
+
+    try {
+      const result = await userBookmarkService.toggleBookmark(currentUser.id, job.id);
+
+      if (result.success) {
+        setIsBookmarked(result.isBookmarked);
+      } else {
+        console.error('Failed to toggle bookmark:', result.error);
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    } finally {
+      setIsBookmarkLoading(false);
+    }
   };
 
   const handleApplyClick = () => {
