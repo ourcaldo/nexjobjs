@@ -10,8 +10,19 @@ export class AdminSettingsApiService {
 
   private async getAuthToken(): Promise<string | null> {
     try {
+      // Try to get Supabase session token first
       const { data: { session } } = await supabase.auth.getSession();
-      return session?.access_token || null;
+      if (session?.access_token) {
+        return session.access_token;
+      }
+
+      // Fallback to API token from environment for admin panel access
+      const apiToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      if (apiToken) {
+        return apiToken;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error getting auth token:', error);
       return null;

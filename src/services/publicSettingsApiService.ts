@@ -48,7 +48,7 @@ export interface PublicSettings {
 }
 
 class PublicSettingsApiService {
-  private baseUrl = '/api';
+  private baseUrl = '/api/public';
   private cache: { data: PublicSettings | null; timestamp: number } | null = null;
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes for public settings
 

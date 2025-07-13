@@ -14,21 +14,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authError || !user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    // Check if it's the API token from environment
+    if (token === process.env.NEXT_PUBLIC_API_TOKEN && process.env.NEXT_PUBLIC_API_TOKEN) {
+      // API token is valid, proceed without user check (for admin panel)
+    } else {
+      // Regular Supabase token authentication
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      
+      if (authError || !user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-    // Check if user is super admin
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+      // Check if user is super admin
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
 
-    if (profileError || profile?.role !== 'super_admin') {
-      return res.status(403).json({ error: 'Forbidden: Super admin access required' });
+      if (profileError || profile?.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Forbidden: Super admin access required' });
+      }
     }
 
     switch (req.method) {
