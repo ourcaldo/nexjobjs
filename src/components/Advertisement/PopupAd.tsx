@@ -31,6 +31,14 @@ const PopupAd: React.FC = () => {
       console.log('[DEBUG] PopupAd: Processing ad code for head injection...');
 
       try {
+        // Create global variables that external scripts might expect
+        window.adCode = adCode;
+        window.nexjobAd = {
+          code: adCode,
+          loaded: true,
+          debug: true
+        };
+
         // Create a temporary container to parse the HTML
         const tempContainer = document.createElement('div');
         tempContainer.innerHTML = adCode;
@@ -63,6 +71,15 @@ const PopupAd: React.FC = () => {
             // Add load and error handlers
             newScript.onload = () => {
               console.log(`[DEBUG] PopupAd: External script loaded successfully:`, src);
+              console.log(`[DEBUG] PopupAd: Window object keys after script load:`, Object.keys(window).filter(key => key.includes('ad') || key.includes('Ad')));
+              
+              // Trigger a custom event to let external scripts know the environment is ready
+              window.dispatchEvent(new CustomEvent('nexjobAdReady', { 
+                detail: { 
+                  adCode: adCode,
+                  timestamp: Date.now()
+                }
+              }));
             };
 
             newScript.onerror = () => {
@@ -81,9 +98,25 @@ const PopupAd: React.FC = () => {
             console.log(`[DEBUG] PopupAd: Executing inline script ${index + 1}:`, script.innerHTML.substring(0, 100) + '...');
 
             try {
+              // Wrap the script content to provide context
+              const wrappedScript = `
+                (function() {
+                  console.log('[DEBUG] PopupAd: Inline script ${index + 1} starting execution');
+                  var adCode = window.adCode || '';
+                  var nexjobAd = window.nexjobAd || {};
+                  
+                  try {
+                    ${script.innerHTML}
+                    console.log('[DEBUG] PopupAd: Inline script ${index + 1} executed without errors');
+                  } catch (error) {
+                    console.error('[DEBUG] PopupAd: Error in inline script ${index + 1}:', error);
+                  }
+                })();
+              `;
+
               // Create new script element for inline scripts
               const newScript = document.createElement('script');
-              newScript.textContent = script.innerHTML;
+              newScript.textContent = wrappedScript;
 
               // Copy attributes
               Array.from(script.attributes).forEach(attr => {
@@ -92,7 +125,7 @@ const PopupAd: React.FC = () => {
 
               // Append to head to execute (like WP Code)
               document.head.appendChild(newScript);
-              console.log(`[DEBUG] PopupAd: Inline script ${index + 1} executed successfully`);
+              console.log(`[DEBUG] PopupAd: Inline script ${index + 1} injected successfully`);
 
             } catch (error) {
               console.error(`[DEBUG] PopupAd: Error executing inline script ${index + 1}:`, error);
@@ -111,12 +144,38 @@ const PopupAd: React.FC = () => {
 
         console.log('[DEBUG] PopupAd: Ad code processing completed');
 
-        // Add example debug listeners for common events
-        ['click', 'mousemove', 'scroll'].forEach(evt => {
-          window.addEventListener(evt, () => {
-            console.log(`[DEBUG] PopupAd: User triggered event: ${evt}`);
-          }, { once: true }); // Only log once per event type to avoid spam
+        // Add comprehensive debug listeners for all common events
+        const events = ['click', 'mousemove', 'scroll', 'keydown', 'touchstart', 'resize', 'load'];
+        events.forEach(evt => {
+          const listener = () => {
+            console.log(`[DEBUG] PopupAd: User triggered event: ${evt} at ${new Date().toISOString()}`);
+          };
+          
+          window.addEventListener(evt, listener, { once: true }); // Only log once per event type to avoid spam
         });
+
+        // Also add a general DOM ready check
+        if (document.readyState === 'complete') {
+          console.log('[DEBUG] PopupAd: DOM is already complete, triggering nexjobAdReady event');
+          window.dispatchEvent(new CustomEvent('nexjobAdReady', { 
+            detail: { 
+              adCode: adCode,
+              timestamp: Date.now(),
+              domReady: true
+            }
+          }));
+        } else {
+          document.addEventListener('DOMContentLoaded', () => {
+            console.log('[DEBUG] PopupAd: DOM loaded, triggering nexjobAdReady event');
+            window.dispatchEvent(new CustomEvent('nexjobAdReady', { 
+              detail: { 
+                adCode: adCode,
+                timestamp: Date.now(),
+                domReady: true
+              }
+            }));
+          });
+        }
 
       } catch (error) {
         console.error('[DEBUG] PopupAd: Error processing ad code:', error);
