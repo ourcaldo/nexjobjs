@@ -171,10 +171,22 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
   // Check if current user is super admin using API layer
   async isSuperAdmin(): Promise<boolean> {
     try {
+      // Check if we're on server side
+      if (typeof window === 'undefined') {
+        // Server-side: use direct database access
+        return await this.isSuperAdminServerSide();
+      }
+
+      // Client-side: use API layer
+      const token = await this.getAuthToken();
+      if (!token) {
+        return false;
+      }
+
       const response = await fetch('/api/user/role/', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${await this.getAuthToken()}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -188,6 +200,32 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
       return data.success && data.data?.role === 'super_admin';
     } catch (error) {
       console.error('Error checking super admin status via API:', error instanceof Error ? error.message : 'Unknown error');
+      return false;
+    }
+  }
+
+  // Server-side method for direct database access (used in API routes)
+  private async isSuperAdminServerSide(): Promise<boolean> {
+    try {
+      const supabaseServer = createServerSupabaseClient();
+      
+      const { data: { user } } = await supabaseServer.auth.getUser();
+      if (!user) return false;
+
+      const { data: profile, error } = await supabaseServer
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error checking super admin status server-side:', error);
+        return false;
+      }
+
+      return profile?.role === 'super_admin';
+    } catch (error) {
+      console.error('Error checking super admin status server-side:', error);
       return false;
     }
   }

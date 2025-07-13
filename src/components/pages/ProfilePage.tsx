@@ -78,54 +78,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
     }
   }, [showToast]);
 
-  const checkUser = useCallback(async () => {
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        router.push('/login/');
-        return;
-      }
-
-      setUser(user);
-      await loadProfile(user.id);
-    } catch (error) {
-      console.error('Error checking user:', error);
-      router.push('/login/');
-    }
-  }, [router, loadProfile]);
-
-  const loadBookmarkedJobs = useCallback(async () => {
-    if (!user) return;
-
-    setLoadingBookmarks(true);
-    try {
-      const bookmarks = await userBookmarkService.getUserBookmarks(user.id);
-
-      if (bookmarks.length === 0) {
-        setBookmarkedJobs([]);
-        return;
-      }
-
-      // Get job details for bookmarked jobs
-      const jobPromises = bookmarks.map(bookmark => 
-        wpService.getJobById(bookmark.job_id)
-      );
-
-      const jobs = await Promise.all(jobPromises);
-      const validJobs = jobs.filter(job => job !== null) as Job[];
-
-      setBookmarkedJobs(validJobs);
-    } catch (error) {
-      console.error('Error loading bookmarked jobs:', error);
-      showToast('error', 'Gagal memuat lowongan tersimpan');
-    } finally {
-      setLoadingBookmarks(false);
-    }
-  }, [user, showToast]);
-
   const checkAuthStatus = useCallback(async () => {
     try {
+      // Use single session check to avoid multiple auth calls
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
 
@@ -152,26 +107,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
       } else if (event === 'SIGNED_IN' && session.user) {
         setUser(session.user);
         loadProfile(session.user.id);
-        loadBookmarkedJobs();
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [checkAuthStatus, router, loadProfile, loadBookmarkedJobs]);
+  }, [checkAuthStatus, router, loadProfile]);
 
   useEffect(() => {
     if (activeTab === 'bookmarks' && user) {
       loadBookmarkedJobs();
     }
   }, [activeTab, user, loadBookmarkedJobs]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -192,13 +138,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
         return;
       }
 
-      // Update profile with new image URL
-      const { error } = await supabase
-        .from('profiles')
-        .update({ photo_url: result.url })
-        .eq('id', user.id);
+      // Use API layer to update profile
+      const { userProfileApiService } = await import('@/services/userProfileApiService');
+      const updateResult = await userProfileApiService.updateUserProfile({
+        photo_url: result.url
+      });
 
-      if (error) {
+      if (!updateResult.success) {
         showToast('error', 'Gagal menyimpan foto profil');
         return;
       }
@@ -228,12 +174,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
         bio: formData.bio
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', user.id);
+      // Use API layer instead of direct database access
+      const { userProfileApiService } = await import('@/services/userProfileApiService');
+      const result = await userProfileApiService.updateUserProfile(updateData);
 
-      if (error) {
+      if (!result.success) {
         showToast('error', 'Gagal menyimpan profil');
         return;
       }
@@ -258,34 +203,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ settings }) => {
       showToast('error', 'Gagal logout');
     }
   };
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Get current session first
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session?.user) {
-          setUser(session.user);
-          await loadProfile(session.user.id);
-        } else {
-          // Fallback to getUser
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            router.push('/login/');
-            return;
-          }
-          setUser(user);
-          await loadProfile(user.id);
-        }
-      } catch (error) {
-        console.error('Error checking auth:', error);
-        router.push('/login/');
-      }
-    };
-
-    checkAuth();
-  }, [router, loadProfile]);
 
   if (loading) {
     return (

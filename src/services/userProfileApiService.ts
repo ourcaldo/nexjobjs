@@ -101,42 +101,40 @@ class UserProfileApiService {
     }
   }
 
-  async updateUserProfile(profileData: Partial<Profile>): Promise<UserProfileResponse> {
+  // Update current user profile
+  async updateUserProfile(updateData: Partial<any>): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      const token = await this.getAuthToken();
-      if (!token) {
-        return { success: false, error: 'No authentication token available' };
-      }
-
       const response = await fetch('/api/user/profile/', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${await this.getAuthToken()}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(profileData),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        return { 
-          success: false, 
-          error: errorData.error || `HTTP ${response.status}` 
-        };
+        console.error('Error updating user profile via API:', errorData);
+        return { success: false, error: errorData.error || 'Failed to update profile' };
       }
 
-      const data = await response.json();
-      return {
-        success: true,
-        data: data.data
-      };
+      const result = await response.json();
+
+      // Clear cache after successful update
+      this.clearCache();
+
+      return { success: true, data: result.data };
     } catch (error) {
-      console.error('Error updating user profile:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to update user profile'
-      };
+      console.error('Error updating user profile via API:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
+  }
+
+  // Clear cache
+  clearCache(): void {
+    this.cache = null;
+    console.log('User profile cache cleared');
   }
 }
 
