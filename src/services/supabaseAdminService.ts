@@ -169,12 +169,29 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
         return await this.getSettingsServerSide();
       }
 
-      // Client-side: use API layer
-      const { adminSettingsApiService } = await import('./adminSettingsApiService');
-      const settings = await adminSettingsApiService.getSettings(forceRefresh);
+      // Client-side: Check if user is super admin
+      const isAdmin = await this.isSuperAdmin();
       
-      if (settings) {
-        return settings;
+      if (isAdmin) {
+        // For super admin: use admin API (full settings with sensitive data)
+        const { adminSettingsApiService } = await import('./adminSettingsApiService');
+        const settings = await adminSettingsApiService.getSettings(forceRefresh);
+        
+        if (settings) {
+          return settings;
+        }
+      } else {
+        // For public/regular users: use public API (safe settings only)
+        const { publicSettingsApiService } = await import('./publicSettingsApiService');
+        const publicSettings = await publicSettingsApiService.getSettings(forceRefresh);
+        
+        if (publicSettings) {
+          // Merge public settings with defaults for any missing fields
+          return {
+            ...this.defaultSettings,
+            ...publicSettings
+          } as AdminSettings;
+        }
       }
       
       // Fallback to defaults if no settings found
@@ -261,8 +278,16 @@ Sitemap: ${env.SITE_URL}/sitemap.xml`,
       const result = await adminSettingsApiService.saveSettings(settings);
       
       if (result.success) {
-        // Clear cache after successful save
+        // Clear both admin and public caches after successful save
         this.clearSettingsCache();
+        
+        // Also clear public cache
+        try {
+          const { publicSettingsApiService } = await import('./publicSettingsApiService');
+          publicSettingsApiService.clearCache();
+        } catch (error) {
+          console.log('Could not clear public cache:', error);
+        }
       }
       
       return result;
