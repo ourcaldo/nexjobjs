@@ -13,9 +13,9 @@ export const env = {
   SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   
-  // SEO
-  SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME || 'Nexjob',
-  SITE_DESCRIPTION: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || 'Platform pencarian kerja terpercaya di Indonesia',
+  // SEO (now handled by database settings)
+  SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME || '',
+  SITE_DESCRIPTION: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || '',
   
   // Analytics
   GA_ID: process.env.NEXT_PUBLIC_GA_ID,
