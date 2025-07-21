@@ -1,11 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
-
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  console.warn('Supabase environment variables are missing. Using placeholder values.');
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -13,7 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    storageKey: 'sb-uzlzyosmbxgghhmafidk-auth-token'
+    storageKey: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_KEY!
   }
 });
 
@@ -59,7 +55,7 @@ export const waitForAuthInitialization = () => {
 
 // Auth state cache to prevent unnecessary re-checks
 let authStateCache: { session: any; timestamp: number } | null = null;
-const CACHE_DURATION = 5000; // 5 seconds
+const CACHE_DURATION = parseInt(process.env.AUTH_CACHE_DURATION || '5000');
 
 export const getCachedAuthState = async () => {
   const now = Date.now();
@@ -88,11 +84,7 @@ export const clearAuthCache = () => {
 
 // Server-side client with service role key
 export const createServerSupabaseClient = () => {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key';
-  
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('Supabase service role key is missing. Using placeholder value.');
-  }
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
   
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {

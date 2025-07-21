@@ -165,7 +165,7 @@ const WordPressSettings: React.FC = () => {
                 name="filters_api_url"
                 value={settings.filters_api_url}
                 onChange={handleInputChange}
-                placeholder="https://cms.nexjob.tech/wp-json/nex/v1/filters-data"
+                placeholder="Enter filters API URL"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
               />
               <p className="mt-1 text-xs text-gray-500">

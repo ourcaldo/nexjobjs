@@ -28,7 +28,7 @@ class WordPressService {
 
   // Cache for filter data with ISR-like behavior (1 hour cache)
   private filterDataCache: { data: FilterData; timestamp: number } | null = null;
-  private readonly FILTER_CACHE_TTL = 60 * 60 * 1000; // 1 hour cache (as requested)
+  private readonly FILTER_CACHE_TTL = parseInt(process.env.FILTER_CACHE_TTL || '3600000'); // 1 hour cache (as requested)
 
   constructor() {
     // Initialize with environment variables as fallback
