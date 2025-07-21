@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  env: {
+    PORT: process.env.PORT || '5000',
+  },
   images: {
     remotePatterns: [
       {
